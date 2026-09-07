@@ -1,0 +1,24 @@
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+# Dependencias y artefactos
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+.turbo/
+# Datos persistentes y respaldos locales
+data/
+backups/
+*.dump
+# Editor y sistema operativo
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

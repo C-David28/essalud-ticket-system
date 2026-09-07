@@ -1,0 +1,36 @@
+name: Infrastructure CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Validate scripts
+        run: npm run check
+      - name: Generate ephemeral credentials
+        run: npm run env:init
+      - name: Validate Compose
+        run: npm run infra:config
+      - name: Start infrastructure and await readiness
+        run: npm run infra:up
+      - name: Verify SQL and Redis authentication
+        run: npm run infra:check
+      - name: Service status
+        if: failure()
+        run: docker compose ps -a
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose down --volumes --remove-orphans

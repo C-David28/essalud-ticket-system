@@ -1,0 +1,54 @@
+name: ${COMPOSE_PROJECT_NAME:-essalud-tickets-local}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-essalud_tickets}
+      POSTGRES_USER: ${POSTGRES_USER:-bootstrap_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Ejecutar npm run env:init}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
+    networks: [backend]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Ejecutar npm run env:init}
+    command:
+      - /bin/sh
+      - -ec
+      - 'exec redis-server --appendonly yes --requirepass "$${REDISCLI_AUTH}"'
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-56379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [CMD-SHELL, 'test "$$(redis-cli ping)" = "PONG"']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+    networks: [backend]
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
