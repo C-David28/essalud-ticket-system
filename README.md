@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 1.4 — backend NestJS ejecutable.** La 1.3 fue verificada por el usuario en Docker. Esta entrega conserva ambas migraciones y agrega Prisma, transacciones por tenant, salud HTTP, Swagger, Dockerfile y pruebas. La validación Docker de 1.4 y CI están pendientes; ver [evidencia](docs/VALIDATION-1.4.md).
+**Entrega actual: subetapa 1.5 — portal del usuario y tablero técnico.** La 1.4 fue confirmada por el usuario. El frontend Next.js permite recorrer el flujo con datos ficticios y cambios temporales; solo el indicador de disponibilidad consulta la API real. [Guía 1.5](docs/SUBETAPA-1.5.md) y [pruebas ejecutadas](docs/VALIDATION-1.5.md).
 
 ## Comenzar
 
-- Si ya completaste 1.3: seguir [la guía paso a paso de 1.4](docs/SUBETAPA-1.4.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 1.4: seguir [la guía paso a paso de 1.5](docs/SUBETAPA-1.5.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -37,6 +37,8 @@ npm run api:start
 
 En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs. Las URLs de conexión están en apps/api/.env, ignorado por Git. Alternativa Docker y checklist: [SUBETAPA-1.4.md](docs/SUBETAPA-1.4.md).
 
+Para el frontend, después de instalar dependencias: `npm run web:build`, `npm run web:check`, `npm run web:test`, `npm run web:smoke` y `npm run web:dev`. Abrir http://127.0.0.1:3000. El portal y el Kanban no requieren una base de tickets ni escriben en PostgreSQL.
+
 ## Qué contiene esta entrega
 
 - PostgreSQL 17 y Redis 7.4 con volúmenes persistentes y healthchecks.
@@ -49,9 +51,10 @@ En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs
 - Historial protegido contra modificaciones del runtime y consultas limitadas a su red.
 - Respaldo PostgreSQL en formato custom, 22 verificaciones de aislamiento y 34 de auditoría.
 - Backend NestJS por capas, Prisma, runtime restringido y endpoints de salud/documentación.
+- Portal Next.js y Kanban técnico con búsqueda, filtros, formulario y detalle de demostración.
 - Workflow CI con regresión SQL, build y pruebas HTTP, integración Prisma/Redis y contenedor API.
 
-La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. La API base ya es ejecutable; el portal se implementará en 1.5. Las mutaciones del runtime ahora requieren app.user_id y app.request_id, además del tenant, dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
+La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. La API base y el frontend son ejecutables. Los tickets visibles siguen siendo ejemplos en memoria. Las mutaciones del runtime ahora requieren app.user_id y app.request_id, además del tenant, dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
 
 ## Arquitectura prevista
 
@@ -68,7 +71,7 @@ flowchart LR
   NR -.-> INT[SMTP / WhatsApp / Zabbix / IA]
 ```
 
-NestJS y Prisma están implementados en 1.4; Next.js se incorpora en 1.5 y Node-RED desde 4.2. El diagrama incluye componentes futuros. [API.md](docs/API.md) documenta las capas implementadas.
+NestJS y Prisma están implementados desde 1.4 y Next.js en 1.5; Node-RED se incorpora desde 4.2. El diagrama incluye componentes futuros. [API.md](docs/API.md) documenta las capas implementadas.
 
 ```mermaid
 erDiagram

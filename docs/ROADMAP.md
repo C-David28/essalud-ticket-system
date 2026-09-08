@@ -5,8 +5,8 @@
 | 1.1 | Estructura, Compose, SQL técnico, Git y CI | Infraestructura local aprobada por el usuario; remoto y CI pendientes |
 | 1.2 | Esquema multi-tenant, roles y restricciones | Aprobado en Docker; commit local 17eab1e; CI pendiente de confirmar |
 | 1.3 | Audit logs transaccionales append-only | Aprobado por el usuario en Docker; commit local 8cbfc1e; CI pendiente de confirmar |
-| 1.4 | Backend NestJS, Prisma, Clean Architecture, Swagger | Implementado y probado parcialmente; integración y contenedor Docker pendientes |
-| 1.5 | Portal Next.js y tablero técnico | Pendiente |
+| 1.4 | Backend NestJS, Prisma, Clean Architecture, Swagger | Toda la checklist confirmada por el usuario |
+| 1.5 | Portal Next.js y tablero técnico | Implementado; build, tipos, 13 pruebas y smoke HTTP aprobados |
 | 1.6 | Cloud, dominio público y HTTPS verificado | Pendiente |
 | 2.1 | CRUD de tickets INC-año-secuencia | Pendiente |
 | 2.2 | Máquina de estados | Pendiente |

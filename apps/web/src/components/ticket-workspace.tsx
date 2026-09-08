@@ -1,0 +1,741 @@
+"use client";
+import { useRef, useState, type FormEvent, type ComponentType } from "react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Building2,
+  CheckCheck,
+  CheckCircle2,
+  Circle,
+  CircleDashed,
+  ClipboardList,
+  Clock3,
+  HardDrive,
+  Info,
+  Monitor,
+  Network,
+  Plus,
+  Search,
+  Stethoscope,
+  Ticket,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useDemoTickets } from "@/components/providers";
+import {
+  CATEGORIES,
+  CENTERS,
+  DEMO_USER,
+  STATUSES,
+  PRIORITIES,
+  filterTickets,
+  formatDate,
+  validateDraft,
+  type Category,
+  type DemoTicket,
+  type TicketDraft,
+  type TicketStatus,
+} from "@/lib/demo-tickets";
+
+const categoryIcons: Record<Category, ComponentType<{ size?: number }>> = {
+  "Soporte técnico": Monitor,
+  "Redes y conectividad": Network,
+  Infraestructura: HardDrive,
+  "Equipamiento biomédico": Stethoscope,
+};
+const stateClasses: Record<TicketStatus, string> = {
+  Abierto: "open",
+  "En Proceso": "progress",
+  Pendiente: "pending",
+  Resuelto: "resolved",
+  Cerrado: "closed",
+};
+const statusIcons = {
+  Abierto: Circle,
+  "En Proceso": CircleDashed,
+  Pendiente: Clock3,
+  Resuelto: CheckCircle2,
+  Cerrado: CheckCheck,
+};
+function Status({ status }: { status: TicketStatus }) {
+  const Icon = statusIcons[status];
+  return (
+    <span className={"status-badge " + stateClasses[status]}>
+      <Icon size={13} />
+      {status}
+    </span>
+  );
+}
+function Priority({ value }: { value: DemoTicket["priority"] }) {
+  return (
+    <span className={"priority " + value.toLowerCase()}>
+      <span />
+      {value}
+    </span>
+  );
+}
+function Empty({ reset }: { reset: () => void }) {
+  return (
+    <div className="empty-state">
+      <Search size={30} />
+      <h3>No encontramos solicitudes</h3>
+      <p>Prueba con otra palabra o cambia los filtros.</p>
+      <Button variant="outline" onClick={reset}>
+        Limpiar filtros
+      </Button>
+    </div>
+  );
+}
+const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
+  title: "",
+  description: "",
+  category,
+  center: CENTERS[0],
+  area: "",
+  priority: "Media",
+});
+
+export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
+  const tech = mode === "tecnico";
+  const { tickets, add, move } = useDemoTickets();
+  const [search, setSearch] = useState(""),
+    [status, setStatus] = useState(""),
+    [center, setCenter] = useState(""),
+    [priority, setPriority] = useState(""),
+    [mine, setMine] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null),
+    [createOpen, setCreateOpen] = useState(false),
+    [draft, setDraft] = useState<TicketDraft>(emptyDraft),
+    [errors, setErrors] = useState<Record<string, string>>({}),
+    [message, setMessage] = useState("");
+  const lastDetailTrigger = useRef<HTMLButtonElement | null>(null);
+  const lastTicketId = useRef<string>("");
+  const own = filterTickets(tickets, { requester: DEMO_USER });
+  const visible = filterTickets(tickets, {
+    search,
+    status,
+    center,
+    priority,
+    mine,
+    requester: tech ? undefined : DEMO_USER,
+  });
+  const detail = tickets.find((t) => t.id === selected);
+  function reset() {
+    setSearch("");
+    setStatus("");
+    setCenter("");
+    setPriority("");
+    setMine(false);
+  }
+  function openCreate(category?: Category) {
+    setDraft(emptyDraft(category));
+    setErrors({});
+    setCreateOpen(true);
+  }
+  function showDetail(ticket: DemoTicket, trigger: HTMLButtonElement) {
+    lastDetailTrigger.current = trigger;
+    lastTicketId.current = ticket.id;
+    setSelected(ticket.id);
+  }
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const next = validateDraft(draft);
+    setErrors(next);
+    if (Object.keys(next).length) {
+      document.getElementById("draft-" + Object.keys(next)[0])?.focus();
+      return;
+    }
+    const ticket = add(draft);
+    setCreateOpen(false);
+    reset();
+    setMessage(
+      ticket.id +
+        " creada en esta demostración. No se envió al servicio de soporte.",
+    );
+  }
+  function field(key: keyof TicketDraft, value: string) {
+    setDraft((old) => ({ ...old, [key]: value }));
+  }
+  const error = (key: string) =>
+    errors[key] ? (
+      <span id={"error-" + key} className="field-error">
+        {errors[key]}
+      </span>
+    ) : null;
+  return (
+    <div className="workspace">
+      <div className="page-heading">
+        <div>
+          <div className="eyebrow">
+            {tech ? "GESTIÓN DE ATENCIONES" : "PORTAL DEL USUARIO"}
+          </div>
+          <h1>{tech ? "Tablero de atención" : "¿En qué podemos ayudarte?"}</h1>
+          <p>
+            {tech
+              ? "Organiza el trabajo y consulta cada solicitud."
+              : "Registra una solicitud y sigue el estado de tu atención."}
+          </p>
+        </div>
+        <Dialog
+          open={createOpen}
+          onOpenChange={(open) => {
+            setCreateOpen(open);
+            if (open) {
+              setDraft(emptyDraft());
+              setErrors({});
+            }
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button>
+              <Plus />
+              Nueva solicitud de prueba
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <div className="dialog-heading">
+              <span className="eyebrow">PORTAL DEL USUARIO</span>
+              <DialogTitle>Nueva solicitud de prueba</DialogTitle>
+              <DialogDescription>
+                Usa información ficticia. Esta solicitud solo existirá mientras
+                navegas en la demostración.
+              </DialogDescription>
+            </div>
+            <form onSubmit={submit} noValidate className="request-form">
+              <label htmlFor="draft-title">
+                ¿Qué necesitas resolver?
+                <Input
+                  id="draft-title"
+                  value={draft.title}
+                  onChange={(e) => field("title", e.target.value)}
+                  maxLength={120}
+                  placeholder="Ej. La impresora no responde"
+                  aria-invalid={!!errors.title}
+                  aria-describedby={errors.title ? "error-title" : undefined}
+                  required
+                />
+                {error("title")}
+              </label>
+              <div className="form-grid">
+                <label htmlFor="draft-category">
+                  Categoría
+                  <select
+                    id="draft-category"
+                    value={draft.category}
+                    onChange={(e) => field("category", e.target.value)}
+                    className="field"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                  {error("category")}
+                </label>
+                <label htmlFor="draft-priority">
+                  Prioridad
+                  <select
+                    id="draft-priority"
+                    value={draft.priority}
+                    onChange={(e) => field("priority", e.target.value)}
+                    className="field"
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p}>{p}</option>
+                    ))}
+                  </select>
+                  {error("priority")}
+                </label>
+                <label htmlFor="draft-center">
+                  Centro de ejemplo
+                  <select
+                    id="draft-center"
+                    value={draft.center}
+                    onChange={(e) => field("center", e.target.value)}
+                    className="field"
+                  >
+                    {CENTERS.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                  {error("center")}
+                </label>
+                <label htmlFor="draft-area">
+                  Área
+                  <Input
+                    id="draft-area"
+                    value={draft.area}
+                    onChange={(e) => field("area", e.target.value)}
+                    maxLength={80}
+                    placeholder="Ej. Admisión"
+                    aria-invalid={!!errors.area}
+                    aria-describedby={errors.area ? "error-area" : undefined}
+                    required
+                  />
+                  {error("area")}
+                </label>
+              </div>
+              <label htmlFor="draft-description">
+                Describe el problema
+                <textarea
+                  id="draft-description"
+                  value={draft.description}
+                  onChange={(e) => field("description", e.target.value)}
+                  maxLength={2000}
+                  rows={4}
+                  placeholder="Indica qué ocurre y desde cuándo, usando un caso ficticio."
+                  className="field"
+                  aria-invalid={!!errors.description}
+                  aria-describedby={
+                    errors.description ? "error-description" : undefined
+                  }
+                  required
+                />
+                {error("description")}
+              </label>
+              <div className="form-footer">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreateOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Crear solicitud de prueba
+                  <ArrowRight />
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {message && (
+        <div className="feedback" role="status">
+          <CheckCircle2 size={18} />
+          <span>{message}</span>
+          <button aria-label="Cerrar aviso" onClick={() => setMessage("")}>
+            <X size={18} />
+          </button>
+        </div>
+      )}
+      {!tech && (
+        <>
+          <section className="category-grid" aria-label="Categorías de soporte">
+            {CATEGORIES.map((category, i) => {
+              const Icon = categoryIcons[category];
+              return (
+                <button
+                  key={category}
+                  className="category-card"
+                  onClick={() => openCreate(category)}
+                >
+                  <span className={"category-icon tone-" + i}>
+                    <Icon size={22} />
+                  </span>
+                  <span>
+                    {category}
+                    <small>
+                      {
+                        [
+                          "Equipos, impresoras y aplicaciones",
+                          "Internet, red y comunicaciones",
+                          "Energía y espacios de trabajo",
+                          "Revisión y mantenimiento",
+                        ][i]
+                      }
+                    </small>
+                  </span>
+                  <ArrowUpRight size={17} className="category-arrow" />
+                </button>
+              );
+            })}
+          </section>
+          <section
+            className="summary-grid"
+            aria-label="Resumen de mis solicitudes"
+          >
+            <div>
+              <span className="summary-icon">
+                <Ticket size={21} />
+              </span>
+              <div>
+                <span>Total de solicitudes</span>
+                <strong>{own.length}</strong>
+              </div>
+              <small>En esta demostración</small>
+            </div>
+            <div>
+              <span className="summary-icon blue">
+                <Clock3 size={21} />
+              </span>
+              <div>
+                <span>En atención</span>
+                <strong>
+                  {
+                    own.filter(
+                      (t) => !["Resuelto", "Cerrado"].includes(t.status),
+                    ).length
+                  }
+                </strong>
+              </div>
+              <small>Abiertas, en proceso o pendientes</small>
+            </div>
+            <div>
+              <span className="summary-icon green">
+                <CheckCircle2 size={21} />
+              </span>
+              <div>
+                <span>Atendidas</span>
+                <strong>
+                  {
+                    own.filter((t) =>
+                      ["Resuelto", "Cerrado"].includes(t.status),
+                    ).length
+                  }
+                </strong>
+              </div>
+              <small>Resueltas o cerradas</small>
+            </div>
+          </section>
+        </>
+      )}
+      <div className={tech ? "board-section" : "portal-columns"}>
+        <section className="ticket-section" aria-labelledby="ticket-list-title">
+          <div className="section-heading">
+            <div>
+              <h2 id="ticket-list-title">
+                {tech ? "Solicitudes de la red" : "Mis solicitudes"}
+                <span>{tech ? tickets.length : own.length}</span>
+              </h2>
+              <p>
+                {tech
+                  ? "Datos de ejemplo · 5 estados de atención"
+                  : "Consulta el detalle y el avance de tus solicitudes."}
+              </p>
+            </div>
+            {tech && (
+              <span className="view-label">
+                <ClipboardList size={16} />
+                Vista Kanban
+              </span>
+            )}
+          </div>
+          <div className="filters">
+            <div className="search-field">
+              <Search size={18} />
+              <Input
+                aria-label="Buscar solicitudes"
+                placeholder="Buscar por código o descripción…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            {tech ? (
+              <>
+                <select
+                  className="field filter-select"
+                  aria-label="Filtrar por centro"
+                  value={center}
+                  onChange={(e) => setCenter(e.target.value)}
+                >
+                  <option value="">Todos los centros</option>
+                  {CENTERS.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+                <select
+                  className="field filter-select"
+                  aria-label="Filtrar por prioridad"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
+                  <option value="">Todas las prioridades</option>
+                  {PRIORITIES.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </>
+            ) : (
+              <select
+                className="field filter-select"
+                aria-label="Filtrar por estado"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">Todos los estados</option>
+                {STATUSES.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          {tech && (
+            <div className="board-meta">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={mine}
+                  onChange={(e) => setMine(e.target.checked)}
+                />
+                Asignados al técnico de prueba 01
+              </label>
+              <span role="status">{visible.length} solicitudes visibles</span>
+            </div>
+          )}
+          {!visible.length ? (
+            <Empty reset={reset} />
+          ) : tech ? (
+            <div className="kanban" aria-label="Tablero Kanban" tabIndex={0}>
+              {STATUSES.map((s) => {
+                const Icon = statusIcons[s];
+                const rows = visible.filter((t) => t.status === s);
+                return (
+                  <section
+                    key={s}
+                    className={"kanban-column " + stateClasses[s]}
+                    aria-label={s}
+                  >
+                    <div className="column-heading">
+                      <Icon size={16} />
+                      <h3>{s}</h3>
+                      <span>{rows.length}</span>
+                    </div>
+                    <div className="column-body">
+                      {rows.map((ticket) => {
+                        const CategoryIcon = categoryIcons[ticket.category];
+                        return (
+                          <button
+                            className="kanban-card"
+                            key={ticket.id}
+                            data-ticket-id={ticket.id}
+                            onClick={(e) => showDetail(ticket, e.currentTarget)}
+                            aria-label={
+                              "Ver " + ticket.id + ": " + ticket.title
+                            }
+                          >
+                            <div className="card-meta">
+                              <span>{ticket.id}</span>
+                              <Priority value={ticket.priority} />
+                            </div>
+                            <h4>{ticket.title}</h4>
+                            <p>
+                              <Building2 size={14} />
+                              {ticket.center}
+                            </p>
+                            <span className="card-category">
+                              <CategoryIcon size={13} />
+                              {ticket.category}
+                            </span>
+                            <div className="card-bottom">
+                              <span className="assignee">
+                                <span
+                                  className={
+                                    "avatar " +
+                                    (!ticket.assignee ? "unassigned" : "")
+                                  }
+                                >
+                                  {ticket.assignee
+                                    ? ticket.assignee.endsWith("01")
+                                      ? "T1"
+                                      : "T2"
+                                    : "—"}
+                                </span>
+                                {ticket.assignee
+                                  ? ticket.assignee.endsWith("01")
+                                    ? "Técnico 01"
+                                    : "Técnico 02"
+                                  : "Sin asignar"}
+                              </span>
+                              <time dateTime={ticket.createdAt}>
+                                {formatDate(ticket.createdAt)}
+                              </time>
+                            </div>
+                          </button>
+                        );
+                      })}
+                      {!rows.length && (
+                        <p className="column-empty">Sin solicitudes</p>
+                      )}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="ticket-list">
+              <div className="list-labels" aria-hidden="true">
+                <span>SOLICITUD</span>
+                <span>ESTADO</span>
+                <span>PRIORIDAD</span>
+                <span />
+              </div>
+              {visible.map((ticket) => {
+                const Icon = categoryIcons[ticket.category];
+                return (
+                  <button
+                    className="ticket-row"
+                    key={ticket.id}
+                    data-ticket-id={ticket.id}
+                    onClick={(e) => showDetail(ticket, e.currentTarget)}
+                    aria-label={"Ver " + ticket.id + ": " + ticket.title}
+                  >
+                    <div className="ticket-main">
+                      <span className="ticket-icon">
+                        <Icon size={21} />
+                      </span>
+                      <div>
+                        <div className="ticket-reference">
+                          {ticket.id}
+                          <span>·</span>
+                          <time dateTime={ticket.createdAt}>
+                            {formatDate(ticket.createdAt)}
+                          </time>
+                        </div>
+                        <h3>{ticket.title}</h3>
+                        <p>
+                          {ticket.center} · {ticket.area}
+                        </p>
+                      </div>
+                    </div>
+                    <Status status={ticket.status} />
+                    <Priority value={ticket.priority} />
+                    <ArrowRight size={17} />
+                  </button>
+                );
+              })}
+              <div className="list-footnote">
+                {visible.length} solicitudes de ejemplo · Vista solicitante
+              </div>
+            </div>
+          )}
+        </section>
+        {!tech && (
+          <aside className="help-panel">
+            <span className="help-icon">
+              <Info size={23} />
+            </span>
+            <h2>
+              Una buena descripción
+              <br />
+              agiliza la atención
+            </h2>
+            <p>
+              Cuéntanos qué equipo o servicio presenta el problema y qué
+              comprobaciones realizaste.
+            </p>
+            <div className="help-divider" />
+            <strong>Antes de registrar</strong>
+            <ul>
+              <li>Identifica el centro y el área.</li>
+              <li>Describe el problema con claridad.</li>
+              <li>Usa solo información ficticia en esta demostración.</li>
+            </ul>
+            <span className="help-caption">
+              Tus solicitudes, en un solo lugar.
+            </span>
+          </aside>
+        )}
+      </div>
+      <Dialog
+        open={!!detail}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
+      >
+        <DialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const trigger = lastDetailTrigger.current?.isConnected
+              ? lastDetailTrigger.current
+              : document.querySelector<HTMLButtonElement>(
+                  '[data-ticket-id="' + lastTicketId.current + '"]',
+                );
+            trigger?.focus();
+          }}
+        >
+          {detail && (
+            <>
+              <div className="dialog-heading">
+                <span className="eyebrow">
+                  {detail.id} · SOLICITUD DE EJEMPLO
+                </span>
+                <DialogTitle>{detail.title}</DialogTitle>
+                <DialogDescription>
+                  {detail.center} · {detail.area}
+                </DialogDescription>
+              </div>
+              <div className="detail-badges">
+                <Status status={detail.status} />
+                <Priority value={detail.priority} />
+              </div>
+              <dl className="detail-grid">
+                <div>
+                  <dt>Categoría</dt>
+                  <dd>{detail.category}</dd>
+                </div>
+                <div>
+                  <dt>Registrada</dt>
+                  <dd>{formatDate(detail.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt>Centro de ejemplo</dt>
+                  <dd>{detail.center}</dd>
+                </div>
+                <div>
+                  <dt>Asignación de ejemplo</dt>
+                  <dd>{detail.assignee ?? "Sin asignar"}</dd>
+                </div>
+              </dl>
+              <section className="detail-description">
+                <h3>Descripción</h3>
+                <p>{detail.description}</p>
+              </section>
+              {tech && (
+                <div className="demo-change">
+                  <label htmlFor="demo-status">
+                    Estado de prueba
+                    <select
+                      id="demo-status"
+                      className="field"
+                      value={detail.status}
+                      onChange={(e) => {
+                        move(detail.id, e.target.value as TicketStatus);
+                        setMessage(
+                          detail.id +
+                            " cambió a " +
+                            e.target.value +
+                            " en la demostración.",
+                        );
+                      }}
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <p>
+                    El cambio solo mueve la tarjeta de ejemplo. No registra una
+                    atención real.
+                  </p>
+                </div>
+              )}
+              <div className="form-footer">
+                <Button variant="outline" onClick={() => setSelected(null)}>
+                  Cerrar detalle
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

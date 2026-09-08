@@ -27,6 +27,12 @@ jobs:
           npm run api:test
       - name: Validate scripts
         run: npm run check
+      - name: Build and verify user portal and technician board
+        run: |
+          npm run web:build
+          npm run web:check
+          npm run web:test
+          npm run web:smoke
       - name: Generate ephemeral credentials
         run: npm run env:init
       - name: Validate Compose

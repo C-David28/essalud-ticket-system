@@ -1,8 +1,10 @@
 # Preparación cloud — ejecución en la subetapa 1.6
 
-En 1.4 hay un backend NestJS compilable y un Dockerfile. El frontend sigue pendiente de 1.5. No se ha desplegado una URL pública ni verificado HTTPS; esa ejecución corresponde a 1.6.
+Hay un backend NestJS compilable con Dockerfile y, desde 1.5, un frontend Next.js con build de producción validado. No se ha desplegado una URL pública ni verificado HTTPS; esa ejecución corresponde a 1.6.
 
-## Artefacto disponible en 1.4
+## Artefactos disponibles en 1.4 y 1.5
+
+Frontend: workspace apps/web, build `npm run web:build` desde la raíz. Next.js sirve las vistas y el adaptador de salud; no se usa export estático. En 1.6 se configurará API_BASE_URL como variable solo de servidor con la URL accesible del backend y se verificarán dominio y HTTPS. No hay despliegue en esta entrega.
 
 Desde la raíz: `docker build -f apps/api/Dockerfile -t essalud-api:0.4.0 .`. Contexto de build: raíz del monorepositorio. Para comprobarlo localmente con las bases existentes: `npm run api:setup`, `npm run api:up`, `npm run api:check`.
 

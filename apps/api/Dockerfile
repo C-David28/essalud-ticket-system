@@ -3,10 +3,10 @@ RUN apk add --no-cache openssl
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/package.json
-RUN npm ci --ignore-scripts --no-audit --no-fund
+RUN npm ci --workspace @essalud/api --include-workspace-root --ignore-scripts --no-audit --no-fund
 COPY apps/api ./apps/api
 RUN npm run api:build
-RUN npm prune --omit=dev --ignore-scripts
+RUN npm prune --workspace @essalud/api --include-workspace-root --omit=dev --ignore-scripts
 
 FROM node:24-alpine AS runtime
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001 SWAGGER_ENABLED=false
