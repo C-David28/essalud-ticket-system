@@ -12,12 +12,19 @@ permissions:
 jobs:
   infrastructure:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Validate and build API
+        run: |
+          npm run api:validate
+          npm run api:build
+          npm run api:test
       - name: Validate scripts
         run: npm run check
       - name: Generate ephemeral credentials
@@ -40,9 +47,25 @@ jobs:
         run: npm run db:audit:check
       - name: Show migration history
         run: npm run db:status
+      - name: Provision runtime credentials (repeatable)
+        run: |
+          npm run api:setup
+          npm run api:setup
+      - name: Integration in disposable infrastructure
+        run: npm run api:test:integration
+      - name: Validate and run API container
+        run: |
+          docker compose -f compose.yaml -f compose.api.yaml config --quiet
+          npm run api:up
+          npm run api:check
       - name: Service status
         if: failure()
-        run: docker compose ps -a
+        run: docker compose -f compose.yaml -f compose.api.yaml ps -a
       - name: Stop infrastructure
         if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: |
+          if [ -f apps/api/.env ]; then
+            docker compose -f compose.yaml -f compose.api.yaml down --volumes --remove-orphans
+          elif [ -f .env ]; then
+            docker compose down --volumes --remove-orphans
+          fi

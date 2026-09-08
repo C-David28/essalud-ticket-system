@@ -1,12 +1,20 @@
 # Preparación cloud — ejecución en la subetapa 1.6
 
-En 1.3 se entrega auditoría transaccional sobre el esquema multi-tenant. No hay aún un build de Next.js o NestJS que desplegar, dominio configurado ni certificado verificado. Las instrucciones siguientes fijan el recorrido para 1.6; los comandos de build y healthcheck se agregarán con las aplicaciones de 1.4 y 1.5.
+En 1.4 hay un backend NestJS compilable y un Dockerfile. El frontend sigue pendiente de 1.5. No se ha desplegado una URL pública ni verificado HTTPS; esa ejecución corresponde a 1.6.
+
+## Artefacto disponible en 1.4
+
+Desde la raíz: `docker build -f apps/api/Dockerfile -t essalud-api:0.4.0 .`. Contexto de build: raíz del monorepositorio. Para comprobarlo localmente con las bases existentes: `npm run api:setup`, `npm run api:up`, `npm run api:check`.
+
+La imagen arranca con `node apps/api/dist/main.js`. Inyectar DATABASE_URL del rol restringido, REDIS_URL autenticada, NODE_ENV=production, HOST=0.0.0.0 y PORT asignado por el proveedor. Configurar CORS_ORIGINS con el origen exacto del frontend y SWAGGER_ENABLED=false. No copiar archivos .env a la imagen. El proveedor debe sondear GET /api/v1/health/ready en el puerto asignado; 200 permite tráfico y 503 indica una dependencia no disponible o un rol inseguro. El HEALTHCHECK Docker está configurado para el puerto local 3001.
+
+El overlay Compose adapta los hosts a postgres y redis mediante container.js. Cloud usa main.js directamente con las URLs privadas del proveedor, sin esa adaptación. La aplicación no migra automáticamente al iniciar ni usa bootstrap_admin. La habilitación del transporte remoto de migraciones y el despliegue HTTPS se completan en 1.6.
 
 ## Transporte del esquema de 1.2
 
 Los scripts db:* de esta entrega llaman a Docker Compose local; no conectan automáticamente a Railway. Antes del despliegue, se adaptará el transporte de migraciones a la conexión privada y al mecanismo de secretos del proveedor. La creación inicial de roles requiere privilegios administrativos y se revisará con las capacidades del proveedor. Después se usarán credenciales separadas de migración y runtime.
 
-Se conservarán las claves compuestas, políticas RLS y checksums. En 1.4 se preparará el baseline de Prisma para reconocer estas tablas existentes sin recrearlas. Nunca se trasladará bootstrap_admin como credencial de la API. Primero se ensayarán migración, respaldo y restauración sobre datos ficticios en staging, y luego se repetirá la verificación de aislamiento antes de aceptar el despliegue.
+Se conservarán las claves compuestas, políticas RLS y checksums. En 1.4 se implementó el mapeo Prisma de las tablas existentes sin recrearlas. Nunca se trasladará bootstrap_admin como credencial de la API. Primero se ensayarán migración, respaldo y restauración sobre datos ficticios en staging, y luego se repetirá la verificación de aislamiento antes de aceptar el despliegue.
 
 ## Destino previsto
 
@@ -24,7 +32,7 @@ Vercel y Railway se eligen para el piloto académico. La incorporación de datos
 ## Pasos de despliegue para 1.6
 
 1. Publicar el repositorio y comprobar CI. Tener listos las migraciones 1.2, los controles de auditoría 1.3 y los builds de las aplicaciones.
-2. Crear un proyecto Railway y añadir PostgreSQL y Redis con persistencia. Configurar respaldos y comprobar una restauración. Conectar la API al repositorio y al Dockerfile que se entregará en 1.4; usar red privada para acceder a las bases.
+2. Crear un proyecto Railway y añadir PostgreSQL y Redis con persistencia. Configurar respaldos y comprobar una restauración. Conectar la API al repositorio y a apps/api/Dockerfile con contexto raíz entregado en 1.4; usar red privada para acceder a las bases.
 3. Configurar secretos en el proveedor, nunca en Git: conexión de API con un rol restringido, conexión independiente para migraciones, Redis autenticado y claves de autenticación. Ejecutar migraciones como paso de despliegue y evitar la sincronización automática del esquema.
 4. Exponer la API mediante HTTPS y comprobar su endpoint de salud. Configurar CORS con el origen exacto del frontend y validar conexiones WebSocket cuando se implementen en 2.3.
 5. Importar el mismo repositorio en Vercel, seleccionar Next.js y la raíz `apps/web`. Configurar la URL pública de la API; únicamente las variables destinadas al navegador llevarán el prefijo `NEXT_PUBLIC_`.

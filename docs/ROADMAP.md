@@ -3,9 +3,9 @@
 | Subetapa | Entrega | Estado |
 | --- | --- | --- |
 | 1.1 | Estructura, Compose, SQL técnico, Git y CI | Infraestructura local aprobada por el usuario; remoto y CI pendientes |
-| 1.2 | Esquema multi-tenant, roles y restricciones | Aprobado en Docker por el usuario; commit y CI pendientes |
-| 1.3 | Audit logs transaccionales append-only | Implementado; 22 pruebas de regresión y 34 de auditoría aprobadas en PostgreSQL embebido; pendiente Docker |
-| 1.4 | Backend NestJS, Prisma, Clean Architecture, Swagger | Pendiente |
+| 1.2 | Esquema multi-tenant, roles y restricciones | Aprobado en Docker; commit local 17eab1e; CI pendiente de confirmar |
+| 1.3 | Audit logs transaccionales append-only | Aprobado por el usuario en Docker; commit local 8cbfc1e; CI pendiente de confirmar |
+| 1.4 | Backend NestJS, Prisma, Clean Architecture, Swagger | Implementado y probado parcialmente; integración y contenedor Docker pendientes |
 | 1.5 | Portal Next.js y tablero técnico | Pendiente |
 | 1.6 | Cloud, dominio público y HTTPS verificado | Pendiente |
 | 2.1 | CRUD de tickets INC-año-secuencia | Pendiente |
@@ -30,7 +30,7 @@
 - [x] Archivos de estructura y configuración entregados.
 - [x] PostgreSQL y Redis healthy con `npm run infra:up`.
 - [x] `npm run infra:check` correcto en el equipo de desarrollo, según salida del usuario.
-- [ ] Repositorio personal remoto creado y primer commit publicado.
+- [x] Remoto origin configurado; publicación e historial remoto por confirmar.
 - [ ] Workflow Infrastructure CI en verde en GitHub.
 
 El usuario solicitó continuar con 1.2 tras validar la infraestructura local. La publicación remota y CI permanecen visibles como pendientes.
@@ -53,11 +53,11 @@ Las verificaciones funcionales de 1.2 fueron confirmadas por el usuario. Se entr
 - [x] Migración 0002, pruebas, scripts y guía entregados.
 - [x] Checksum 0001 idéntico al aplicado por el usuario.
 - [x] 22 verificaciones multi-tenant y 34 de auditoría en PostgreSQL 17.5 embebido.
-- [ ] Parche aplicado y 10 scripts validados en el equipo del usuario.
-- [ ] Nuevo respaldo creado antes de migrar.
-- [ ] 0001 SKIP y 0002 APPLIED; repetición con ambas SKIP.
-- [ ] Historial con dos migraciones y checksum 0001 conservado.
-- [ ] Ambas suites aprobadas en el Docker del usuario.
+- [x] Parche 1.3 aplicado y scripts validados por el usuario.
+- [x] Nuevo respaldo creado antes de migrar.
+- [x] 0001 SKIP y 0002 APPLIED; repetición con ambas SKIP.
+- [x] Historial con dos migraciones y checksum 0001 conservado.
+- [x] Ambas suites aprobadas en el Docker del usuario.
 - [ ] Commit 1.3 publicado y CI en verde.
 
-No avanzar a 1.4 hasta confirmar estas verificaciones. Cada entrega incluye código completo, SQL, comandos Git, guía cloud y límites de validación.
+La validación local de 1.3 fue confirmada por el usuario; se implementa 1.4. No avanzar a 1.5 hasta completar [la checklist 1.4](SUBETAPA-1.4.md). Cada entrega incluye código completo, SQL, comandos Git, guía cloud y límites de validación.

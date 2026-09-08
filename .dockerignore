@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/dist
+**/src/generated
+.env
+.env.*
+**/.env
+**/.env.*
+backups
+*.dump
+npm-cache

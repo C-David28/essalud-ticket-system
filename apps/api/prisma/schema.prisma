@@ -1,0 +1,75 @@
+// Mapeo del esquema SQL existente. No usar db push ni prisma migrate.
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+datasource db {
+  provider = "postgresql"
+  schemas = ["app", "audit"]
+}
+model RedAsistencial {
+  redAsistencialId String @id @default(dbgenerated("gen_random_uuid()")) @map("red_asistencial_id") @db.Uuid
+  codigo String @unique @db.VarChar(30)
+  nombre String @db.VarChar(200)
+  activo Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  centros CentroAsistencial[]
+  @@map("redes_asistenciales")
+  @@schema("app")
+}
+model CentroAsistencial {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  centroAsistencialId String @default(dbgenerated("gen_random_uuid()")) @map("centro_asistencial_id") @db.Uuid
+  codigo String @db.VarChar(30)
+  nombre String @db.VarChar(200)
+  tipo String @db.VarChar(20)
+  activo Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  red RedAsistencial @relation(fields: [redAsistencialId], references: [redAsistencialId], onDelete: Restrict, onUpdate: Restrict)
+  areas Area[]
+  @@id([redAsistencialId, centroAsistencialId])
+  @@unique([redAsistencialId, codigo])
+  @@map("centros_asistenciales")
+  @@schema("app")
+}
+model Area {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  centroAsistencialId String @map("centro_asistencial_id") @db.Uuid
+  areaId String @default(dbgenerated("gen_random_uuid()")) @map("area_id") @db.Uuid
+  codigo String @db.VarChar(30)
+  nombre String @db.VarChar(200)
+  activo Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  centro CentroAsistencial @relation(fields: [redAsistencialId, centroAsistencialId], references: [redAsistencialId, centroAsistencialId], onDelete: Restrict, onUpdate: Restrict)
+  @@id([redAsistencialId, centroAsistencialId, areaId])
+  @@unique([redAsistencialId, centroAsistencialId, codigo])
+  @@map("areas")
+  @@schema("app")
+}
+model AuditLog {
+  auditId String @id @default(dbgenerated("gen_random_uuid()")) @map("audit_id") @db.Uuid
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  centroAsistencialId String? @map("centro_asistencial_id") @db.Uuid
+  areaId String? @map("area_id") @db.Uuid
+  userId String? @map("user_id") @db.Uuid
+  actorKind String @map("actor_kind") @db.VarChar(8)
+  dbSessionUser Unsupported("name") @map("db_session_user")
+  dbEffectiveRole Unsupported("name") @map("db_effective_role")
+  action String @db.VarChar(6)
+  entity String
+  entityId Json @map("entity_id")
+  oldValues Json? @map("old_values")
+  newValues Json? @map("new_values")
+  timestamp DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  requestId String? @map("request_id") @db.Uuid
+  transactionId BigInt @default(dbgenerated("txid_current()")) @map("transaction_id")
+  @@index([redAsistencialId, timestamp(sort: Desc), auditId], map: "audit_logs_tenant_time_idx")
+  @@index([redAsistencialId, entity, timestamp(sort: Desc)], map: "audit_logs_tenant_entity_idx")
+  // El indice parcial por solicitud, CHECK, RLS y triggers viven en el SQL versionado.
+  @@map("audit_logs")
+  @@schema("audit")
+}

@@ -1,3 +1,7 @@
+# Estado actualizado de validación
+
+La evidencia histórica siguiente corresponde a las primeras entregas. El usuario confirmó posteriormente las subetapas 1.2 y 1.3 en Docker. Estado vigente y límites de 1.4: [VALIDATION-1.4.md](VALIDATION-1.4.md).
+
 # Evidencia de validación
 
 ## Infraestructura 1.1

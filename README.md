@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 1.3 — auditoría transaccional.** El usuario aprobó la infraestructura y las 22 verificaciones de 1.2 en su Docker. La 1.3 agrega auditoría append-only sin modificar la migración 0001 aplicada. La nueva migración está probada en PostgreSQL embebido y pendiente de verificar en el Docker del usuario. GitHub y CI siguen pendientes de confirmación.
+**Entrega actual: subetapa 1.4 — backend NestJS ejecutable.** La 1.3 fue verificada por el usuario en Docker. Esta entrega conserva ambas migraciones y agrega Prisma, transacciones por tenant, salud HTTP, Swagger, Dockerfile y pruebas. La validación Docker de 1.4 y CI están pendientes; ver [evidencia](docs/VALIDATION-1.4.md).
 
 ## Comenzar
 
-- Si ya completaste 1.2: seguir [la guía paso a paso de 1.3](docs/SUBETAPA-1.3.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 1.3: seguir [la guía paso a paso de 1.4](docs/SUBETAPA-1.4.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -23,7 +23,19 @@ npm run db:check
 npm run db:audit:check
 ```
 
-En Windows se puede usar `npm.cmd` en lugar de `npm`. Los scripts usan módulos nativos de Node.js; no es necesario `npm install`. El generador conserva cualquier `.env` existente.
+En Windows se puede usar `npm.cmd` en lugar de `npm`. El generador conserva cualquier `.env` existente. Los scripts de infraestructura usan módulos nativos; el backend requiere instalar las dependencias del lockfile:
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+npm run api:validate
+npm run api:build
+npm run api:test
+npm run api:setup
+npm run api:test:integration
+npm run api:start
+```
+
+En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs. Las URLs de conexión están en apps/api/.env, ignorado por Git. Alternativa Docker y checklist: [SUBETAPA-1.4.md](docs/SUBETAPA-1.4.md).
 
 ## Qué contiene esta entrega
 
@@ -36,9 +48,10 @@ En Windows se puede usar `npm.cmd` en lugar de `npm`. Los scripts usan módulos 
 - Auditoría automática de INSERT, UPDATE y DELETE, con actor, solicitud, snapshots y timestamp.
 - Historial protegido contra modificaciones del runtime y consultas limitadas a su red.
 - Respaldo PostgreSQL en formato custom, 22 verificaciones de aislamiento y 34 de auditoría.
-- Workflow CI que arranca infraestructura, verifica un respaldo, aplica dos veces y ejecuta ambas suites.
+- Backend NestJS por capas, Prisma, runtime restringido y endpoints de salud/documentación.
+- Workflow CI con regresión SQL, build y pruebas HTTP, integración Prisma/Redis y contenedor API.
 
-La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. No hay una API ni portal ejecutables todavía. Las mutaciones del runtime ahora requieren app.user_id y app.request_id, además del tenant, dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
+La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. La API base ya es ejecutable; el portal se implementará en 1.5. Las mutaciones del runtime ahora requieren app.user_id y app.request_id, además del tenant, dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
 
 ## Arquitectura prevista
 
@@ -55,7 +68,7 @@ flowchart LR
   NR -.-> INT[SMTP / WhatsApp / Zabbix / IA]
 ```
 
-Next.js, NestJS y Prisma se incorporarán en 1.4 y 1.5; Node-RED, desde 4.2. El diagrama muestra la arquitectura objetivo. Las carpetas de `apps/` aún reservan esas capas.
+NestJS y Prisma están implementados en 1.4; Next.js se incorpora en 1.5 y Node-RED desde 4.2. El diagrama incluye componentes futuros. [API.md](docs/API.md) documenta las capas implementadas.
 
 ```mermaid
 erDiagram
