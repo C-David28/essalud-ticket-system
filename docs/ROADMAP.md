@@ -3,8 +3,8 @@
 | Subetapa | Entrega | Estado |
 | --- | --- | --- |
 | 1.1 | Estructura, Compose, SQL técnico, Git y CI | Infraestructura local aprobada por el usuario; remoto y CI pendientes |
-| 1.2 | Esquema multi-tenant, roles y restricciones | Implementado y probado en PostgreSQL embebido; pendiente de verificar en Docker del usuario |
-| 1.3 | Audit logs transaccionales append-only | Pendiente |
+| 1.2 | Esquema multi-tenant, roles y restricciones | Aprobado en Docker por el usuario; commit y CI pendientes |
+| 1.3 | Audit logs transaccionales append-only | Implementado; 22 pruebas de regresión y 34 de auditoría aprobadas en PostgreSQL embebido; pendiente Docker |
 | 1.4 | Backend NestJS, Prisma, Clean Architecture, Swagger | Pendiente |
 | 1.5 | Portal Next.js y tablero técnico | Pendiente |
 | 1.6 | Cloud, dominio público y HTTPS verificado | Pendiente |
@@ -39,11 +39,25 @@ El usuario solicitó continuar con 1.2 tras validar la infraestructura local. La
 
 - [x] Migración, scripts y guía completa entregados.
 - [x] Pruebas de SQL y aislamiento aprobadas en PostgreSQL 17.5 embebido.
-- [ ] Parche aplicado y sintaxis verificada en el repositorio del usuario.
-- [ ] Respaldo local creado y catálogo legible.
-- [ ] Primera migración APPLIED y segunda SKIP.
-- [ ] Historial con una fila 0001_multi_tenant y su checksum.
-- [ ] Las 22 verificaciones de db:check aprobadas en Docker.
+- [x] Parche aplicado y sintaxis verificada en el repositorio del usuario.
+- [x] Respaldo local creado y catálogo legible.
+- [x] Primera migración APPLIED y segunda SKIP.
+- [x] Historial con una fila 0001_multi_tenant y su checksum.
+- [x] Las 22 verificaciones de db:check aprobadas en Docker.
 - [ ] Commit publicado y CI en verde.
 
-No avanzar a 1.3 hasta revisar estas verificaciones con el usuario. Cada entrega incluye código completo, SQL aplicable, comandos Git, guía cloud y límites explícitos de validación.
+Las verificaciones funcionales de 1.2 fueron confirmadas por el usuario. Se entrega 1.3 con la publicación GitHub aún como pendiente visible.
+
+## Criterios de cierre de 1.3
+
+- [x] Migración 0002, pruebas, scripts y guía entregados.
+- [x] Checksum 0001 idéntico al aplicado por el usuario.
+- [x] 22 verificaciones multi-tenant y 34 de auditoría en PostgreSQL 17.5 embebido.
+- [ ] Parche aplicado y 10 scripts validados en el equipo del usuario.
+- [ ] Nuevo respaldo creado antes de migrar.
+- [ ] 0001 SKIP y 0002 APPLIED; repetición con ambas SKIP.
+- [ ] Historial con dos migraciones y checksum 0001 conservado.
+- [ ] Ambas suites aprobadas en el Docker del usuario.
+- [ ] Commit 1.3 publicado y CI en verde.
+
+No avanzar a 1.4 hasta confirmar estas verificaciones. Cada entrega incluye código completo, SQL, comandos Git, guía cloud y límites de validación.

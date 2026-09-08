@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 1.2 — esquema multi-tenant.** La infraestructura local de 1.1 fue verificada por el usuario. La migración de 1.2 está preparada y probada en PostgreSQL embebido; falta ejecutarla y verificarla en su Docker. La publicación en GitHub sigue pendiente.
+**Entrega actual: subetapa 1.3 — auditoría transaccional.** El usuario aprobó la infraestructura y las 22 verificaciones de 1.2 en su Docker. La 1.3 agrega auditoría append-only sin modificar la migración 0001 aplicada. La nueva migración está probada en PostgreSQL embebido y pendiente de verificar en el Docker del usuario. GitHub y CI siguen pendientes de confirmación.
 
 ## Comenzar
 
-- Si ya completaste 1.1: seguir [la guía paso a paso de 1.2](docs/SUBETAPA-1.2.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 1.2: seguir [la guía paso a paso de 1.3](docs/SUBETAPA-1.3.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -20,6 +20,7 @@ npm run db:migrate
 npm run db:migrate
 npm run db:status
 npm run db:check
+npm run db:audit:check
 ```
 
 En Windows se puede usar `npm.cmd` en lugar de `npm`. Los scripts usan módulos nativos de Node.js; no es necesario `npm install`. El generador conserva cualquier `.env` existente.
@@ -32,10 +33,12 @@ En Windows se puede usar `npm.cmd` en lugar de `npm`. Los scripts usan módulos 
 - UUID, códigos únicos por ámbito y claves foráneas compuestas.
 - Roles de propietario, migración y runtime separados.
 - RLS habilitado y forzado; lecturas y escrituras limitadas al contexto de red.
-- Respaldo PostgreSQL en formato custom y 22 verificaciones SQL.
-- Workflow CI que arranca infraestructura, verifica un respaldo, aplica dos veces y prueba aislamiento.
+- Auditoría automática de INSERT, UPDATE y DELETE, con actor, solicitud, snapshots y timestamp.
+- Historial protegido contra modificaciones del runtime y consultas limitadas a su red.
+- Respaldo PostgreSQL en formato custom, 22 verificaciones de aislamiento y 34 de auditoría.
+- Workflow CI que arranca infraestructura, verifica un respaldo, aplica dos veces y ejecuta ambas suites.
 
-La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. No hay una API ni portal ejecutables todavía. Los audit logs se implementarán en 1.3 antes de permitir mutaciones desde la API de negocio.
+La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. No hay una API ni portal ejecutables todavía. Las mutaciones del runtime ahora requieren app.user_id y app.request_id, además del tenant, dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
 
 ## Arquitectura prevista
 
@@ -46,6 +49,7 @@ flowchart LR
   APP --> DOM[Dominio y puertos]
   PRISMA[Adaptador Prisma] --> DOM
   PRISMA --> PG[(PostgreSQL / RLS)]
+  PG --> AUDIT[Triggers y audit.audit_logs]
   APP --> REDIS[(Redis)]
   NR[Node-RED] -. Webhooks autenticados .-> API
   NR -.-> INT[SMTP / WhatsApp / Zabbix / IA]
@@ -88,8 +92,10 @@ apps/web/src/
 packages/contracts/
 infra/postgres/init/001-bootstrap.sql
 infra/postgres/migrations/0001_multi_tenant.sql
+infra/postgres/migrations/0002_audit_logs.sql
 infra/postgres/verify.sql
 infra/postgres/verify-multi-tenant.sql
+infra/postgres/verify-audit.sql
 infra/node-red/
 scripts/lib/
 scripts/db-{backup,migrate,status,check}.mjs
@@ -113,7 +119,9 @@ Si hay conflicto de puertos, cambiarlos en `.env`. Modificar la contraseña de `
 
 ## Documentación
 
-- [Guía de ejecución 1.2 y resultados esperados](docs/SUBETAPA-1.2.md).
+- [Guía de ejecución 1.3 y resultados esperados](docs/SUBETAPA-1.3.md).
+- [Auditoría: contrato, campos, protección y alcance](docs/AUDIT.md).
+- [Evidencia de validación 1.3](docs/VALIDATION-1.3.md).
 - [Modelo, contexto tenant y límites de seguridad](docs/MULTI-TENANCY.md).
 - [Git y publicación personal en GitHub](docs/GITHUB.md).
 - [Cloud: preparación para 1.6](docs/CLOUD.md).

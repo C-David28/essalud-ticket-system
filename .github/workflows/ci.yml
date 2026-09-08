@@ -36,6 +36,8 @@ jobs:
         run: npm run db:migrate
       - name: Verify tenant isolation and database constraints
         run: npm run db:check
+      - name: Verify transactional append-only audit
+        run: npm run db:audit:check
       - name: Show migration history
         run: npm run db:status
       - name: Service status

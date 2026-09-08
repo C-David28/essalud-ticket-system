@@ -1,6 +1,6 @@
 # Preparación cloud — ejecución en la subetapa 1.6
 
-En 1.2 se entrega el esquema organizacional multi-tenant sobre la infraestructura local. No hay aún un build de Next.js o NestJS que desplegar, dominio configurado ni certificado verificado. Las instrucciones siguientes fijan el recorrido para 1.6; los comandos de build y healthcheck se agregarán con las aplicaciones de 1.4 y 1.5.
+En 1.3 se entrega auditoría transaccional sobre el esquema multi-tenant. No hay aún un build de Next.js o NestJS que desplegar, dominio configurado ni certificado verificado. Las instrucciones siguientes fijan el recorrido para 1.6; los comandos de build y healthcheck se agregarán con las aplicaciones de 1.4 y 1.5.
 
 ## Transporte del esquema de 1.2
 
@@ -9,6 +9,8 @@ Los scripts db:* de esta entrega llaman a Docker Compose local; no conectan auto
 Se conservarán las claves compuestas, políticas RLS y checksums. En 1.4 se preparará el baseline de Prisma para reconocer estas tablas existentes sin recrearlas. Nunca se trasladará bootstrap_admin como credencial de la API. Primero se ensayarán migración, respaldo y restauración sobre datos ficticios en staging, y luego se repetirá la verificación de aislamiento antes de aceptar el despliegue.
 
 ## Destino previsto
+
+La migración 0002 añade el rol interno NOLOGIN essalud_audit_writer. En cloud deben conservarse sus permisos mínimos y mantenerse separados los secretos de runtime y migración. Las pruebas de staging incluirán las 22 verificaciones multi-tenant y las 34 de auditoría, además de una restauración completa que preserve historial. La retención externa protegida frente a administradores es un control adicional pendiente; los triggers por sí solos no la garantizan. [AUDIT.md](AUDIT.md) describe el procedimiento de restauración y sus límites.
 
 | Componente | Destino previsto | Configuración que se completará en 1.6 |
 | --- | --- | --- |

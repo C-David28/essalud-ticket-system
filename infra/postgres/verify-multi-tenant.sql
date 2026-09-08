@@ -56,6 +56,9 @@ UNION ALL
 SELECT red_b,centro_b,area_b,'AREA','Area ficticia B' FROM test_context;
 
 SET LOCAL ROLE essalud_app;
+-- 1.3 exige contexto de actor y solicitud para las mutaciones del runtime.
+SELECT set_config('app.user_id',gen_random_uuid()::text,true);
+SELECT set_config('app.request_id',gen_random_uuid()::text,true);
 SELECT set_config('app.red_asistencial_id','',true);
 SELECT pg_temp.assert_true(
   NOT EXISTS(SELECT FROM app.redes_asistenciales) AND

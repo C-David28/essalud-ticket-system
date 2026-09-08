@@ -37,11 +37,14 @@ El patrón para la API de 1.4/3.1 será una transacción y una única conexión:
 BEGIN;
 -- Valor obtenido de identidad y pertenencia verificadas por el servidor.
 SELECT set_config('app.red_asistencial_id', $1, true);
+-- Desde 1.3, las mutaciones del runtime necesitan también usuario y solicitud.
+SELECT set_config('app.user_id', $2, true);
+SELECT set_config('app.request_id', $3, true);
 -- Consultas del caso de uso en esta MISMA transacción/conexión.
 COMMIT;
 ```
 
-El parámetro true hace el ajuste local a la transacción. No usar un SET de sesión persistente en el pool ni ejecutar la consulta fuera de esa transacción.
+El parámetro true hace el ajuste local a la transacción. No usar un SET de sesión persistente en el pool ni ejecutar la consulta fuera de esa transacción. El contrato de actor y las protecciones append-only de 1.3 se detallan en [AUDIT.md](AUDIT.md).
 
 RLS es una defensa de aislamiento frente a omisiones de filtros. **El contexto no autentica a nadie**: quien tenga acceso SQL directo con el runtime puede cambiar un parámetro personalizado. Las credenciales deben permanecer en el backend y el servidor debe derivar y autorizar el tenant, sin aceptar libremente un tenant enviado por el cliente. No se declara aislamiento frente a alguien que controle esas credenciales o ejecute SQL arbitrario.
 
