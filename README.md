@@ -1,115 +1,123 @@
 # EsSalud Ticket System
 
-Proyecto académico y base para un piloto de soporte técnico, redes, infraestructura y mantenimiento biomédico en la Red Asistencial Pasco. No representa un servicio oficial desplegado de EsSalud.
+Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 1.1 — repositorio e infraestructura local.** Contiene código completo de esta subetapa, PostgreSQL, Redis, SQL de preparación, automatización de verificación y documentación. La ejecución Docker y la publicación GitHub requieren completar las comprobaciones descritas abajo. Todavía no existen una aplicación web, endpoints ni tablas de tickets.
+**Entrega actual: subetapa 1.2 — esquema multi-tenant.** La infraestructura local de 1.1 fue verificada por el usuario. La migración de 1.2 está preparada y probada en PostgreSQL embebido; falta ejecutarla y verificarla en su Docker. La publicación en GitHub sigue pendiente.
 
-## Decisiones de arquitectura
+## Comenzar
 
-Monorepositorio con Next.js y NestJS, ambos en TypeScript. Prisma será el adaptador de persistencia; el dominio y los casos de uso no dependerán de él. Usaremos Node.js 24 para las herramientas de esta entrega. Los paquetes de Next.js, NestJS y Prisma se incorporarán con sus versiones y lockfile en las subetapas 1.4 y 1.5.
-
-PostgreSQL 17 y Redis 7.4 usan imágenes oficiales con etiquetas de rama. Reciben actualizaciones de parche: para el despliegue cloud se fijarán los digests probados. El volumen de PostgreSQL corresponde a la versión 17; cambiar de versión mayor requiere una migración.
-
-```mermaid
-flowchart LR
-  U[Usuario o técnico] --> WEB[Next.js / PWA — 1.5 y 3.4]
-  WEB --> HTTP[HTTP + JWT / RBAC — 1.4 y 3.1]
-  HTTP --> UC[Casos de uso NestJS — 1.4]
-  UC --> DOM[Dominio y puertos — 1.4]
-  ADAPT[Adaptador Prisma — 1.4] --> DOM
-  ADAPT --> PG[(PostgreSQL — infraestructura 1.1)]
-  UC --> CACHE[(Redis — infraestructura 1.1)]
-  PG -.-> TENANT[Modelo multi-tenant — 1.2]
-  PG -.-> AUDIT[Auditoría append-only — 1.3]
-  WEB -.-> RT[WebSockets / SSE — 2.3]
-  RT -.-> UC
-  NR[Node-RED — 4.2] -. Webhooks autenticados .-> HTTP
-  NR -.-> EXT[SMTP / WhatsApp / Zabbix / IA — 5.1 y 5.2]
-```
-
-El diagrama describe el destino y marca la subetapa de cada componente. Solo PostgreSQL y Redis se levantan en este Compose.
-
-## Estructura
-
-```text
-essalud-ticket-system/
-├── apps/
-│   ├── api/src/
-│   │   ├── domain/          # entidades y puertos
-│   │   ├── application/     # casos de uso
-│   │   ├── infrastructure/  # Prisma y adaptadores externos
-│   │   └── presentation/    # controladores, DTO y transporte
-│   └── web/src/            # Next.js en 1.5
-├── packages/contracts/     # contratos públicos, sin entidades ORM
-├── infra/
-│   ├── postgres/init/      # SQL del primer arranque
-│   ├── postgres/verify.sql # verificación transaccional
-│   └── node-red/           # integración en 4.2
-├── scripts/                # configuración y verificaciones
-├── docs/                   # GitHub, cloud, decisiones y avance
-├── .github/workflows/ci.yml
-├── .env.example
-├── compose.yaml
-└── package.json
-```
-
-Las carpetas de las aplicaciones reservan la estructura; su código funcional corresponde a las subetapas 1.4 y 1.5.
-
-## Arranque local (PowerShell, Linux o macOS)
-
-Requisitos: Git, Node.js 24 y Docker con Compose v2 que soporte `up --wait`. En Windows, iniciar Docker Desktop con contenedores Linux. No se requiere instalar PostgreSQL o Redis en el host.
-
-Desde la carpeta de este README:
+- Si ya completaste 1.1: seguir [la guía paso a paso de 1.2](docs/SUBETAPA-1.2.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
-node --version
-docker compose version
-docker info
 npm run env:init
 npm run check
 npm run infra:config
 npm run infra:up
 npm run infra:check
-npm run infra:status
+npm run db:backup
+npm run db:migrate
+npm run db:migrate
+npm run db:status
+npm run db:check
 ```
 
-Los scripts usan solo módulos nativos de Node.js; esta entrega no necesita `npm install`. Si PowerShell bloquea `npm.ps1`, sustituir `npm` por `npm.cmd` sin cambiar la política del sistema.
+En Windows se puede usar `npm.cmd` en lugar de `npm`. Los scripts usan módulos nativos de Node.js; no es necesario `npm install`. El generador conserva cualquier `.env` existente.
 
-`env:init` crea dos contraseñas aleatorias y conserva cualquier `.env` existente. No imprime las contraseñas. No usar `.env.example` directamente como credenciales. `infra:config` verifica Compose sin mostrar los valores interpolados.
+## Qué contiene esta entrega
 
-| Servicio | Desde el host | Desde un futuro contenedor de la misma red |
+- PostgreSQL 17 y Redis 7.4 con volúmenes persistentes y healthchecks.
+- Migración transaccional con bloqueo y registro SHA-256; repetirla no duplica objetos.
+- Tres tablas: redes asistenciales, centros asistenciales y áreas.
+- UUID, códigos únicos por ámbito y claves foráneas compuestas.
+- Roles de propietario, migración y runtime separados.
+- RLS habilitado y forzado; lecturas y escrituras limitadas al contexto de red.
+- Respaldo PostgreSQL en formato custom y 22 verificaciones SQL.
+- Workflow CI que arranca infraestructura, verifica un respaldo, aplica dos veces y prueba aislamiento.
+
+La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. No hay una API ni portal ejecutables todavía. Los audit logs se implementarán en 1.3 antes de permitir mutaciones desde la API de negocio.
+
+## Arquitectura prevista
+
+```mermaid
+flowchart LR
+  WEB[Next.js / PWA] --> API[Presentacion NestJS]
+  API --> APP[Casos de uso]
+  APP --> DOM[Dominio y puertos]
+  PRISMA[Adaptador Prisma] --> DOM
+  PRISMA --> PG[(PostgreSQL / RLS)]
+  APP --> REDIS[(Redis)]
+  NR[Node-RED] -. Webhooks autenticados .-> API
+  NR -.-> INT[SMTP / WhatsApp / Zabbix / IA]
+```
+
+Next.js, NestJS y Prisma se incorporarán en 1.4 y 1.5; Node-RED, desde 4.2. El diagrama muestra la arquitectura objetivo. Las carpetas de `apps/` aún reservan esas capas.
+
+```mermaid
+erDiagram
+  REDES_ASISTENCIALES ||--o{ CENTROS_ASISTENCIALES : contiene
+  CENTROS_ASISTENCIALES ||--o{ AREAS : contiene
+  REDES_ASISTENCIALES {
+    uuid red_asistencial_id PK
+    varchar codigo UK
+    varchar nombre
+  }
+  CENTROS_ASISTENCIALES {
+    uuid red_asistencial_id PK,FK
+    uuid centro_asistencial_id PK
+    varchar codigo
+    varchar nombre
+    varchar tipo
+  }
+  AREAS {
+    uuid red_asistencial_id PK,FK
+    uuid centro_asistencial_id PK,FK
+    uuid area_id PK
+    varchar codigo
+    varchar nombre
+  }
+```
+
+Cada tabla incluye `activo`, `created_at` y `updated_at`. Las claves compuestas de los hijos preservan su jerarquía institucional. La pertenencia debe conservarse también en futuras tablas de tickets. Los índices de PK y UNIQUE comienzan por la red en los hijos y sirven a las consultas por tenant.
+
+## Estructura
+
+```text
+apps/api/src/{domain,application,infrastructure,presentation}/
+apps/web/src/
+packages/contracts/
+infra/postgres/init/001-bootstrap.sql
+infra/postgres/migrations/0001_multi_tenant.sql
+infra/postgres/verify.sql
+infra/postgres/verify-multi-tenant.sql
+infra/node-red/
+scripts/lib/
+scripts/db-{backup,migrate,status,check}.mjs
+docs/
+.github/workflows/ci.yml
+compose.yaml
+```
+
+## Operación local
+
+| Servicio | Desde el host | Desde la red Docker |
 | --- | --- | --- |
 | PostgreSQL | `127.0.0.1:55432` | `postgres:5432` |
 | Redis | `127.0.0.1:56379` | `redis:6379` |
 
-Base local: `essalud_tickets`. Usuario de bootstrap: `bootstrap_admin`. Contraseñas: `.env`. El usuario de bootstrap es superusuario de desarrollo; en 1.2 se separarán propietario, migrador y usuario restringido de la API antes de incorporar tráfico de aplicación.
+Base: `essalud_tickets`; administrador local: `bootstrap_admin`; claves en `.env`. El administrador solo se usa para herramientas de desarrollo y bootstrap. No será la credencial de la API.
 
-El SQL inicial limita CREATE de PUBLIC en el schema public. El modelo relacional multi-tenant se implementa en 1.2 y la auditoría en 1.3, antes de la API de negocio. Los logs de Docker son diagnósticos y no sustituyen a los audit logs.
+`npm run infra:down` detiene sin borrar volúmenes. `npm run infra:logs` muestra diagnósticos. No usar `down --volumes` para actualizar el esquema. El SQL de `init/` solo se ejecuta en volúmenes nuevos; las migraciones funcionan sobre el volumen existente.
 
-## Verificación y operación
+Si hay conflicto de puertos, cambiarlos en `.env`. Modificar la contraseña de `.env` no cambia la almacenada en un volumen PostgreSQL existente: requiere una rotación coordinada. Las imágenes usan etiquetas de rama; los digests se fijarán al preparar producción.
 
-`infra:up` espera los healthchecks. `infra:check` comprueba conexión PostgreSQL por TCP con contraseña, zona UTC, permisos base y escritura en una tabla temporal dentro de una transacción que se revierte; comprueba también Redis autenticado y el rechazo sin contraseña. Resultado esperado: `OK: PostgreSQL autenticado, SQL y permisos base; Redis PONG y rechazo sin clave.`
+## Documentación
 
-```sh
-npm run infra:logs
-npm run infra:down
-```
+- [Guía de ejecución 1.2 y resultados esperados](docs/SUBETAPA-1.2.md).
+- [Modelo, contexto tenant y límites de seguridad](docs/MULTI-TENANCY.md).
+- [Git y publicación personal en GitHub](docs/GITHUB.md).
+- [Cloud: preparación para 1.6](docs/CLOUD.md).
+- [Estado de la hoja de ruta](docs/ROADMAP.md).
+- [Evidencia y límites de las pruebas](docs/VALIDATION.md).
 
-Detener con `infra:down` conserva los volúmenes. Para comprobar persistencia operativa, arrancar nuevamente y repetir `infra:check`. No ejecutar `docker compose down --volumes` en un entorno con datos que se necesiten: elimina los volúmenes. CI lo usa exclusivamente para sus datos efímeros.
-
-Si hay conflicto de puertos, cambiar `POSTGRES_PORT` o `REDIS_PORT` en `.env` y repetir el arranque. Si Docker no responde, iniciar su daemon. Si PostgreSQL informa contraseña incorrecta tras editar `.env`, el volumen conserva la contraseña original: restaurar la configuración o realizar una rotación con SQL. El SQL de `init/` solo se ejecuta al inicializar un volumen vacío; los cambios futuros de esquema serán migraciones versionadas.
-
-GitHub Actions ejecuta las mismas verificaciones en un runner Linux. No tiene secretos de producción ni realiza despliegues. La existencia del workflow no implica que ya haya pasado: comprobar su ejecución después del push.
-
-## GitHub y cloud
-
-Consultar [comandos Git y publicación](docs/GITHUB.md), [preparación del despliegue cloud](docs/CLOUD.md), [decisión de arquitectura](docs/ADR-001.md) y [avance por subetapa](docs/ROADMAP.md).
-
-La subetapa 1.1 se cierra cuando PostgreSQL y Redis pasan `infra:check`, existe el repositorio personal `essalud-ticket-system` y su CI está verde. El siguiente trabajo es 1.2, sin adelantar API, UI ni integraciones.
-
-## Fuentes técnicas
-
-- [Docker: healthchecks y orden de arranque](https://docs.docker.com/compose/how-tos/startup-order/).
-- [Imagen oficial PostgreSQL: inicialización y volúmenes](https://hub.docker.com/_/postgres).
-- [Imagen oficial Redis](https://hub.docker.com/_/redis).
-- [GitHub CLI: crear un repositorio desde una carpeta](https://cli.github.com/manual/gh_repo_create).
+Fuentes: [RLS en PostgreSQL 17](https://www.postgresql.org/docs/17/ddl-rowsecurity.html), [imagen oficial PostgreSQL](https://hub.docker.com/_/postgres) y [healthchecks Docker](https://docs.docker.com/compose/how-tos/startup-order/).

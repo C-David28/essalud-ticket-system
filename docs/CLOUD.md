@@ -1,6 +1,12 @@
 # Preparación cloud — ejecución en la subetapa 1.6
 
-En 1.1 se entrega infraestructura local. No hay aún un build de Next.js o NestJS que desplegar, dominio configurado ni certificado verificado. Las instrucciones siguientes fijan el recorrido para 1.6; los comandos exactos de build, migración y healthcheck se agregarán con las aplicaciones de 1.4 y 1.5.
+En 1.2 se entrega el esquema organizacional multi-tenant sobre la infraestructura local. No hay aún un build de Next.js o NestJS que desplegar, dominio configurado ni certificado verificado. Las instrucciones siguientes fijan el recorrido para 1.6; los comandos de build y healthcheck se agregarán con las aplicaciones de 1.4 y 1.5.
+
+## Transporte del esquema de 1.2
+
+Los scripts db:* de esta entrega llaman a Docker Compose local; no conectan automáticamente a Railway. Antes del despliegue, se adaptará el transporte de migraciones a la conexión privada y al mecanismo de secretos del proveedor. La creación inicial de roles requiere privilegios administrativos y se revisará con las capacidades del proveedor. Después se usarán credenciales separadas de migración y runtime.
+
+Se conservarán las claves compuestas, políticas RLS y checksums. En 1.4 se preparará el baseline de Prisma para reconocer estas tablas existentes sin recrearlas. Nunca se trasladará bootstrap_admin como credencial de la API. Primero se ensayarán migración, respaldo y restauración sobre datos ficticios en staging, y luego se repetirá la verificación de aislamiento antes de aceptar el despliegue.
 
 ## Destino previsto
 

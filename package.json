@@ -1,6 +1,6 @@
 {
   "name": "essalud-ticket-system",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Piloto académico e institucional de soporte — Red Asistencial Pasco",
   "engines": { "node": ">=24 <25" },
@@ -12,6 +12,10 @@
     "infra:status": "docker compose ps",
     "infra:logs": "docker compose logs --tail 100",
     "infra:check": "node scripts/check-infra.mjs",
-    "infra:down": "docker compose down"
+    "infra:down": "docker compose down",
+    "db:backup": "node scripts/db-backup.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:status": "node scripts/db-status.mjs",
+    "db:check": "node scripts/db-check.mjs"
   }
 }

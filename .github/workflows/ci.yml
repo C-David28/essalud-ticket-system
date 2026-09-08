@@ -28,6 +28,16 @@ jobs:
         run: npm run infra:up
       - name: Verify SQL and Redis authentication
         run: npm run infra:check
+      - name: Verify pre-migration backup
+        run: npm run db:backup
+      - name: Apply multi-tenant migration
+        run: npm run db:migrate
+      - name: Verify migration can be repeated
+        run: npm run db:migrate
+      - name: Verify tenant isolation and database constraints
+        run: npm run db:check
+      - name: Show migration history
+        run: npm run db:status
       - name: Service status
         if: failure()
         run: docker compose ps -a

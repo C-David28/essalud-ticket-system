@@ -2,8 +2,8 @@
 
 | Subetapa | Entrega | Estado |
 | --- | --- | --- |
-| 1.1 | Estructura, Compose, SQL técnico, Git y CI | Archivos entregados; ejecución Docker y publicación remota pendientes |
-| 1.2 | Esquema multi-tenant, roles y restricciones | Pendiente |
+| 1.1 | Estructura, Compose, SQL técnico, Git y CI | Infraestructura local aprobada por el usuario; remoto y CI pendientes |
+| 1.2 | Esquema multi-tenant, roles y restricciones | Implementado y probado en PostgreSQL embebido; pendiente de verificar en Docker del usuario |
 | 1.3 | Audit logs transaccionales append-only | Pendiente |
 | 1.4 | Backend NestJS, Prisma, Clean Architecture, Swagger | Pendiente |
 | 1.5 | Portal Next.js y tablero técnico | Pendiente |
@@ -28,9 +28,22 @@
 ## Criterios de cierre de 1.1
 
 - [x] Archivos de estructura y configuración entregados.
-- [ ] PostgreSQL y Redis healthy con `npm run infra:up`.
-- [ ] `npm run infra:check` correcto en el equipo de desarrollo.
+- [x] PostgreSQL y Redis healthy con `npm run infra:up`.
+- [x] `npm run infra:check` correcto en el equipo de desarrollo, según salida del usuario.
 - [ ] Repositorio personal remoto creado y primer commit publicado.
 - [ ] Workflow Infrastructure CI en verde en GitHub.
 
-No avanzar a 1.2 hasta completar estas verificaciones. Cada turno entregará los archivos de la subetapa vigente, SQL aplicable, comandos Git, instrucciones cloud y un estado explícito de validación.
+El usuario solicitó continuar con 1.2 tras validar la infraestructura local. La publicación remota y CI permanecen visibles como pendientes.
+
+## Criterios de cierre de 1.2
+
+- [x] Migración, scripts y guía completa entregados.
+- [x] Pruebas de SQL y aislamiento aprobadas en PostgreSQL 17.5 embebido.
+- [ ] Parche aplicado y sintaxis verificada en el repositorio del usuario.
+- [ ] Respaldo local creado y catálogo legible.
+- [ ] Primera migración APPLIED y segunda SKIP.
+- [ ] Historial con una fila 0001_multi_tenant y su checksum.
+- [ ] Las 22 verificaciones de db:check aprobadas en Docker.
+- [ ] Commit publicado y CI en verde.
+
+No avanzar a 1.3 hasta revisar estas verificaciones con el usuario. Cada entrega incluye código completo, SQL aplicable, comandos Git, guía cloud y límites explícitos de validación.
