@@ -26,7 +26,9 @@ jobs:
           npm run api:build
           npm run api:test
       - name: Validate scripts
-        run: npm run check
+        run: |
+          npm run check
+          npm run cloud:test
       - name: Build and verify user portal and technician board
         run: |
           npm run web:build
@@ -64,6 +66,8 @@ jobs:
           docker compose -f compose.yaml -f compose.api.yaml config --quiet
           npm run api:up
           npm run api:check
+      - name: Verify cloud operations and backup restoration
+        run: npm run cloud:test:integration
       - name: Service status
         if: failure()
         run: docker compose -f compose.yaml -f compose.api.yaml ps -a

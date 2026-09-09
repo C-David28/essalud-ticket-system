@@ -1,0 +1,55 @@
+import { mkdirSync, chmodSync, writeFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { postgresEnvironment, postgresTools } from './lib/cloud-postgres.mjs';
+import { prepareCloudSchema, verifyCloudSchema } from './lib/cloud-schema.mjs';
+
+let phase = 'configuracion';
+try {
+  if (process.argv[2] !== 'prepare') throw new Error('Uso: node scripts/cloud-db.mjs prepare');
+  if (!/^[a-f0-9]{64}$/.test(process.env.CLOUD_RUNTIME_PASSWORD ?? '')) throw new Error('CLOUD_RUNTIME_PASSWORD debe tener 64 caracteres hexadecimales.');
+  const env = postgresEnvironment(process.env);
+  const db = postgresTools(env);
+  phase = 'comprobar PostgreSQL y privilegios de operaciones';
+  db.sql(`DO $$ BEGIN
+    IF current_setting('server_version_num')::int / 10000 <> 17 THEN RAISE EXCEPTION 'Se requiere PostgreSQL 17'; END IF;
+    IF NOT (SELECT rolsuper FROM pg_roles WHERE rolname = session_user) THEN RAISE EXCEPTION 'Bootstrap requiere administrador separado'; END IF;
+  END $$;`);
+  if (!process.env.CLOUD_BACKUP_DIR) throw new Error('Falta CLOUD_BACKUP_DIR, directorio persistente para respaldos.');
+  const directory = resolve(process.env.CLOUD_BACKUP_DIR);
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const id = new Date().toISOString().replace(/[:.]/g, '-') + '-' + randomBytes(6).toString('hex');
+  const before = join(directory, 'before-' + id + '.dump');
+  const after = join(directory, 'after-' + id + '.dump');
+  phase = 'respaldo previo'; db.backup(before); chmodSync(before, 0o600);
+  phase = 'migraciones, rol restringido y 56 verificaciones SQL';
+  await prepareCloudSchema(db.sql, process.env.CLOUD_RUNTIME_PASSWORD);
+  console.log('OK: migraciones y rol repetibles; 22 verificaciones tenant y 34 de auditoria.');
+  phase = 'respaldo posterior'; db.backup(after); chmodSync(after, 0o600);
+  // Restaurar solamente en una base generada aqui. Nunca limpiar ni restaurar sobre el destino.
+  const temporary = 'essalud_restore_' + randomBytes(12).toString('hex');
+  let created = false;
+  try {
+    phase = 'crear base temporal de restauracion';
+    db.sql('CREATE DATABASE "' + temporary + '" TEMPLATE template0;'); created = true;
+    const restored = postgresTools({ ...env, PGDATABASE: temporary });
+    phase = 'restaurar backup con propietarios, permisos e historial'; restored.restore(after);
+    phase = 'verificar datos restaurados';
+    await verifyCloudSchema(restored.sql);
+    // pg_restore falla ante cualquier objeto/dato no restaurado. Confirmar ademas el ledger.
+    const history = 'SELECT version,checksum FROM infra_meta.schema_migrations ORDER BY version;';
+    if (restored.sql(history) !== db.sql(history)) throw new Error('Historial restaurado distinto.');
+  } finally {
+    if (created) {
+      db.sql('DROP DATABASE "' + temporary + '";');
+    }
+  }
+  const evidence = { checkedAt: new Date().toISOString(), commit: process.env.RAILWAY_GIT_COMMIT_SHA ?? null,
+    database: env.PGDATABASE, sqlChecks: 56, restoreSqlChecks: 56, backupBefore: before, backupAfter: after };
+  writeFileSync(join(directory, 'verified-' + id + '.json'), JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 });
+  console.log('OK: respaldo restaurado en base temporal, 56 pruebas repetidas y base temporal eliminada.');
+  console.log('OK: evidencia y dos respaldos conservados en CLOUD_BACKUP_DIR. Operaciones finalizadas.');
+} catch (error) {
+  console.error('ERROR cloud:db en fase: ' + phase + '. ' + error.message);
+  process.exitCode = 1;
+}

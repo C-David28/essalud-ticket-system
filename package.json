@@ -1,6 +1,6 @@
 {
   "name": "essalud-ticket-system",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Piloto académico e institucional de soporte — Red Asistencial Pasco",
   "engines": {
@@ -34,7 +34,11 @@
     "web:start": "npm run start --workspace @essalud/web",
     "web:check": "npm run check --workspace @essalud/web",
     "web:test": "npm run test --workspace @essalud/web",
-    "web:smoke": "node scripts/web-smoke.mjs"
+    "web:smoke": "node scripts/web-smoke.mjs",
+    "cloud:db:prepare": "node scripts/cloud-db.mjs prepare",
+    "cloud:check": "node scripts/cloud-check.mjs",
+    "cloud:test": "node --test scripts/test/cloud.test.mjs",
+    "cloud:test:integration": "node scripts/cloud-integration.mjs"
   },
   "workspaces": [
     "apps/api",

@@ -4,7 +4,7 @@ import { DependencyProbe } from '../domain/health';
 export class RedisProbe implements DependencyProbe, OnApplicationShutdown {
   readonly client: Redis;
   constructor(url: string) {
-    this.client = new Redis(url, { connectTimeout: 1500, commandTimeout: 1500,
+    this.client = new Redis(url, { family: 0, connectTimeout: 1500, commandTimeout: 1500,
       maxRetriesPerRequest: 0, enableOfflineQueue: false,
       retryStrategy: () => 1000 });
     this.client.on('error', () => { /* No imprimir URI ni contrasena. */ });

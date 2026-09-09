@@ -1,46 +1,131 @@
-# Preparación cloud — ejecución en la subetapa 1.6
+# Subetapa 1.6 — Vercel y Railway
 
-Hay un backend NestJS compilable con Dockerfile y, desde 1.5, un frontend Next.js con build de producción validado. No se ha desplegado una URL pública ni verificado HTTPS; esa ejecución corresponde a 1.6.
+Configuración preparada; publicación pendiente de crear las cuentas. No hay URL ni certificado verificados en esta entrega. Aplicar primero [SUBETAPA-1.6.md](SUBETAPA-1.6.md).
 
-## Artefactos disponibles en 1.4 y 1.5
+## Arquitectura
 
-Frontend: workspace apps/web, build `npm run web:build` desde la raíz. Next.js sirve las vistas y el adaptador de salud; no se usa export estático. En 1.6 se configurará API_BASE_URL como variable solo de servidor con la URL accesible del backend y se verificarán dominio y HTTPS. No hay despliegue en esta entrega.
+```mermaid
+flowchart LR
+  U[Usuario] -->|HTTPS| W[Vercel: Next.js]
+  W -->|HTTPS: API_BASE_URL en servidor| A[Railway: NestJS]
+  A -->|Red privada: essalud_api| P[(PostgreSQL 17)]
+  A -->|Red privada autenticada| R[(Redis 7.4)]
+  O[Railway: cloud-ops temporal] -->|Administrador separado| P
+  O --> B[Volumen de respaldos]
+```
 
-Desde la raíz: `docker build -f apps/api/Dockerfile -t essalud-api:0.4.0 .`. Contexto de build: raíz del monorepositorio. Para comprobarlo localmente con las bases existentes: `npm run api:setup`, `npm run api:up`, `npm run api:check`.
+Se conserva la demostración de 1.5: la conexión real sigue siendo el indicador de salud. No se añaden CRUD, autenticación, WebSockets ni Node-RED. Las dos migraciones, Prisma y las 56 verificaciones SQL permanecen iguales. No hay migración 0003. Cambios mínimos de API: Redis resuelve IPv4/IPv6 y el HEALTHCHECK respeta PORT. Cloud inicia main.js; container.js sigue siendo exclusivo de Compose local.
 
-La imagen arranca con `node apps/api/dist/main.js`. Inyectar DATABASE_URL del rol restringido, REDIS_URL autenticada, NODE_ENV=production, HOST=0.0.0.0 y PORT asignado por el proveedor. Configurar CORS_ORIGINS con el origen exacto del frontend y SWAGGER_ENABLED=false. No copiar archivos .env a la imagen. El proveedor debe sondear GET /api/v1/health/ready en el puerto asignado; 200 permite tráfico y 503 indica una dependencia no disponible o un rol inseguro. El HEALTHCHECK Docker está configurado para el puerto local 3001.
+## 1. Crear las cuentas
 
-El overlay Compose adapta los hosts a postgres y redis mediante container.js. Cloud usa main.js directamente con las URLs privadas del proveedor, sin esa adaptación. La aplicación no migra automáticamente al iniciar ni usa bootstrap_admin. La habilitación del transporte remoto de migraciones y el despliegue HTTPS se completan en 1.6.
+Crear personalmente las cuentas en [Vercel](https://vercel.com/signup) y [Railway](https://railway.com/login), con acceso al GitHub del repositorio. Completar sus condiciones y revisar el plan antes de contratar. Usar dominios del proveedor evita comprar un dominio propio, pero no implica que toda la infraestructura sea gratuita.
 
-## Transporte del esquema de 1.2
+Crear en Railway el proyecto essalud-ticket-system, con un entorno dedicado al piloto y sus servicios en la misma región. No reutilizar una base de otro proyecto. Publicar el commit de 1.6 solo después de CI en verde. Habilitar la espera de CI en el proveedor cuando esté disponible. No activar autodespliegues antes de validar la configuración inicial.
 
-Los scripts db:* de esta entrega llaman a Docker Compose local; no conectan automáticamente a Railway. Antes del despliegue, se adaptará el transporte de migraciones a la conexión privada y al mecanismo de secretos del proveedor. La creación inicial de roles requiere privilegios administrativos y se revisará con las capacidades del proveedor. Después se usarán credenciales separadas de migración y runtime.
+## 2. PostgreSQL 17 privado
 
-Se conservarán las claves compuestas, políticas RLS y checksums. En 1.4 se implementó el mapeo Prisma de las tablas existentes sin recrearlas. Nunca se trasladará bootstrap_admin como credencial de la API. Primero se ensayarán migración, respaldo y restauración sobre datos ficticios en staging, y luego se repetirá la verificación de aislamiento antes de aceptar el despliegue.
+Añadir un servicio Docker Image `postgres:17-alpine`, nombre **Postgres**. Antes de desplegar, montar un volumen en `/var/lib/postgresql/data` y establecer:
 
-## Destino previsto
+| Variable | Valor |
+| --- | --- |
+| POSTGRES_DB | `railway` |
+| POSTGRES_USER | `postgres` |
+| POSTGRES_PASSWORD | Clave hexadecimal propia del servicio |
+| PGHOST | `${{RAILWAY_PRIVATE_DOMAIN}}` |
+| PGPORT | `5432` |
+| PGDATABASE | `${{POSTGRES_DB}}` |
+| PGUSER | `${{POSTGRES_USER}}` |
+| PGPASSWORD | `${{POSTGRES_PASSWORD}}` |
 
-La migración 0002 añade el rol interno NOLOGIN essalud_audit_writer. En cloud deben conservarse sus permisos mínimos y mantenerse separados los secretos de runtime y migración. Las pruebas de staging incluirán las 22 verificaciones multi-tenant y las 34 de auditoría, además de una restauración completa que preserve historial. La retención externa protegida frente a administradores es un control adicional pendiente; los triggers por sí solos no la garantizan. [AUDIT.md](AUDIT.md) describe el procedimiento de restauración y sus límites.
+Generar una clave en tu CMD local, copiarla solo al administrador de secretos del proveedor y guardarla en tu gestor de contraseñas:
 
-| Componente | Destino previsto | Configuración que se completará en 1.6 |
-| --- | --- | --- |
-| Next.js | Vercel | Repositorio GitHub y raíz `apps/web` |
-| NestJS y WebSockets | Servicio persistente Railway | Dockerfile de la API y healthcheck |
-| PostgreSQL y Redis | Servicios privados Railway | Volúmenes, credenciales y conectividad privada |
-| Node-RED | Servicio adicional en 4.2 | Autenticación del editor, secretos y volumen |
+```bat
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
 
-Vercel y Railway se eligen para el piloto académico. La incorporación de datos institucionales requiere que EsSalud confirme el alojamiento y acceso adecuados al piloto. El primer despliegue usará datos ficticios.
+Generar claves distintas para PostgreSQL, Redis y el rol runtime. No enviarlas al chat ni subirlas a Git. No añadir dominio público ni TCP Proxy a Postgres. Desplegar y esperar que PostgreSQL acepte conexiones. No cambiar la versión mayor sobre un volumen ya inicializado.
 
-## Pasos de despliegue para 1.6
+## 3. Redis privado
 
-1. Publicar el repositorio y comprobar CI. Tener listos las migraciones 1.2, los controles de auditoría 1.3 y los builds de las aplicaciones.
-2. Crear un proyecto Railway y añadir PostgreSQL y Redis con persistencia. Configurar respaldos y comprobar una restauración. Conectar la API al repositorio y a apps/api/Dockerfile con contexto raíz entregado en 1.4; usar red privada para acceder a las bases.
-3. Configurar secretos en el proveedor, nunca en Git: conexión de API con un rol restringido, conexión independiente para migraciones, Redis autenticado y claves de autenticación. Ejecutar migraciones como paso de despliegue y evitar la sincronización automática del esquema.
-4. Exponer la API mediante HTTPS y comprobar su endpoint de salud. Configurar CORS con el origen exacto del frontend y validar conexiones WebSocket cuando se implementen en 2.3.
-5. Importar el mismo repositorio en Vercel, seleccionar Next.js y la raíz `apps/web`. Configurar la URL pública de la API; únicamente las variables destinadas al navegador llevarán el prefijo `NEXT_PUBLIC_`.
-6. Desplegar y comprobar el portal contra la API. Usar primero el dominio HTTPS del proveedor. Para un dominio propio, añadirlo en el proveedor, aplicar los registros DNS que este indique y verificar emisión del certificado y redirección HTTPS.
-7. Comprobar migraciones, aislamiento tenant, auditoría, reinicio con persistencia y recuperación de datos. Registrar URL, commit desplegado y resultados antes de cerrar 1.6.
+Añadir servicio Docker Image `redis:7.4-alpine`, nombre **Redis**; volumen `/data`; variable REDIS_PASSWORD con otra clave hexadecimal. Establecer este Start Command literal, sin pegar la clave:
 
-El Compose actual publica servicios solo en loopback y está destinado a desarrollo. No es una configuración de producción. Docker Compose no se sube como aplicación a Vercel; frontend, API y datos se despliegan como componentes separados.
+```sh
+sh -ec 'exec redis-server --appendonly yes --requirepass "$REDIS_PASSWORD"'
+```
 
-Fuentes oficiales: [monorepositorios en Vercel](https://vercel.com/docs/monorepos), [NestJS en Railway](https://docs.railway.com/guides/nest), [bases de datos en Railway](https://docs.railway.com/databases) y [dominios en Vercel](https://vercel.com/docs/domains/working-with-domains/deploying-and-redirecting).
+Desplegar sin dominio público ni TCP Proxy. Esperar que acepte conexiones. La API utiliza PING autenticado.
+
+## 4. Migraciones y restauración
+
+Crear **cloud-ops** desde el repositorio GitHub. Root Directory vacío (raíz del monorepo), Config File `/infra/cloud/railway-ops.json`. Seleccionar explícitamente esta ruta en Settings; Railway no la descubre automáticamente en infra. No sobrescribir Start Command ni añadir healthcheck, dominio o comando previo al despliegue. Desactivar autodespliegues: se ejecuta manualmente antes de la API, una réplica y una ejecución a la vez.
+
+Montar volumen en `/backups`. El punto de entrada ajusta solo ese directorio y ejecuta Node como usuario sin privilegios. Variables:
+
+| Variable | Valor |
+| --- | --- |
+| CLOUD_ADMIN_DATABASE_URL | `postgresql://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}` |
+| CLOUD_DATABASE_NAME | `${{Postgres.PGDATABASE}}` |
+| CLOUD_RUNTIME_PASSWORD | Tercera clave hexadecimal de 64 caracteres |
+| CLOUD_BACKUP_DIR | `/backups` |
+
+Las referencias suponen exactamente los nombres Postgres y Redis. El hostname debe terminar en .railway.internal. El transporte rechaza URLs públicas y bases distintas de CLOUD_DATABASE_NAME. Los scripts db:* conservan su transporte local y no se usan para Railway.
+
+Desplegar y comprobar estas tres líneas finales:
+
+```text
+OK: migraciones y rol repetibles; 22 verificaciones tenant y 34 de auditoria.
+OK: respaldo restaurado en base temporal, 56 pruebas repetidas y base temporal eliminada.
+OK: evidencia y dos respaldos conservados en CLOUD_BACKUP_DIR. Operaciones finalizadas.
+```
+
+El código de salida 0 y el estado detenido/completado son esperados. Conserva dumps antes/después y evidencia verified-*.json. Aplica migraciones y rol dos veces, ejecuta ambas suites, restaura en una base temporal generada con propietarios y permisos, repite las suites y elimina únicamente esa base temporal.
+
+Si falla, no desplegar API. Corregir la fase indicada y repetir con la misma clave runtime. Si se cambia, actualizar también DATABASE_URL de la API. Los tests revierten sus datos ficticios. Ejecutar sobre el piloto dedicado, inicialmente sin tráfico de negocio; no ejecutar varias instancias simultáneas.
+
+Configurar respaldos periódicos de PostgreSQL y del volumen /backups en Railway según el plan. Confirmar al menos un respaldo correcto y conservar una copia descargada fuera del proyecto. Los dumps contienen datos: no van a Git. Esta restauración usa los roles del mismo clúster; recuperar en otro requiere recrear antes los roles y sus secretos. No equivale a una recuperación total del proveedor.
+
+## 5. API con HTTPS
+
+Crear **api** desde el mismo repositorio, Root Directory vacío y Config File `/infra/cloud/railway-api.json`. No sobrescribir Start Command. Variables:
+
+| Variable | Valor |
+| --- | --- |
+| NODE_ENV | `production` |
+| HOST | `::` |
+| PORT | `3001` |
+| SWAGGER_ENABLED | `false` |
+| DATABASE_URL | `postgresql://essalud_api:CLAVE_RUNTIME@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}` |
+| REDIS_URL | `redis://:${{Redis.REDIS_PASSWORD}}@${{Redis.RAILWAY_PRIVATE_DOMAIN}}:6379/0` |
+| CORS_ORIGINS | Vacío primero; después origen HTTPS exacto de Vercel |
+
+Reemplazar CLAVE_RUNTIME por la clave de cloud-ops únicamente en el campo secreto del proveedor. No usar el usuario postgres en la API ni añadirle CLOUD_ADMIN_DATABASE_URL. Desactivar la suspensión/serverless de la API para mantenerla persistente.
+
+Desplegar después de operaciones exitosas. Railway espera 200 en /api/v1/health/ready hasta 120 segundos. En Networking → Public Networking → Generate Domain, elegir puerto destino 3001. Guardar la URL HTTPS asignada. Abrir /api/v1/health/ready: status ok y ambas dependencias up. /docs y /docs-json deben responder 404.
+
+## 6. Vercel
+
+Importar el repositorio, elegir Next.js, Root Directory **apps/web**, Node.js **24.x** y habilitar archivos fuera de Root Directory. apps/web/vercel.json utiliza el lockfile raíz, instala solo el workspace web y ejecuta su build. Conservar Output Directory por defecto; no usar export estático.
+
+Añadir **API_BASE_URL** en Production con la URL HTTPS pública de API, sin /api/v1 ni barra final. Es variable de servidor, sin NEXT_PUBLIC_. Desplegar el commit aprobado y guardar su dominio de producción. Ese dominio debe abrirse sin login de Vercel; los previews pueden mantener protección.
+
+En Railway → api establecer CORS_ORIGINS con el origen exacto de producción Vercel, sin barra final. Redesplegar y esperar readiness. No usar comodín para previews. Abrir /portal y /tecnico; comprobar el indicador de API disponible.
+
+## 7. Verificar HTTPS y persistencia
+
+En CMD local reemplazar los ejemplos con los orígenes reales:
+
+```bat
+set "CLOUD_WEB_URL=https://TU-PROYECTO.vercel.app"
+set "CLOUD_API_URL=https://TU-API.up.railway.app"
+npm.cmd run cloud:check
+```
+
+Exige certificado válido, redirección HTTP → HTTPS, contrato de salud, identidad API, Swagger oculto, CORS exacto, ambas páginas y conexión frontend → API. No configurar NODE_TLS_REJECT_UNAUTHORIZED=0. Guardar salida, fecha, URLs y commit desplegado. Solo acredita el estado observado en ese momento.
+
+Reiniciar Postgres y Redis conservando volúmenes; esperar recuperación, repetir cloud-ops con la misma clave y cloud:check. Confirmar historial de migraciones y respaldos anteriores presentes en /backups. Cerrar 1.6 únicamente cuando CI, operaciones, restauración, respaldo periódico, reinicio y las 12 verificaciones HTTPS pasen.
+
+## Fuentes oficiales
+
+[Configuración Railway](https://docs.railway.com/config-as-code/reference), [Redis dual stack](https://docs.railway.com/databases/troubleshooting/enotfound-redis-railway-internal), [PostgreSQL](https://docs.railway.com/databases/postgresql), [volúmenes](https://docs.railway.com/volumes), [dominios y SSL](https://docs.railway.com/networking/public-networking), [monorepositorios Vercel](https://vercel.com/docs/monorepos).
+
+Se mantiene el piloto con datos ficticios y los dominios asignados por los proveedores. No se contratan servicios en esta entrega ni se amplían las etapas 2–5.

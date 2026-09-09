@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 1.5 — portal del usuario y tablero técnico.** La 1.4 fue confirmada por el usuario. El frontend Next.js permite recorrer el flujo con datos ficticios y cambios temporales; solo el indicador de disponibilidad consulta la API real. [Guía 1.5](docs/SUBETAPA-1.5.md) y [pruebas ejecutadas](docs/VALIDATION-1.5.md).
+**Entrega actual: preparación de la subetapa 1.6 — Vercel y Railway.** La 1.5 fue confirmada por el usuario. Se conservan SQL, portal y tablero. Faltan crear las cuentas, publicar y verificar las URLs HTTPS. [Guía 1.6](docs/SUBETAPA-1.6.md), [despliegue](docs/CLOUD.md) y [validación](docs/VALIDATION-1.6.md).
 
 ## Comenzar
 
-- Si ya completaste 1.4: seguir [la guía paso a paso de 1.5](docs/SUBETAPA-1.5.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 1.5: seguir [la guía paso a paso de 1.6](docs/SUBETAPA-1.6.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
