@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: preparación de la subetapa 1.6 — Vercel y Railway.** La 1.5 fue confirmada por el usuario. Se conservan SQL, portal y tablero. Faltan crear las cuentas, publicar y verificar las URLs HTTPS. [Guía 1.6](docs/SUBETAPA-1.6.md), [despliegue](docs/CLOUD.md) y [validación](docs/VALIDATION-1.6.md).
+**Entrega actual: subetapa 2.1 — CRUD local de tickets.** La 1.6 fue confirmada y la nube pausada por el usuario. [Arranque y pruebas 2.1](docs/SUBETAPA-2.1.md); [resultados y pendientes](docs/VALIDATION-2.1.md). Se mantiene main y no se realizan despliegues cloud.
 
 ## Comenzar
 
-- Si ya completaste 1.5: seguir [la guía paso a paso de 1.6](docs/SUBETAPA-1.6.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 1.6: seguir [la guía local de 2.1](docs/SUBETAPA-2.1.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh

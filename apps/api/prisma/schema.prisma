@@ -36,6 +36,7 @@ model CentroAsistencial {
   @@schema("app")
 }
 model Area {
+  tickets Ticket[]
   redAsistencialId String @map("red_asistencial_id") @db.Uuid
   centroAsistencialId String @map("centro_asistencial_id") @db.Uuid
   areaId String @default(dbgenerated("gen_random_uuid()")) @map("area_id") @db.Uuid
@@ -72,4 +73,25 @@ model AuditLog {
   // El indice parcial por solicitud, CHECK, RLS y triggers viven en el SQL versionado.
   @@map("audit_logs")
   @@schema("audit")
+}
+
+model Ticket {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  ticketId String @default(dbgenerated("gen_random_uuid()")) @map("ticket_id") @db.Uuid
+  centroAsistencialId String @map("centro_asistencial_id") @db.Uuid
+  areaId String @map("area_id") @db.Uuid
+  codigo String @unique @default(dbgenerated()) @db.VarChar(40)
+  titulo String @db.VarChar(200)
+  descripcion String @db.VarChar(5000)
+  categoria String @db.VarChar(20)
+  prioridad String @db.VarChar(10)
+  estado String @default("ABIERTO") @db.VarChar(20)
+  solicitanteId String @default(dbgenerated()) @map("solicitante_id") @db.Uuid
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
+  area Area @relation(fields:[redAsistencialId,centroAsistencialId,areaId], references:[redAsistencialId,centroAsistencialId,areaId],onDelete:Restrict,onUpdate:Restrict)
+  @@id([redAsistencialId,ticketId])
+  @@index([redAsistencialId,createdAt(sort: Desc),ticketId(sort: Desc)],map:"tickets_tenant_created_idx")
+  @@map("tickets")
+  @@schema("app")
 }

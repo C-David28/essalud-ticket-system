@@ -53,6 +53,8 @@ jobs:
         run: npm run db:check
       - name: Verify transactional append-only audit
         run: npm run db:audit:check
+      - name: Verify tickets SQL
+        run: npm run db:tickets:check
       - name: Show migration history
         run: npm run db:status
       - name: Provision runtime credentials (repeatable)
@@ -66,6 +68,11 @@ jobs:
           docker compose -f compose.yaml -f compose.api.yaml config --quiet
           npm run api:up
           npm run api:check
+      - name: Verify local ticket API in Docker
+        run: |
+          npm run tickets:setup
+          npm run tickets:up
+          npm run tickets:check
       - name: Verify cloud operations and backup restoration
         run: npm run cloud:test:integration
       - name: Service status

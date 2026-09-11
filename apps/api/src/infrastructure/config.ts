@@ -1,7 +1,9 @@
+import { tenantContext } from '../domain/tenant-context';
+export interface LocalTicketsConfig { key: string; redAsistencialId: string; userId: string }
 export type ApiConfig = Readonly<{
   nodeEnv: 'development' | 'test' | 'production';
   host: string; port: number; databaseUrl: string; redisUrl: string;
-  corsOrigins: readonly string[]; swaggerEnabled: boolean;
+  corsOrigins: readonly string[]; swaggerEnabled: boolean; localTickets?: LocalTicketsConfig;
 }>;
 export function readConfig(env: NodeJS.ProcessEnv): ApiConfig {
   const fail = (field: string): never => { throw new Error('Configuracion invalida o ausente: ' + field); };
@@ -31,6 +33,17 @@ export function readConfig(env: NodeJS.ProcessEnv): ApiConfig {
   });
   const swagger = env.SWAGGER_ENABLED ?? (nodeEnv === 'production' ? 'false' : 'true');
   if (!['true','false'].includes(swagger)) fail('SWAGGER_ENABLED');
-  return Object.freeze({ nodeEnv: nodeEnv as ApiConfig['nodeEnv'], host, port, databaseUrl, redisUrl,
+  let localTickets: LocalTicketsConfig | undefined;
+  if (env.TICKETS_LOCAL_ENABLED && !['true','false'].includes(env.TICKETS_LOCAL_ENABLED)) fail('TICKETS_LOCAL_ENABLED');
+  if (env.TICKETS_LOCAL_ENABLED === 'true') {
+    if (nodeEnv === 'production' || env.RAILWAY_PROJECT_ID || env.VERCEL) fail('TICKETS_LOCAL_ENABLED: solo local');
+    if (!['127.0.0.1','::1'].includes(host) && !(env.API_CONTAINER_NETWORK==='true' && host==='0.0.0.0')) fail('HOST: solo loopback o Compose local');
+    if (!/^[a-f0-9]{64}$/.test(env.TICKETS_LOCAL_KEY ?? '')) fail('TICKETS_LOCAL_KEY');
+    try {
+      const context = tenantContext({redAsistencialId:env.TICKETS_LOCAL_RED_ID!,userId:env.TICKETS_LOCAL_USER_ID!,requestId:'00000000-0000-4000-8000-000000000001'});
+      localTickets = Object.freeze({key:env.TICKETS_LOCAL_KEY!,redAsistencialId:context.redAsistencialId,userId:context.userId});
+    } catch { fail('TICKETS_LOCAL_RED_ID/TICKETS_LOCAL_USER_ID'); }
+  }
+  return Object.freeze({ localTickets, nodeEnv: nodeEnv as ApiConfig['nodeEnv'], host, port, databaseUrl, redisUrl,
     corsOrigins: Object.freeze(corsOrigins), swaggerEnabled: swagger === 'true' });
 }

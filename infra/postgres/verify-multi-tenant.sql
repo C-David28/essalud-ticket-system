@@ -32,7 +32,7 @@ SELECT pg_temp.assert_true((
   SELECT count(*) = 3 AND bool_and(c.relrowsecurity AND c.relforcerowsecurity
     AND pg_get_userbyid(c.relowner) = 'essalud_owner')
   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname='app' AND c.relkind='r'
+  WHERE n.nspname='app' AND c.relkind='r' AND c.relname IN ('redes_asistenciales','centros_asistenciales','areas')
 ), 'RLS forzado y propietario en las tres tablas');
 
 SELECT pg_temp.assert_true((

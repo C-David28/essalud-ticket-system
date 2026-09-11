@@ -1,0 +1,8 @@
+# Exclusivo del desarrollo local. Mantener la publicacion 127.0.0.1 del overlay API.
+services:
+  api:
+    env_file: ./apps/api/.env.tickets
+    environment:
+      NODE_ENV: development
+      SWAGGER_ENABLED: "true"
+

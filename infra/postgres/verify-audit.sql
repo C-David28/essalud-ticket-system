@@ -79,7 +79,7 @@ SELECT pg_temp.assert_true((
 SELECT pg_temp.expect_error('UPDATE audit.audit_logs SET action=action','55000','guard rechaza UPDATE administrativo');
 SELECT pg_temp.expect_error('DELETE FROM audit.audit_logs','55000','guard rechaza DELETE administrativo');
 SELECT pg_temp.expect_error('TRUNCATE audit.audit_logs','55000','guard rechaza TRUNCATE administrativo');
-SELECT pg_temp.expect_error('TRUNCATE app.areas','55000','no se permite TRUNCATE de negocio sin auditoria');
+SELECT pg_temp.expect_error('TRUNCATE app.areas, app.tickets','55000','no se permite TRUNCATE de negocio sin auditoria');
 
 SET LOCAL ROLE essalud_app;
 SELECT pg_temp.assert_true(NOT EXISTS(SELECT FROM audit.audit_logs),'sin tenant no se puede leer auditoria');

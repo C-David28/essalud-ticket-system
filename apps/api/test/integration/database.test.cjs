@@ -103,6 +103,14 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
       }));
     } finally {await parallel.onApplicationShutdown();}
   });
+  await t.test('CRUD HTTP con Prisma, aislamiento, auditoria y codigos concurrentes',async()=>{
+    const ctx=context();
+    const c=await uow.run(ctx,tx=>tx.centroAsistencial.create({data:{redAsistencialId:redA,codigo:'TICKETS',nombre:'Centro tickets',tipo:'CAP'}}));
+    const area=await uow.run(ctx,tx=>tx.area.create({data:{redAsistencialId:redA,centroAsistencialId:c.centroAsistencialId,codigo:'TICKETS',nombre:'Area tickets'}}));
+    const parallel=new Database(process.env.DATABASE_URL,3);
+    try {await require('./tickets-flow.cjs').exerciseTickets({db:parallel,redA,redB,centro:c.centroAsistencialId,area:area.areaId});}
+    finally {await parallel.onApplicationShutdown();}
+  });
   await t.test('HTTP real: readiness 200, Redis caido 503 y liveness 200',async()=>{
     const app=await createApplication(readConfig(process.env),true);
     try {
