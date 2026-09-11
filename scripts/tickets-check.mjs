@@ -22,11 +22,24 @@ try {
   assert.equal((await req('/'+created[0],{method:'PATCH',body:JSON.stringify({estado:'CERRADO'})})).status,400);
   const update=await req('/'+created[0],{method:'PATCH',body:JSON.stringify({titulo:'Titulo corregido de prueba',prioridad:'ALTA'})});
   assert.equal(update.status,200);assert.equal((await update.json()).prioridad,'ALTA');
+  const state='/'+created[0]+'/estado';
+  assert.equal((await req(state,{method:'PATCH',body:JSON.stringify({estado:'CERRADO',motivo:'Salto invalido'})})).status,409);
+  for(const [estado,motivo] of [
+    ['EN_PROCESO','Atencion local iniciada'],['PENDIENTE','Esperando repuesto ficticio'],
+    ['EN_PROCESO','Repuesto ficticio recibido'],['RESUELTO','Solucion local verificada'],
+    ['CERRADO','Conformidad local registrada'],
+  ]) {
+    const response=await req(state,{method:'PATCH',body:JSON.stringify({estado,motivo})});
+    assert.equal(response.status,200);assert.equal((await response.json()).estado,estado);
+  }
+  assert.equal((await req(state,{method:'PATCH',body:JSON.stringify({estado:'EN_PROCESO',motivo:'Intento terminal'})})).status,409);
+  const history=await req(state+'/historial');assert.equal(history.status,200);
+  const events=await history.json();assert.equal(events.length,6);assert.equal(events[0].estadoNuevo,'ABIERTO');
+  assert.deepEqual(events.slice(1).map(event=>event.estadoNuevo),['EN_PROCESO','PENDIENTE','EN_PROCESO','RESUELTO','CERRADO']);
   for(const id of created){
     assert.equal((await req('/'+id,{method:'DELETE'})).status,204);
     assert.equal((await req('/'+id)).status,404);
   }
-  console.log('OK: clave local, validacion, CREATE/READ/LIST/UPDATE/DELETE y rechazo de cambios de estado.');
+  console.log('OK: CRUD, cinco estados, transiciones validas, saltos rechazados e historial local.');
 } catch { console.error('Fallo tickets:check. Revisar tickets:setup, tickets:up y la salud local de la API.');process.exitCode=1; }
 finally { for(const id of created) await req('/'+id,{method:'DELETE'}).catch(()=>{}); }
-

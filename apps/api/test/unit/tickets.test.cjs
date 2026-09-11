@@ -15,7 +15,9 @@ const body={centroAsistencialId:randomUUID(),areaId:randomUUID(),titulo:'Ticket 
 async function fixture(t){
  const calls=[];
  const service={create:async(c,b)=>{calls.push(c);return {...b,codigo:'INC-2026-0001'};},list:async(c,p,size)=>({items:[],page:p,pageSize:size,hasMore:false}),
- get:async()=>{throw new TicketFailure('NOT_FOUND');},update:async(c,id,b)=>{if(!Object.keys(b).length)throw new TicketFailure('INVALID');return b;},delete:async()=>{}};
+ get:async()=>{throw new TicketFailure('NOT_FOUND');},update:async(c,id,b)=>{if(!Object.keys(b).length)throw new TicketFailure('INVALID');return b;},
+ transition:async(c,id,state,reason)=>{calls.push({state,reason});if(state==='CERRADO')throw new TicketFailure('CONFLICT');return {estado:state};},
+ history:async()=>[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}],delete:async()=>{}};
  const config=readConfig(env);
  const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue({check:async()=>true})
  .overrideProvider(RedisProbe).useValue({check:async()=>true}).overrideProvider(Tickets).useValue(service).compile();
@@ -61,4 +63,24 @@ test('paginacion limitada y Swagger con cinco operaciones y clave local',async t
  assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}']).sort(),['delete','get','patch']);
  assert.equal(spec.components.securitySchemes['local-key'].name,'X-Local-Api-Key');
 });
-
+test('estado exige motivo, valida catalogo y convierte transicion invalida en 409',async t=>{
+ const {http,calls}=await fixture(t),id=randomUUID(),url='/api/v1/tickets/'+id+'/estado';
+ await http.patch(url).send({estado:'EN_PROCESO',motivo:'Atencion iniciada'}).expect(401);
+ for(const value of [{estado:'INVALIDO',motivo:'Motivo valido'},{estado:'EN_PROCESO',motivo:'x'},
+   {estado:'EN_PROCESO',motivo:null},{estado:'EN_PROCESO',motivo:'Motivo valido',actorId:randomUUID()}])
+  await http.patch(url).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).send(value).expect(400);
+ const changed=await http.patch(url).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY)
+   .send({estado:'EN_PROCESO',motivo:'  Atencion iniciada  '}).expect(200);
+ assert.equal(changed.body.estado,'EN_PROCESO');assert.equal(calls.at(-1).reason,'Atencion iniciada');
+ await http.patch(url).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY)
+   .send({estado:'CERRADO',motivo:'Salto invalido'}).expect(409);
+});
+test('historial usa la clave local y Swagger publica las dos operaciones de estado',async t=>{
+ const {http}=await fixture(t),id=randomUUID(),url='/api/v1/tickets/'+id+'/estado/historial';
+ await http.get(url).expect(401);
+ const history=await http.get(url).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(200);
+ assert.deepEqual(history.body,[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}]);
+ const spec=(await http.get('/docs-json').expect(200)).body;
+ assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}/estado']),['patch']);
+ assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}/estado/historial']),['get']);
+});

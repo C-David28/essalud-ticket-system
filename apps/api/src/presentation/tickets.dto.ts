@@ -1,7 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import { IsIn, IsInt, IsString, IsUUID, Length, Max, Min } from 'class-validator';
 import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
-import { CATEGORIES, PRIORITIES } from '../domain/ticket';
+import { CATEGORIES, PRIORITIES, TICKET_STATES } from '../domain/ticket';
 const trim = ({value}: {value: unknown}) => typeof value==='string' ? value.trim() : value;
 export class CreateTicketDto {
   @ApiProperty({format:'uuid'}) @IsUUID() centroAsistencialId!: string;
@@ -19,4 +19,7 @@ export class TicketQuery {
   @ApiProperty({required:false,default:20,minimum:1,maximum:100})
   @Type(()=>Number) @IsInt() @Min(1) @Max(100) pageSize: number = 20;
 }
-
+export class TransitionTicketDto {
+  @ApiProperty({enum:TICKET_STATES}) @IsIn(TICKET_STATES) estado!: typeof TICKET_STATES[number];
+  @ApiProperty({minLength:5,maxLength:500}) @Transform(trim) @IsString() @Length(5,500) motivo!: string;
+}

@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 2.1 — CRUD local de tickets.** La 1.6 fue confirmada y la nube pausada por el usuario. [Arranque y pruebas 2.1](docs/SUBETAPA-2.1.md); [resultados y pendientes](docs/VALIDATION-2.1.md). Se mantiene main y no se realizan despliegues cloud.
+**Entrega actual: subetapa 2.2 — máquina de estados auditada.** La 2.1 fue confirmada por el usuario y la nube continúa pausada. [Arranque y pruebas 2.2](docs/SUBETAPA-2.2.md); [resultados y pendientes](docs/VALIDATION-2.2.md). Se mantiene `main` y no se realizan despliegues cloud.
 
 ## Comenzar
 
-- Si ya completaste 1.6: seguir [la guía local de 2.1](docs/SUBETAPA-2.1.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 2.1: seguir [la guía local de 2.2](docs/SUBETAPA-2.2.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh

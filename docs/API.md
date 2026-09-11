@@ -1,4 +1,4 @@
-# Backend base — subetapa 1.4
+# Backend local — subetapa 2.2
 
 NestJS 11, TypeScript estricto, Prisma 7 con adaptador PostgreSQL y Redis mediante ioredis. Versiones exactas y árbol reproducible en package-lock.json. Requiere Node.js 24 y npm con soporte de workspaces.
 
@@ -6,11 +6,12 @@ NestJS 11, TypeScript estricto, Prisma 7 con adaptador PostgreSQL y Redis median
 
 ```mermaid
 flowchart LR
-  HTTP[Controladores y Swagger] --> USECASE[CheckReadiness]
+  HTTP[Controladores y Swagger] --> USECASE[Salud y Tickets]
   USECASE --> PORT[DependencyProbe: dominio]
   PG[Database / PrismaPg] -. implementa .-> PORT
   REDIS[RedisProbe] -. implementa .-> PORT
   UOW[PrismaTenantUnitOfWork] --> PG
+  USECASE --> UOW
   PG --> DB[(PostgreSQL: RLS y auditoria)]
 ```
 
@@ -28,16 +29,20 @@ flowchart LR
 | GET `/api/v1/health/live` | 200 si el proceso responde |
 | GET `/api/v1/health/ready` | 200 si PostgreSQL y Redis están disponibles; 503 si falla una dependencia o el rol SQL es inseguro |
 | GET `/docs` y `/docs-json` | Swagger UI y OpenAPI cuando SWAGGER_ENABLED=true |
+| POST/GET `/api/v1/tickets` | Crear y listar tickets del tenant local |
+| GET/PATCH/DELETE `/api/v1/tickets/:id` | Consultar, editar o eliminar un ticket |
+| PATCH `/api/v1/tickets/:id/estado` | Aplicar una transición válida con motivo |
+| GET `/api/v1/tickets/:id/estado/historial` | Consultar el historial inmutable de estados |
 
-La sonda SQL comprueba permisos efectivos y RLS forzado en las cuatro tablas existentes. Redis debe responder PONG. Las sondas no sustituyen las suites de integridad SQL. Readiness limita su espera a 2,5 segundos; liveness no consulta dependencias.
+La sonda SQL comprueba permisos efectivos y RLS forzado en las seis tablas existentes. Redis debe responder PONG. Las sondas no sustituyen las suites de integridad SQL. Readiness limita su espera a 2,5 segundos; liveness no consulta dependencias.
 
 Cada solicitud recibe un UUID nuevo en `X-Request-Id`. Los errores no devuelven stack, consultas SQL ni configuración. Helmet agrega cabeceras de seguridad; CORS permite únicamente los orígenes configurados, sin credenciales. Los logs incluyen método, ruta sin query string, estado y duración; no registran cuerpos ni cabeceras. Swagger está desactivado por defecto en producción. CORS no es autenticación.
 
-No se publican endpoints de organizaciones ni tickets. Los endpoints de negocio necesitarán identidad y autorización antes de exponerse; JWT/RBAC siguen en 3.1. El adaptador interno no convierte un header de tenant o usuario en autoridad para consultar datos.
+Los endpoints de tickets solo se habilitan con `TICKETS_LOCAL_ENABLED=true`, una clave local y una identidad fija validada en el servidor. La configuración rechaza este modo en producción y cloud. Los headers de tenant o usuario se ignoran como autoridad; JWT/RBAC siguen en 3.1.
 
 ## PostgreSQL y compatibilidad
 
-Las migraciones 0001 y 0002 permanecen intactas. `npm run db:migrate` continúa siendo el único mecanismo DDL. El schema Prisma mapea las tablas existentes; **no ejecutar `prisma db push` ni `prisma migrate`**: no representan los CHECK, triggers, permisos y RLS institucionales.
+Las migraciones 0001–0003 permanecen intactas y 0004 añade la máquina de estados. `npm run db:migrate` continúa siendo el único mecanismo DDL. El schema Prisma mapea las tablas existentes; **no ejecutar `prisma db push` ni `prisma migrate`**: no representan los CHECK, triggers, permisos y RLS institucionales.
 
 `api:setup` genera `apps/api/.env` con una clave aleatoria separada y aprovisiona el LOGIN `essalud_api`, que hereda `essalud_app`. No altera el `.env` raíz. El SQL está en `scripts/lib/api-role.mjs`: se envía por stdin, no como argumento visible del proceso. Se ejecuta dentro de una transacción con bloqueo asesor. Repetir conserva las claves de la API. Un rol preexistente sin la marca del proyecto o con membresías inesperadas se rechaza. La API verifica permisos efectivos y rechaza usar superusuarios, propietarios, migradores o escritores de auditoría.
 
@@ -57,12 +62,14 @@ El contexto debe venir de la futura capa de identidad autorizada. La validación
 | NODE_ENV | development, test o production |
 | CORS_ORIGINS | Orígenes exactos separados por comas |
 | SWAGGER_ENABLED | true/false; por defecto false en producción |
+| TICKETS_LOCAL_ENABLED / TICKETS_LOCAL_KEY | Habilitación y clave del CRUD exclusivamente local |
+| TICKETS_LOCAL_RED_ID / TICKETS_LOCAL_USER_ID | Identidad ficticia fija del servidor local |
 
 Mantener copia privada de ambos `.env`. api:setup conserva un archivo existente: si cambian puertos o credenciales de infraestructura, actualizar de forma coordinada las URLs de apps/api/.env y reiniciar. Las claves generadas del LOGIN son hexadecimales; el script rechaza formatos ajenos. No compartir URLs con claves ni archivos .env.
 
 ## Pruebas
 
-`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta las 56 verificaciones SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba login, aislamiento, relaciones compuestas, auditoría, rollback, reutilización del pool, concurrencia y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
+`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta las cuatro suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba login, aislamiento, auditoría, CRUD, estados, historial, carrera concurrente y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
 
 Si se interrumpe abruptamente, puede quedar el proyecto temporal; su nombre aparece al comienzo. Limpiarlo solo con el comando que incluye ese nombre, nunca usando el proyecto local con `down --volumes`.
 

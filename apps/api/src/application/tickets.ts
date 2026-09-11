@@ -1,4 +1,4 @@
-import { TicketRepository, TicketInput, TicketChanges, TicketFailure } from '../domain/ticket';
+import { TicketRepository, TicketInput, TicketChanges, TicketFailure, TicketState } from '../domain/ticket';
 import { TenantContext } from '../domain/tenant-context';
 export class Tickets {
   constructor(private readonly repository: TicketRepository) {}
@@ -9,6 +9,9 @@ export class Tickets {
     if (Object.keys(input).length===0) throw new TicketFailure('INVALID');
     return this.repository.update(context,id,input);
   }
+  transition(context:TenantContext,id:string,state:TicketState,reason:string) {
+    return this.repository.transition(context,id,state,reason);
+  }
+  history(context:TenantContext,id:string) { return this.repository.history(context,id); }
   delete(context: TenantContext,id: string) { return this.repository.delete(context,id); }
 }
-

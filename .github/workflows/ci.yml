@@ -54,7 +54,9 @@ jobs:
       - name: Verify transactional append-only audit
         run: npm run db:audit:check
       - name: Verify tickets SQL
-        run: npm run db:tickets:check
+        run: |
+          npm run db:tickets:check
+          npm run db:ticket-states:check
       - name: Show migration history
         run: npm run db:status
       - name: Provision runtime credentials (repeatable)

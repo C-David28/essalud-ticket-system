@@ -89,9 +89,28 @@ model Ticket {
   solicitanteId String @default(dbgenerated()) @map("solicitante_id") @db.Uuid
   createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
+  closedAt DateTime? @map("closed_at") @db.Timestamptz(6)
   area Area @relation(fields:[redAsistencialId,centroAsistencialId,areaId], references:[redAsistencialId,centroAsistencialId,areaId],onDelete:Restrict,onUpdate:Restrict)
   @@id([redAsistencialId,ticketId])
   @@index([redAsistencialId,createdAt(sort: Desc),ticketId(sort: Desc)],map:"tickets_tenant_created_idx")
   @@map("tickets")
+  @@schema("app")
+}
+
+model TicketStateTransition {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  transitionId String @default(dbgenerated("gen_random_uuid()")) @map("transition_id") @db.Uuid
+  ticketId String @map("ticket_id") @db.Uuid
+  codigo String @db.VarChar(40)
+  estadoAnterior String? @map("estado_anterior") @db.VarChar(20)
+  estadoNuevo String @map("estado_nuevo") @db.VarChar(20)
+  motivo String @db.VarChar(500)
+  changedBy String @map("changed_by") @db.Uuid
+  requestId String @map("request_id") @db.Uuid
+  changedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("changed_at") @db.Timestamptz(6)
+  @@id([redAsistencialId,transitionId])
+  @@index([redAsistencialId,ticketId,changedAt,transitionId],map:"ticket_state_history_ticket_idx")
+  @@map("ticket_state_history")
   @@schema("app")
 }
