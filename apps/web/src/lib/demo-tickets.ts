@@ -6,7 +6,7 @@ export const STATUSES = [
   "Resuelto",
   "Cerrado",
 ] as const;
-export const PRIORITIES = ["Alta", "Media", "Baja"] as const;
+export const PRIORITIES = ["Crítica", "Alta", "Media", "Baja"] as const;
 export const CATEGORIES = [
   "Soporte técnico",
   "Redes y conectividad",
@@ -14,6 +14,7 @@ export const CATEGORIES = [
   "Equipamiento biomédico",
 ] as const;
 export const CENTERS = [
+  "Centro ficticio de pruebas",
   "Hospital II Pasco",
   "CAP Villa Rica",
   "Centro de Oxapampa",
@@ -21,6 +22,7 @@ export const CENTERS = [
 export type TicketStatus = (typeof STATUSES)[number];
 export type Category = (typeof CATEGORIES)[number];
 export type DemoTicket = {
+  ticketId: string;
   id: string;
   title: string;
   description: string;
@@ -41,6 +43,7 @@ export const DEMO_USER = "solicitante-demo";
 export const DEMO_TECH = "Técnico de prueba 01";
 export const seedTickets: DemoTicket[] = [
   {
+    ticketId: "00000000-0000-4000-8000-000000000001",
     id: "DEMO-001",
     title: "Impresora de admisión no responde",
     description:
@@ -55,6 +58,7 @@ export const seedTickets: DemoTicket[] = [
     assignee: null,
   },
   {
+    ticketId: "00000000-0000-4000-8000-000000000002",
     id: "DEMO-002",
     title: "Conexión intermitente en consultorios",
     description:
@@ -69,6 +73,7 @@ export const seedTickets: DemoTicket[] = [
     assignee: DEMO_TECH,
   },
   {
+    ticketId: "00000000-0000-4000-8000-000000000003",
     id: "DEMO-003",
     title: "Revisión de monitor de signos vitales",
     description:
@@ -83,6 +88,7 @@ export const seedTickets: DemoTicket[] = [
     assignee: null,
   },
   {
+    ticketId: "00000000-0000-4000-8000-000000000004",
     id: "DEMO-004",
     title: "Punto de red sin conectividad",
     description:
@@ -97,6 +103,7 @@ export const seedTickets: DemoTicket[] = [
     assignee: "Técnico de prueba 02",
   },
   {
+    ticketId: "00000000-0000-4000-8000-000000000005",
     id: "DEMO-005",
     title: "Reposición de batería para UPS",
     description:
@@ -111,6 +118,7 @@ export const seedTickets: DemoTicket[] = [
     assignee: DEMO_TECH,
   },
   {
+    ticketId: "00000000-0000-4000-8000-000000000006",
     id: "DEMO-006",
     title: "Configuración de estación de trabajo",
     description:
@@ -125,6 +133,7 @@ export const seedTickets: DemoTicket[] = [
     assignee: "Técnico de prueba 02",
   },
   {
+    ticketId: "00000000-0000-4000-8000-000000000007",
     id: "DEMO-007",
     title: "Mantenimiento preventivo de equipo",
     description:
@@ -200,6 +209,7 @@ export function makeDemoTicket(
     description: draft.description.trim(),
     area: draft.area.trim(),
     id: "DEMO-" + id,
+    ticketId: id,
     createdAt: date,
     status: "Abierto",
     requester: DEMO_USER,

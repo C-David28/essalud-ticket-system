@@ -56,6 +56,7 @@ textarea:focus-visible,
 }
 button:disabled {
   cursor: default;
+  opacity: 0.65;
 }
 svg {
   flex-shrink: 0;
@@ -607,6 +608,13 @@ h1 {
 .priority.alta {
   color: #a4413d;
 }
+.priority.crítica {
+  color: #8b2430;
+  font-weight: 650;
+}
+.priority.crítica > span {
+  background: #b72639;
+}
 .priority.alta > span {
   background: #cc645b;
 }
@@ -692,6 +700,35 @@ h1 {
   gap: 7px;
   font-size: 13px;
   color: #5b788c;
+}
+.board-live {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 7px;
+}
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #6a7783;
+  font-size: 12px;
+}
+.live-indicator > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #87949f;
+}
+.live-indicator.live {
+  color: #19715f;
+}
+.live-indicator.live > span {
+  background: #0a9281;
+  box-shadow: 0 0 0 3px #d7f0ea;
+}
+.live-indicator.reconnecting > span {
+  background: #d7a041;
 }
 .board-meta {
   padding: 0 23px 17px;
@@ -1021,6 +1058,12 @@ h1 {
   padding: 18px;
   border-radius: 8px;
   margin-bottom: 23px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.demo-change .inline-flex {
+  align-self: flex-start;
 }
 .demo-change p {
   font-size: 12px;

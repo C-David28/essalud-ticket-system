@@ -6,6 +6,7 @@ const request=require('supertest');
 const {Database,PrismaTenantUnitOfWork}=require('../../dist/infrastructure/database');
 const {createApplication}=require('../../dist/bootstrap');
 const {readConfig}=require('../../dist/infrastructure/config');
+const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
 
 test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>{
   assert.equal(process.env.ESSALUD_DISPOSABLE_TEST,'true','Ejecutar npm run api:test:integration desde la raiz');
@@ -31,6 +32,21 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
   await t.test('Prisma sin contexto no lee datos',async()=>{
     assert.deepEqual(await db.client.redAsistencial.findMany(),[]);
     assert.deepEqual(await db.client.auditLog.findMany(),[]);
+  });
+  await t.test('Redis propaga eventos entre instancias y conserva aislamiento por tenant',async()=>{
+    const sender=new RedisTicketEvents(process.env.REDIS_URL),receiver=new RedisTicketEvents(process.env.REDIS_URL);
+    await sender.onModuleInit();await receiver.onModuleInit();
+    try {
+      const received=[],foreign=[];
+      const event={version:1,eventId:randomUUID(),type:'ticket.created',redAsistencialId:redA,ticketId:randomUUID(),occurredAt:new Date().toISOString()};
+      const delivered=new Promise((resolve,reject)=>{
+        const timeout=setTimeout(()=>reject(new Error('Evento Redis no recibido')),3000);
+        receiver.subscribe(redA,value=>{received.push(value);clearTimeout(timeout);resolve();});
+      });
+      receiver.subscribe(redB,value=>foreign.push(value));
+      await sender.publish(event);await delivered;
+      assert.deepEqual(received,[event]);assert.deepEqual(foreign,[]);
+    } finally {await receiver.onApplicationShutdown();await sender.onApplicationShutdown();}
   });
   await t.test('Prisma ve solo su red y no encuentra una red ajena',async()=>{
     const rows=await uow.run(context(),tx=>tx.redAsistencial.findMany());

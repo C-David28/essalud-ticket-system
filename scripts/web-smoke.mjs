@@ -7,8 +7,19 @@ import assert from "node:assert/strict";
 const root = new URL("../", import.meta.url),
   require = createRequire(new URL("apps/web/package.json", root));
 let health = true,
+  ticketKeySeen = false,
   child;
 const backend = createServer((req, res) => {
+  if (req.url?.startsWith("/api/v1/tickets")) {
+    ticketKeySeen = req.headers["x-local-api-key"] === "a".repeat(64);
+    if (!ticketKeySeen) { res.writeHead(401).end(); return; }
+    if (req.url === "/api/v1/tickets/events") {
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.end("event: ticket\ndata: {\"type\":\"ticket.updated\",\"ticketId\":\"demo\"}\n\n");return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({items:[],page:1,pageSize:100,hasMore:false}));return;
+  }
   if (req.url !== "/api/v1/health/ready") {
     res.writeHead(404).end();
     return;
@@ -50,6 +61,9 @@ try {
         NODE_ENV: "production",
         NEXT_TELEMETRY_DISABLED: "1",
         API_BASE_URL: `http://127.0.0.1:${address.port}`,
+        TICKETS_LOCAL_KEY: "a".repeat(64),
+        TICKETS_LOCAL_CENTRO_ID: "11111111-1111-4111-8111-111111111111",
+        TICKETS_LOCAL_AREA_ID: "22222222-2222-4222-8222-222222222222",
       },
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -84,7 +98,7 @@ try {
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.ok(html.includes(text));
-    assert.ok(html.includes("Datos ficticios"));
+    assert.ok(html.includes("sincronizan en tiempo real"));
     assert.ok(!html.includes("Application error"));
     assert.equal(response.headers.get("x-content-type-options"), "nosniff");
     console.log("PASS: " + path + " renderiza en produccion");
@@ -106,11 +120,15 @@ try {
     (await fetch(base + "/api/backend-health", { method: "POST" })).status,
     405,
   );
+  response=await get("/api/tickets?page=1&pageSize=100");
+  assert.equal(response.status,200);assert.equal((await response.json()).items.length,0);assert.equal(ticketKeySeen,true);
+  response=await get("/api/tickets/events");assert.equal(response.status,200);
+  assert.match(await response.text(),/ticket\.updated/);
   console.log(
     "PASS: indicador de API 200 -> 503 -> 200, redireccion y rutas HTTP",
   );
   console.log(
-    "OK: frontend de produccion verificado; backend simulado sin PostgreSQL ni datos reales.",
+    "OK: frontend de produccion, proxy protegido y transporte SSE verificados con backend simulado.",
   );
 } catch (error) {
   console.error("Fallo web:smoke: " + error.message);

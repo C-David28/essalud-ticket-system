@@ -1,4 +1,4 @@
-# Backend local — subetapa 2.2
+# Backend local — subetapa 2.3
 
 NestJS 11, TypeScript estricto, Prisma 7 con adaptador PostgreSQL y Redis mediante ioredis. Versiones exactas y árbol reproducible en package-lock.json. Requiere Node.js 24 y npm con soporte de workspaces.
 
@@ -12,6 +12,9 @@ flowchart LR
   REDIS[RedisProbe] -. implementa .-> PORT
   UOW[PrismaTenantUnitOfWork] --> PG
   USECASE --> UOW
+  USECASE --> EVENTS[TicketEventBus]
+  EVENTS --> PUBSUB[(Redis Pub/Sub)]
+  PUBSUB --> SSE[SSE autorizado por tenant]
   PG --> DB[(PostgreSQL: RLS y auditoria)]
 ```
 
@@ -25,7 +28,7 @@ flowchart LR
 
 | Método y ruta | Resultado |
 | --- | --- |
-| GET `/api/v1` | Identificación, versión 0.4.0 y subetapa 1.4 |
+| GET `/api/v1` | Identificación, versión 0.5.0 y subetapa 2.3 |
 | GET `/api/v1/health/live` | 200 si el proceso responde |
 | GET `/api/v1/health/ready` | 200 si PostgreSQL y Redis están disponibles; 503 si falla una dependencia o el rol SQL es inseguro |
 | GET `/docs` y `/docs-json` | Swagger UI y OpenAPI cuando SWAGGER_ENABLED=true |
@@ -33,6 +36,9 @@ flowchart LR
 | GET/PATCH/DELETE `/api/v1/tickets/:id` | Consultar, editar o eliminar un ticket |
 | PATCH `/api/v1/tickets/:id/estado` | Aplicar una transición válida con motivo |
 | GET `/api/v1/tickets/:id/estado/historial` | Consultar el historial inmutable de estados |
+| GET `/api/v1/tickets/events` | Flujo SSE de cambios del tenant autorizado |
+
+Los eventos SSE usan `event: ticket` y un cuerpo con `version`, `type`, `ticketId`, `requestId` y `occurredAt`. Hay heartbeats cada 15 segundos y una recomendación de reconexión de tres segundos. No existe replay en esta subetapa; el cliente vuelve a consultar el listado al conectarse para recuperar cualquier cambio ocurrido durante una desconexión.
 
 La sonda SQL comprueba permisos efectivos y RLS forzado en las seis tablas existentes. Redis debe responder PONG. Las sondas no sustituyen las suites de integridad SQL. Readiness limita su espera a 2,5 segundos; liveness no consulta dependencias.
 
@@ -69,7 +75,7 @@ Mantener copia privada de ambos `.env`. api:setup conserva un archivo existente:
 
 ## Pruebas
 
-`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta las cuatro suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba login, aislamiento, auditoría, CRUD, estados, historial, carrera concurrente y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
+`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta las cuatro suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba login, aislamiento, auditoría, CRUD, estados, historial, carrera concurrente, Redis Pub/Sub entre instancias y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
 
 Si se interrumpe abruptamente, puede quedar el proyecto temporal; su nombre aparece al comienzo. Limpiarlo solo con el comando que incluye ese nombre, nunca usando el proyecto local con `down --volumes`.
 

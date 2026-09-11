@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type FormEvent, type ComponentType } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ComponentType } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useDemoTickets } from "@/components/providers";
+import { useTickets } from "@/components/providers";
 import {
   CATEGORIES,
   CENTERS,
@@ -65,6 +65,13 @@ const statusIcons = {
   Resuelto: CheckCircle2,
   Cerrado: CheckCheck,
 };
+const nextStatuses: Record<TicketStatus, readonly TicketStatus[]> = {
+  Abierto: ["En Proceso"],
+  "En Proceso": ["Pendiente", "Resuelto"],
+  Pendiente: ["En Proceso"],
+  Resuelto: ["En Proceso", "Cerrado"],
+  Cerrado: [],
+};
 function Status({ status }: { status: TicketStatus }) {
   const Icon = statusIcons[status];
   return (
@@ -99,23 +106,24 @@ const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
   description: "",
   category,
   center: CENTERS[0],
-  area: "",
+  area: "Área ficticia de pruebas",
   priority: "Media",
 });
 
 export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
   const tech = mode === "tecnico";
-  const { tickets, add, move } = useDemoTickets();
+  const { tickets, add, move, realtime, loading, error: loadError, busy, refresh } = useTickets();
   const [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
     [center, setCenter] = useState(""),
-    [priority, setPriority] = useState(""),
-    [mine, setMine] = useState(false);
+    [priority, setPriority] = useState("");
   const [selected, setSelected] = useState<string | null>(null),
     [createOpen, setCreateOpen] = useState(false),
     [draft, setDraft] = useState<TicketDraft>(emptyDraft),
     [errors, setErrors] = useState<Record<string, string>>({}),
     [message, setMessage] = useState("");
+  const [nextStatus, setNextStatus] = useState<TicketStatus | "">("");
+  const [reason, setReason] = useState("");
   const lastDetailTrigger = useRef<HTMLButtonElement | null>(null);
   const lastTicketId = useRef<string>("");
   const own = filterTickets(tickets, { requester: DEMO_USER });
@@ -124,16 +132,18 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
     status,
     center,
     priority,
-    mine,
     requester: tech ? undefined : DEMO_USER,
   });
   const detail = tickets.find((t) => t.id === selected);
+  useEffect(() => {
+    setNextStatus(detail ? (nextStatuses[detail.status][0] ?? "") : "");
+    setReason("");
+  }, [detail?.id, detail?.status]);
   function reset() {
     setSearch("");
     setStatus("");
     setCenter("");
     setPriority("");
-    setMine(false);
   }
   function openCreate(category?: Category) {
     setDraft(emptyDraft(category));
@@ -145,7 +155,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
     lastTicketId.current = ticket.id;
     setSelected(ticket.id);
   }
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const next = validateDraft(draft);
     setErrors(next);
@@ -153,13 +163,27 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
       document.getElementById("draft-" + Object.keys(next)[0])?.focus();
       return;
     }
-    const ticket = add(draft);
-    setCreateOpen(false);
-    reset();
-    setMessage(
-      ticket.id +
-        " creada en esta demostración. No se envió al servicio de soporte.",
-    );
+    try {
+      const ticket = await add(draft);
+      setCreateOpen(false);
+      reset();
+      setMessage(ticket.id + " creada y guardada en PostgreSQL.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo crear la solicitud.");
+    }
+  }
+  async function changeState() {
+    if (!detail || !nextStatus) return;
+    if (reason.trim().length < 5 || reason.trim().length > 500) {
+      setMessage("Escribe un motivo de 5 a 500 caracteres.");
+      return;
+    }
+    try {
+      await move(detail.ticketId, nextStatus, reason.trim());
+      setMessage(detail.id + " cambió a " + nextStatus + " y el tablero fue notificado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo cambiar el estado.");
+    }
   }
   function field(key: keyof TicketDraft, value: string) {
     setDraft((old) => ({ ...old, [key]: value }));
@@ -205,8 +229,8 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
               <span className="eyebrow">PORTAL DEL USUARIO</span>
               <DialogTitle>Nueva solicitud de prueba</DialogTitle>
               <DialogDescription>
-                Usa información ficticia. Esta solicitud solo existirá mientras
-                navegas en la demostración.
+                Usa información ficticia. La solicitud se guardará en la base
+                local y aparecerá en el tablero técnico en tiempo real.
               </DialogDescription>
             </div>
             <form onSubmit={submit} noValidate className="request-form">
@@ -254,12 +278,13 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                   {error("priority")}
                 </label>
                 <label htmlFor="draft-center">
-                  Centro de ejemplo
+                  Centro local
                   <select
                     id="draft-center"
                     value={draft.center}
                     onChange={(e) => field("center", e.target.value)}
                     className="field"
+                    disabled
                   >
                     {CENTERS.map((c) => (
                       <option key={c}>{c}</option>
@@ -278,6 +303,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                     aria-invalid={!!errors.area}
                     aria-describedby={errors.area ? "error-area" : undefined}
                     required
+                    disabled
                   />
                   {error("area")}
                 </label>
@@ -308,8 +334,8 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  Crear solicitud de prueba
+                <Button type="submit" disabled={busy}>
+                  {busy ? "Guardando…" : "Crear solicitud de prueba"}
                   <ArrowRight />
                 </Button>
               </div>
@@ -370,7 +396,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                 <span>Total de solicitudes</span>
                 <strong>{own.length}</strong>
               </div>
-              <small>En esta demostración</small>
+              <small>Guardadas en PostgreSQL local</small>
             </div>
             <div>
               <span className="summary-icon blue">
@@ -417,15 +443,18 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
               </h2>
               <p>
                 {tech
-                  ? "Datos de ejemplo · 5 estados de atención"
+                  ? "Datos locales · actualización en tiempo real"
                   : "Consulta el detalle y el avance de tus solicitudes."}
               </p>
             </div>
             {tech && (
-              <span className="view-label">
-                <ClipboardList size={16} />
-                Vista Kanban
-              </span>
+              <div className="board-live">
+                <span className={"live-indicator " + realtime} role="status">
+                  <span />
+                  {realtime === "live" ? "Tiempo real activo" : realtime === "reconnecting" ? "Reconectando" : "Conectando"}
+                </span>
+                <span className="view-label"><ClipboardList size={16} />Vista Kanban</span>
+              </div>
             )}
           </div>
           <div className="filters">
@@ -479,18 +508,15 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
           </div>
           {tech && (
             <div className="board-meta">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={mine}
-                  onChange={(e) => setMine(e.target.checked)}
-                />
-                Asignados al técnico de prueba 01
-              </label>
               <span role="status">{visible.length} solicitudes visibles</span>
             </div>
           )}
-          {!visible.length ? (
+          {loading ? (
+            <div className="empty-state" role="status"><Clock3 size={30} /><h3>Cargando solicitudes</h3></div>
+          ) : loadError ? (
+            <div className="empty-state" role="alert"><Info size={30} /><h3>API local no disponible</h3>
+              <p>{loadError}</p><Button variant="outline" onClick={() => void refresh()}>Reintentar</Button></div>
+          ) : !visible.length ? (
             <Empty reset={reset} />
           ) : tech ? (
             <div className="kanban" aria-label="Tablero Kanban" tabIndex={0}>
@@ -612,7 +638,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                 );
               })}
               <div className="list-footnote">
-                {visible.length} solicitudes de ejemplo · Vista solicitante
+                {visible.length} solicitudes locales · Vista solicitante
               </div>
             </div>
           )}
@@ -665,7 +691,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
             <>
               <div className="dialog-heading">
                 <span className="eyebrow">
-                  {detail.id} · SOLICITUD DE EJEMPLO
+                  {detail.id} · SOLICITUD LOCAL
                 </span>
                 <DialogTitle>{detail.title}</DialogTitle>
                 <DialogDescription>
@@ -686,11 +712,11 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                   <dd>{formatDate(detail.createdAt)}</dd>
                 </div>
                 <div>
-                  <dt>Centro de ejemplo</dt>
+                  <dt>Centro local</dt>
                   <dd>{detail.center}</dd>
                 </div>
                 <div>
-                  <dt>Asignación de ejemplo</dt>
+                  <dt>Asignación</dt>
                   <dd>{detail.assignee ?? "Sin asignar"}</dd>
                 </div>
               </dl>
@@ -701,30 +727,34 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
               {tech && (
                 <div className="demo-change">
                   <label htmlFor="demo-status">
-                    Estado de prueba
+                    Siguiente estado
                     <select
                       id="demo-status"
                       className="field"
-                      value={detail.status}
-                      onChange={(e) => {
-                        move(detail.id, e.target.value as TicketStatus);
-                        setMessage(
-                          detail.id +
-                            " cambió a " +
-                            e.target.value +
-                            " en la demostración.",
-                        );
-                      }}
+                      value={nextStatus}
+                      disabled={!nextStatuses[detail.status].length || busy}
+                      onChange={(e) => setNextStatus(e.target.value as TicketStatus)}
                     >
-                      {STATUSES.map((s) => (
+                      {!nextStatuses[detail.status].length && <option value="">Estado terminal</option>}
+                      {nextStatuses[detail.status].map((s) => (
                         <option key={s}>{s}</option>
                       ))}
                     </select>
                   </label>
-                  <p>
-                    El cambio solo mueve la tarjeta de ejemplo. No registra una
-                    atención real.
-                  </p>
+                  {!!nextStatuses[detail.status].length && (
+                    <>
+                      <label htmlFor="state-reason">
+                        Motivo
+                        <textarea id="state-reason" className="field" rows={3} maxLength={500}
+                          value={reason} onChange={(e) => setReason(e.target.value)}
+                          placeholder="Describe brevemente la atención realizada" />
+                      </label>
+                      <Button onClick={() => void changeState()} disabled={busy || reason.trim().length < 5}>
+                        {busy ? "Guardando…" : "Guardar cambio"}
+                      </Button>
+                    </>
+                  )}
+                  <p>El cambio queda auditado y se envía a los tableros conectados.</p>
                 </div>
               )}
               <div className="form-footer">

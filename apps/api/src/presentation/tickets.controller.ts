@@ -1,6 +1,8 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, HttpCode, Inject, MessageEvent, Param, ParseUUIDPipe, Patch, Post, Query, Req, Sse, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiProduces, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { interval, merge, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Tickets } from '../application/tickets';
 import { CreateTicketDto, UpdateTicketDto, TicketQuery, TransitionTicketDto } from './tickets.dto';
 import { LOCAL_TICKETS, LocalTicketsConfig, LocalTicketsGuard } from './local-tickets.guard';
@@ -20,6 +22,17 @@ export class TicketsController {
   create(@Req() req: Request,@Body() body: CreateTicketDto) { return this.tickets.create(this.context(req),body); }
   @Get() @ApiResponse({status:200,description:'items, page, pageSize y hasMore'})
   list(@Req() req: Request,@Query() query: TicketQuery) { return this.tickets.list(this.context(req),query.page,query.pageSize); }
+  @Sse('events') @ApiOperation({summary:'Recibir cambios de tickets en tiempo real mediante SSE'})
+  @ApiProduces('text/event-stream') @ApiResponse({status:200,description:'Flujo SSE aislado por red asistencial'})
+  events(@Req() req:Request):Observable<MessageEvent> {
+    const context=this.context(req);
+    const changes=new Observable<MessageEvent>(subscriber=>this.tickets.watch(context,event=>subscriber.next({
+      id:event.eventId,type:'ticket',retry:3000,data:{version:event.version,type:event.type,ticketId:event.ticketId,
+        requestId:event.eventId,occurredAt:event.occurredAt},
+    })));
+    const heartbeat=interval(15000).pipe(map(()=>({type:'heartbeat',data:{occurredAt:new Date().toISOString()}})));
+    return merge(of({type:'connected',retry:3000,data:{occurredAt:new Date().toISOString()}}),changes,heartbeat);
+  }
   @Get(':id') @ApiResponse({status:404,description:'Ticket inexistente o de otra red'})
   get(@Req() req: Request,@Param('id',new ParseUUIDPipe()) id: string) { return this.tickets.get(this.context(req),id); }
   @Patch(':id') @ApiResponse({status:404,description:'Ticket inexistente o de otra red'})

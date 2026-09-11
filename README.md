@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 2.2 — máquina de estados auditada.** La 2.1 fue confirmada por el usuario y la nube continúa pausada. [Arranque y pruebas 2.2](docs/SUBETAPA-2.2.md); [resultados y pendientes](docs/VALIDATION-2.2.md). Se mantiene `main` y no se realizan despliegues cloud.
+**Entrega actual: subetapa 2.3 — actualización en tiempo real mediante SSE y Redis.** La 2.2 fue confirmada por el usuario y la nube continúa pausada. [Despliegue y demostración local](docs/SUBETAPA-2.3.md); [resultados y pendientes](docs/VALIDATION-2.3.md).
 
 ## Comenzar
 
-- Si ya completaste 2.1: seguir [la guía local de 2.2](docs/SUBETAPA-2.2.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 2.2: seguir [la guía local de 2.3](docs/SUBETAPA-2.3.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -37,7 +37,7 @@ npm run api:start
 
 En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs. Las URLs de conexión están en apps/api/.env, ignorado por Git. Alternativa Docker y checklist: [SUBETAPA-1.4.md](docs/SUBETAPA-1.4.md).
 
-Para el frontend, después de instalar dependencias: `npm run web:build`, `npm run web:check`, `npm run web:test`, `npm run web:smoke` y `npm run web:dev`. Abrir http://127.0.0.1:3000. El portal y el Kanban no requieren una base de tickets ni escriben en PostgreSQL.
+Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal y el Kanban usan PostgreSQL, reciben cambios por SSE y conservan las claves únicamente en el servidor Next.js.
 
 ## Qué contiene esta entrega
 
@@ -51,10 +51,11 @@ Para el frontend, después de instalar dependencias: `npm run web:build`, `npm r
 - Historial protegido contra modificaciones del runtime y consultas limitadas a su red.
 - Respaldo PostgreSQL en formato custom, 22 verificaciones de aislamiento y 34 de auditoría.
 - Backend NestJS por capas, Prisma, runtime restringido y endpoints de salud/documentación.
-- Portal Next.js y Kanban técnico con búsqueda, filtros, formulario y detalle de demostración.
-- Workflow CI con regresión SQL, build y pruebas HTTP, integración Prisma/Redis y contenedor API.
+- Portal Next.js y Kanban técnico conectados al CRUD local mediante un proxy que no expone la clave.
+- Redis Pub/Sub y SSE por tenant, reconexión automática y refresco de React Query.
+- Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
-La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. La API base y el frontend son ejecutables. Los tickets visibles siguen siendo ejemplos en memoria. Las mutaciones del runtime ahora requieren app.user_id y app.request_id, además del tenant, dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
+La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. Esta demostración usa una identidad local ficticia fija; los tickets se guardan en PostgreSQL. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
 
 ## Arquitectura prevista
 
@@ -66,7 +67,9 @@ flowchart LR
   PRISMA[Adaptador Prisma] --> DOM
   PRISMA --> PG[(PostgreSQL / RLS)]
   PG --> AUDIT[Triggers y audit.audit_logs]
-  APP --> REDIS[(Redis)]
+  APP --> REDIS[(Redis Pub/Sub)]
+  REDIS --> SSE[SSE por tenant]
+  SSE --> WEB
   NR[Node-RED] -. Webhooks autenticados .-> API
   NR -.-> INT[SMTP / WhatsApp / Zabbix / IA]
 ```

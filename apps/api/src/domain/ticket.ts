@@ -3,6 +3,20 @@ export const CATEGORIES = ['SOPORTE','REDES','INFRAESTRUCTURA','BIOMEDICO'] as c
 export const PRIORITIES = ['BAJA','MEDIA','ALTA','CRITICA'] as const;
 export const TICKET_STATES = ['ABIERTO','EN_PROCESO','PENDIENTE','RESUELTO','CERRADO'] as const;
 export type TicketState = typeof TICKET_STATES[number];
+export const TICKET_EVENT_TYPES = ['ticket.created','ticket.updated','ticket.state_changed','ticket.deleted'] as const;
+export type TicketEventType = typeof TICKET_EVENT_TYPES[number];
+export type TicketEvent = Readonly<{
+  version: 1;
+  eventId: string;
+  type: TicketEventType;
+  redAsistencialId: string;
+  ticketId: string;
+  occurredAt: string;
+}>;
+export interface TicketEventBus {
+  publish(event: TicketEvent): Promise<void>;
+  subscribe(redAsistencialId: string, listener: (event: TicketEvent) => void): () => void;
+}
 export const TICKET_TRANSITIONS: Readonly<Record<TicketState,readonly TicketState[]>> = Object.freeze({
   ABIERTO:Object.freeze(['EN_PROCESO'] as TicketState[]),
   EN_PROCESO:Object.freeze(['PENDIENTE','RESUELTO'] as TicketState[]),

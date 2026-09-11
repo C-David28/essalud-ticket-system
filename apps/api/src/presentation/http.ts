@@ -47,8 +47,8 @@ export function configureHttp(app: INestApplication, config: ApiConfig, accessLo
   app.useGlobalFilters(new PublicExceptionFilter());
   if (config.swaggerEnabled) {
     const options = new DocumentBuilder().setTitle('EsSalud Ticket API')
-      .setDescription('Subetapa 1.4: endpoints tecnicos. No hay autenticacion ni CRUD de tickets en esta entrega.')
-      .setVersion('0.4.0').addApiKey({type:'apiKey',in:'header',name:'X-Local-Api-Key'},'local-key').build();
+      .setDescription('Subetapa 2.3: CRUD local, maquina de estados auditada y eventos SSE en tiempo real.')
+      .setVersion('0.5.0').addApiKey({type:'apiKey',in:'header',name:'X-Local-Api-Key'},'local-key').build();
     SwaggerModule.setup('docs',app,() => SwaggerModule.createDocument(app,options), {
       jsonDocumentUrl:'docs-json', swaggerOptions:{persistAuthorization:false},
     });

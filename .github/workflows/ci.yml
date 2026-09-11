@@ -75,6 +75,11 @@ jobs:
           npm run tickets:setup
           npm run tickets:up
           npm run tickets:check
+      - name: Verify local real-time demonstration
+        run: |
+          npm run demo:config
+          npm run demo:up
+          npm run demo:check
       - name: Verify cloud operations and backup restoration
         run: npm run cloud:test:integration
       - name: Service status

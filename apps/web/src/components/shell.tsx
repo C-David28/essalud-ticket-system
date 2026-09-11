@@ -85,7 +85,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <br />
             Vista de demostración.
           </p>
-          <span className="sidebar-version">SUBETAPA 1.5</span>
+          <span className="sidebar-version">SUBETAPA 2.3</span>
         </div>
       </aside>
       <div className="app-main">
@@ -100,10 +100,10 @@ export function Shell({ children }: { children: ReactNode }) {
         </header>
         <div className="demo-banner">
           <span>
-            <strong>Demostración</strong> Datos ficticios. Los cambios se
-            reinician al recargar.
+            <strong>Demostración local</strong> Usa datos ficticios. Los cambios
+            se guardan y sincronizan en tiempo real.
           </span>
-          <span className="demo-tag">Sin envío de solicitudes reales</span>
+          <span className="demo-tag">PostgreSQL + Redis + SSE</span>
         </div>
         <main id="contenido" tabIndex={-1}>
           {children}

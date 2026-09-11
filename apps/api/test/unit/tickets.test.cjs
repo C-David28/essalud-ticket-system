@@ -7,6 +7,7 @@ const {Tickets}=require('../../dist/application/tickets');
 const {TicketFailure}=require('../../dist/domain/ticket');
 const {Database}=require('../../dist/infrastructure/database');
 const {RedisProbe}=require('../../dist/infrastructure/redis-probe');
+const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
 const {readConfig}=require('../../dist/infrastructure/config');
 const {configureHttp}=require('../../dist/presentation/http');
 const env={NODE_ENV:'test',DATABASE_URL:'postgresql://runtime:example@localhost/db',REDIS_URL:'redis://:example@localhost',
@@ -17,10 +18,13 @@ async function fixture(t){
  const service={create:async(c,b)=>{calls.push(c);return {...b,codigo:'INC-2026-0001'};},list:async(c,p,size)=>({items:[],page:p,pageSize:size,hasMore:false}),
  get:async()=>{throw new TicketFailure('NOT_FOUND');},update:async(c,id,b)=>{if(!Object.keys(b).length)throw new TicketFailure('INVALID');return b;},
  transition:async(c,id,state,reason)=>{calls.push({state,reason});if(state==='CERRADO')throw new TicketFailure('CONFLICT');return {estado:state};},
- history:async()=>[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}],delete:async()=>{}};
+ history:async()=>[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}],delete:async()=>{},
+ watch:(context,listener)=>{calls.push({watch:context.redAsistencialId,listener});return ()=>{};}};
  const config=readConfig(env);
  const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue({check:async()=>true})
- .overrideProvider(RedisProbe).useValue({check:async()=>true}).overrideProvider(Tickets).useValue(service).compile();
+ .overrideProvider(RedisProbe).useValue({check:async()=>true})
+ .overrideProvider(RedisTicketEvents).useValue({publish:async()=>{},subscribe:()=>()=>{}})
+ .overrideProvider(Tickets).useValue(service).compile();
  const app=mod.createNestApplication({logger:false,bodyParser:false});configureHttp(app,config,false);await app.init();t.after(()=>app.close());
  return {http:request(app.getHttpServer()),calls};
 }
@@ -82,5 +86,23 @@ test('historial usa la clave local y Swagger publica las dos operaciones de esta
  assert.deepEqual(history.body,[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}]);
  const spec=(await http.get('/docs-json').expect(200)).body;
  assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}/estado']),['patch']);
- assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}/estado/historial']),['get']);
+  assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}/estado/historial']),['get']);
+  assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/events']),['get']);
+});
+
+test('aplicacion publica cambios confirmados con tenant y request, pero no publica fallos',async()=>{
+ const published=[],listeners=new Map();
+ const bus={publish:async event=>published.push(event),subscribe:(red,listener)=>{listeners.set(red,listener);return()=>listeners.delete(red);}};
+ const ticket={ticketId:randomUUID()};
+ const repository={create:async()=>ticket,list:async()=>({items:[]}),get:async()=>ticket,update:async()=>ticket,
+  transition:async()=>ticket,history:async()=>[],delete:async()=>{},};
+ const service=new Tickets(repository,bus),context={redAsistencialId:randomUUID(),userId:randomUUID(),requestId:randomUUID()};
+ await service.create(context,body);await service.update(context,ticket.ticketId,{titulo:'Actualizado'});
+ await service.transition(context,ticket.ticketId,'EN_PROCESO','Atencion iniciada');await service.delete(context,ticket.ticketId);
+ assert.deepEqual(published.map(event=>event.type),['ticket.created','ticket.updated','ticket.state_changed','ticket.deleted']);
+ assert.ok(published.every(event=>event.redAsistencialId===context.redAsistencialId&&event.eventId===context.requestId));
+ const received=[];const stop=service.watch(context,event=>received.push(event));
+ listeners.get(context.redAsistencialId)(published[0]);stop();assert.equal(received.length,1);assert.equal(listeners.size,0);
+ const failed=new Tickets({...repository,create:async()=>{throw new TicketFailure('INVALID');}},bus);
+ await assert.rejects(failed.create(context,body));assert.equal(published.length,4);
 });
