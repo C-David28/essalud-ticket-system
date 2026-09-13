@@ -739,6 +739,28 @@ h1 {
   color: var(--secondary-text);
   font-size: 13px;
 }
+.workload-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 23px 17px;
+}
+.workload-strip > div {
+  min-width: 185px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e2eaee;
+  border-radius: 8px;
+  background: #f8fafb;
+  font-size: 12px;
+}
+.workload-strip span {display:flex;gap:7px;align-items:center;}
+.workload-strip small {color:#6a7d89;background:#e8eef1;border-radius:4px;padding:2px 5px;}
+.workload-strip strong {color:#176d64;font-size:13px;}
 .board-meta label {
   display: flex;
   align-items: center;
@@ -1065,6 +1087,9 @@ h1 {
 .demo-change .inline-flex {
   align-self: flex-start;
 }
+.assignment-control > strong {font-size:14px;}
+.assignment-control > p {margin-top:0;}
+.assignment-actions {display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
 .demo-change p {
   font-size: 12px;
   color: var(--secondary-text);

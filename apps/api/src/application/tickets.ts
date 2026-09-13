@@ -21,6 +21,14 @@ export class Tickets {
     return this.changed(context,'ticket.state_changed',this.repository.transition(context,id,state,reason));
   }
   history(context:TenantContext,id:string) { return this.repository.history(context,id); }
+  technicians(context:TenantContext) {return this.repository.technicians(context);}
+  assign(context:TenantContext,id:string,technicianId:string,reason:string) {
+    return this.changed(context,'ticket.assignment_changed',this.repository.assign(context,id,technicianId,reason));
+  }
+  autoAssign(context:TenantContext,id:string) {
+    return this.changed(context,'ticket.assignment_changed',this.repository.autoAssign(context,id));
+  }
+  assignmentHistory(context:TenantContext,id:string) {return this.repository.assignmentHistory(context,id);}
   async delete(context: TenantContext,id: string) {
     await this.repository.delete(context,id);
     await this.eventBus.publish({version:1,eventId:context.requestId,type:'ticket.deleted',

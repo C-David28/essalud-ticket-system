@@ -3,14 +3,16 @@ const assert=require('node:assert/strict'), request=require('supertest'), {rando
 const {Test}=require('@nestjs/testing');
 const {AppModule}=require('../../dist/app.module'),{Database,PrismaTenantUnitOfWork}=require('../../dist/infrastructure/database');
 const {RedisProbe}=require('../../dist/infrastructure/redis-probe');
+const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
 const {readConfig}=require('../../dist/infrastructure/config'),{configureHttp}=require('../../dist/presentation/http');
-exports.exerciseTickets=async function({db,redA,redB,centro,area,concurrent=true}){
+exports.exerciseTickets=async function({db,redA,redB,centro,area,tech1,tech2,concurrent=true}){
  const key='a'.repeat(64),user=randomUUID(),apps=[];
  async function appFor(red){
   const config=readConfig({NODE_ENV:'test',DATABASE_URL:'postgresql://unused:unused@localhost/db',REDIS_URL:'redis://:unused@localhost',
    TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:key,TICKETS_LOCAL_RED_ID:red,TICKETS_LOCAL_USER_ID:user});
   const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue(db)
-   .overrideProvider(RedisProbe).useValue({check:async()=>true}).compile();
+   .overrideProvider(RedisProbe).useValue({check:async()=>true})
+   .overrideProvider(RedisTicketEvents).useValue({publish:async()=>{},subscribe:()=>()=>{}}).compile();
   const app=mod.createNestApplication({logger:false,bodyParser:false});configureHttp(app,config,false);await app.init();apps.push(app);
   return request(app.getHttpServer());
  }
@@ -25,6 +27,28 @@ exports.exerciseTickets=async function({db,redA,redB,centro,area,concurrent=true
   assert.equal(new Set(responses.map(r=>r.body.codigo)).size,responses.length);
   const first=responses[0].body;
   assert.match(first.codigo,/^INC-\d{4}-\d{4,}$/);assert.equal(first.solicitanteId,user);
+  const techList=(await a.get('/api/v1/tickets/asignacion/tecnicos').set('X-Local-Api-Key',key).expect(200)).body;
+  assert.deepEqual(techList.map(item=>item.technicianId),[tech1,tech2]);assert.ok(techList.every(item=>item.activeLoad===0));
+  await b.get('/api/v1/tickets/asignacion/tecnicos').set('X-Local-Api-Key',key).expect(200).expect([]);
+  const autoBase=id=>'/api/v1/tickets/'+id+'/asignacion/automatica';
+  let assigned=await a.post(autoBase(responses[0].body.ticketId)).set('X-Local-Api-Key',key).expect(200);
+  assert.equal(assigned.body.assignedTo,tech1);assert.equal(assigned.body.assignmentMode,'AUTOMATICA');
+  assigned=await a.post(autoBase(responses[1].body.ticketId)).set('X-Local-Api-Key',key).expect(200);
+  assert.equal(assigned.body.assignedTo,tech2);
+  const manual='/api/v1/tickets/'+responses[0].body.ticketId+'/asignacion';
+  await a.patch(manual).set('X-Local-Api-Key',key).send({tecnicoId:tech2,motivo:'Reasignacion integral manual'}).expect(200);
+  await a.patch(manual).set('X-Local-Api-Key',key).send({tecnicoId:tech2,motivo:'Asignacion repetida'}).expect(409);
+  await b.patch(manual).set('X-Local-Api-Key',key).send({tecnicoId:tech1,motivo:'Intento ajeno'}).expect(404);
+  const automatic=await Promise.all(responses.slice(2).map(response=>a.post(autoBase(response.body.ticketId)).set('X-Local-Api-Key',key)));
+  assert.ok(automatic.every(response=>response.status===200));
+  const balanced=(await a.get('/api/v1/tickets/asignacion/tecnicos').set('X-Local-Api-Key',key).expect(200)).body;
+  assert.deepEqual(balanced.map(item=>item.activeLoad),[3,3]);
+  await a.post(autoBase(responses[2].body.ticketId)).set('X-Local-Api-Key',key).expect(409);
+  await a.patch('/api/v1/tickets/'+responses[1].body.ticketId+'/asignacion').set('X-Local-Api-Key',key)
+    .send({tecnicoId:tech1,motivo:'Capacidad completa'}).expect(409);
+  const assignments=(await a.get(manual+'/historial').set('X-Local-Api-Key',key).expect(200)).body;
+  assert.deepEqual(assignments.map(item=>item.assignmentMode),['AUTOMATICA','MANUAL']);
+  assert.deepEqual(assignments.map(item=>item.newTechnicianId),[tech1,tech2]);
   const raceUrl='/api/v1/tickets/'+responses[1].body.ticketId+'/estado';
   const race=await Promise.all([
    a.patch(raceUrl).set('X-Local-Api-Key',key).send({estado:'EN_PROCESO',motivo:'Tecnico A toma el ticket'}),
@@ -64,12 +88,18 @@ exports.exerciseTickets=async function({db,redA,redB,centro,area,concurrent=true
   const retainedHistory=await uow.run({redAsistencialId:redA,userId:user,requestId:randomUUID()},
     tx=>tx.ticketStateTransition.findMany({where:{ticketId:first.ticketId}}));
   assert.equal(retainedHistory.length,8);
+  const retainedAssignments=await uow.run({redAsistencialId:redA,userId:user,requestId:randomUUID()},
+    tx=>tx.ticketAssignmentHistory.findMany({where:{ticketId:first.ticketId}}));
+  assert.equal(retainedAssignments.length,2);
   const logs=await uow.run({redAsistencialId:redA,userId:user,requestId:randomUUID()},tx=>tx.auditLog.findMany({where:{entity:'app.tickets',entityId:{path:['ticket_id'],equals:first.ticketId}},orderBy:{timestamp:'asc'}}));
   assert.equal(logs[0].action,'INSERT');assert.equal(logs.at(-1).action,'DELETE');
   assert.equal(logs.filter(l=>l.action==='UPDATE'&&l.oldValues.estado!==l.newValues.estado).length,7);
   assert.equal(logs[0].requestId,responses[0].headers['x-request-id']);
-  assert.equal(logs[1].oldValues.titulo,input.titulo);assert.equal(logs[1].newValues.prioridad,'CRITICA');
+  const contentUpdate=logs.find(log=>log.action==='UPDATE'&&log.oldValues.titulo===input.titulo&&log.newValues.prioridad==='CRITICA');
+  assert.ok(contentUpdate,'la auditoria debe conservar la edicion de contenido y prioridad');
+  assert.equal(contentUpdate.requestId,patched.headers['x-request-id']);
   assert.ok(logs.some(l=>l.newValues?.estado==='CERRADO'&&l.newValues.closed_at));
+  assert.equal(logs.filter(l=>l.action==='UPDATE'&&l.oldValues.assigned_to!==l.newValues.assigned_to).length,2);
   assert.equal(logs.at(-1).requestId,deletion.headers['x-request-id']);
   for(const r of responses.slice(1))await a.delete('/api/v1/tickets/'+r.body.ticketId).set('X-Local-Api-Key',key).expect(204);
   assert.deepEqual(await real.client.ticket.findMany(),[]);

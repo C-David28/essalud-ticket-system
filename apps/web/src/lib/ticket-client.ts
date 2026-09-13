@@ -10,7 +10,11 @@ type ApiTicket = {
   estado: "ABIERTO" | "EN_PROCESO" | "PENDIENTE" | "RESUELTO" | "CERRADO";
   createdAt: string;
   solicitanteId: string;
+  assignedTo:string|null;
+  assignedAt:string|null;
+  assignmentMode:"MANUAL"|"AUTOMATICA"|null;
 };
+export type Technician={technicianId:string;name:string;level:"N1"|"N2";maxCapacity:number;activeLoad:number;availableCapacity:number};
 
 const categoryToApi = {
   "Soporte técnico": "SOPORTE",
@@ -49,18 +53,21 @@ function mapTicket(ticket: ApiTicket): DemoTicket {
     status: statusFromApi[ticket.estado],
     createdAt: ticket.createdAt,
     requester: "solicitante-demo",
+    assigneeId:ticket.assignedTo,
     assignee: null,
+    assignedAt:ticket.assignedAt,
+    assignmentMode:ticket.assignmentMode,
   };
 }
 
-async function api<T>(path = "", init?: RequestInit): Promise<T> {
+async function api<T>(path = "", init?: RequestInit, conflictMessage="La transición no está permitida desde el estado actual."): Promise<T> {
   const response = await fetch("/api/tickets" + path, {
     ...init,
     headers: init?.body ? { "Content-Type": "application/json" } : undefined,
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) {
-    if (response.status === 409) throw new Error("La transición no está permitida desde el estado actual.");
+    if (response.status === 409) throw new Error(conflictMessage);
     throw new Error("No se pudo completar la operación. Verifica que la API local esté disponible.");
   }
   return (response.status === 204 ? undefined : await response.json()) as T;
@@ -70,6 +77,7 @@ export async function listTickets(): Promise<DemoTicket[]> {
   const page = await api<{ items: ApiTicket[] }>("?page=1&pageSize=100");
   return page.items.map(mapTicket);
 }
+export function listTechnicians():Promise<Technician[]> {return api<Technician[]>("/asignacion/tecnicos");}
 export async function createTicket(draft: TicketDraft): Promise<DemoTicket> {
   const result = await api<ApiTicket>("", {
     method: "POST",
@@ -83,4 +91,13 @@ export async function transitionTicket(ticketId:string,status:TicketStatus,reaso
     method:"PATCH",body:JSON.stringify({estado:statusToApi[status],motivo:reason}),
   });
   return mapTicket(result);
+}
+export async function assignTicket(ticketId:string,technicianId:string,reason:string):Promise<void> {
+  await api("/"+encodeURIComponent(ticketId)+"/asignacion",{method:"PATCH",
+    body:JSON.stringify({tecnicoId:technicianId,motivo:reason})},
+    "No se pudo asignar: revisa el técnico, la capacidad y el estado del ticket.");
+}
+export async function autoAssignTicket(ticketId:string):Promise<void> {
+  await api("/"+encodeURIComponent(ticketId)+"/asignacion/automatica",{method:"POST"},
+    "No hay un técnico disponible o el ticket ya fue asignado.");
 }

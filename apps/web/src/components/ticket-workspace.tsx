@@ -112,7 +112,7 @@ const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
 
 export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
   const tech = mode === "tecnico";
-  const { tickets, add, move, realtime, loading, error: loadError, busy, refresh } = useTickets();
+  const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets();
   const [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
     [center, setCenter] = useState(""),
@@ -124,6 +124,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
     [message, setMessage] = useState("");
   const [nextStatus, setNextStatus] = useState<TicketStatus | "">("");
   const [reason, setReason] = useState("");
+  const [technicianId,setTechnicianId]=useState(""),[assignmentReason,setAssignmentReason]=useState("");
   const lastDetailTrigger = useRef<HTMLButtonElement | null>(null);
   const lastTicketId = useRef<string>("");
   const own = filterTickets(tickets, { requester: DEMO_USER });
@@ -138,7 +139,9 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
   useEffect(() => {
     setNextStatus(detail ? (nextStatuses[detail.status][0] ?? "") : "");
     setReason("");
-  }, [detail?.id, detail?.status]);
+    setTechnicianId(detail?.assigneeId??technicians[0]?.technicianId??"");
+    setAssignmentReason("");
+  }, [detail?.id, detail?.status, detail?.assigneeId, technicians[0]?.technicianId]);
   function reset() {
     setSearch("");
     setStatus("");
@@ -184,6 +187,18 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo cambiar el estado.");
     }
+  }
+  async function manualAssignment() {
+    if(!detail||!technicianId)return;
+    if(assignmentReason.trim().length<5){setMessage("Escribe un motivo de asignación de al menos 5 caracteres.");return;}
+    try {await assign(detail.ticketId,technicianId,assignmentReason.trim());
+      setMessage(detail.id+" fue asignado manualmente y el tablero fue actualizado.");}
+    catch(error){setMessage(error instanceof Error?error.message:"No se pudo asignar el ticket.");}
+  }
+  async function automaticAssignment() {
+    if(!detail)return;
+    try {await autoAssign(detail.ticketId);setMessage(detail.id+" fue asignado al técnico con menor carga.");}
+    catch(error){setMessage(error instanceof Error?error.message:"No hay capacidad disponible.");}
   }
   function field(key: keyof TicketDraft, value: string) {
     setDraft((old) => ({ ...old, [key]: value }));
@@ -506,6 +521,12 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
               </select>
             )}
           </div>
+          {tech&&!!technicians.length&&<div className="workload-strip" aria-label="Carga activa por técnico">
+            {technicians.map(technician=><div key={technician.technicianId}>
+              <span>{technician.name}<small>{technician.level}</small></span>
+              <strong>{technician.activeLoad}/{technician.maxCapacity}</strong>
+            </div>)}
+          </div>}
           {tech && (
             <div className="board-meta">
               <span role="status">{visible.length} solicitudes visibles</span>
@@ -569,16 +590,10 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                                   }
                                 >
                                   {ticket.assignee
-                                    ? ticket.assignee.endsWith("01")
-                                      ? "T1"
-                                      : "T2"
+                                    ? ticket.assignee.split(/\s+/).slice(-2).map(part=>part[0]).join("").toUpperCase()
                                     : "—"}
                                 </span>
-                                {ticket.assignee
-                                  ? ticket.assignee.endsWith("01")
-                                    ? "Técnico 01"
-                                    : "Técnico 02"
-                                  : "Sin asignar"}
+                                {ticket.assignee ?? "Sin asignar"}
                               </span>
                               <time dateTime={ticket.createdAt}>
                                 {formatDate(ticket.createdAt)}
@@ -724,6 +739,30 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                 <h3>Descripción</h3>
                 <p>{detail.description}</p>
               </section>
+              {tech && (
+                <div className="demo-change assignment-control">
+                  <strong>Asignación técnica</strong>
+                  <p>Actual: {detail.assignee??"Sin asignar"}{detail.assignmentMode?" · "+(detail.assignmentMode==="AUTOMATICA"?"Automática":"Manual"):""}</p>
+                  {!["Resuelto","Cerrado"].includes(detail.status)&&<>
+                    <label htmlFor="ticket-technician">Técnico
+                      <select id="ticket-technician" className="field" value={technicianId}
+                        onChange={event=>setTechnicianId(event.target.value)} disabled={busy||!technicians.length}>
+                        {technicians.map(technician=><option key={technician.technicianId} value={technician.technicianId}>
+                          {technician.name} · {technician.activeLoad}/{technician.maxCapacity}
+                        </option>)}
+                      </select>
+                    </label>
+                    <label htmlFor="assignment-reason">Motivo de asignación
+                      <Input id="assignment-reason" value={assignmentReason} maxLength={500}
+                        onChange={event=>setAssignmentReason(event.target.value)} placeholder="Ej. Especialista disponible en turno" />
+                    </label>
+                    <div className="assignment-actions">
+                      <Button variant="outline" onClick={()=>void automaticAssignment()} disabled={busy||!!detail.assigneeId}>Asignar por menor carga</Button>
+                      <Button onClick={()=>void manualAssignment()} disabled={busy||!technicianId||assignmentReason.trim().length<5}>Asignar manualmente</Button>
+                    </div>
+                  </>}
+                </div>
+              )}
               {tech && (
                 <div className="demo-change">
                   <label htmlFor="demo-status">

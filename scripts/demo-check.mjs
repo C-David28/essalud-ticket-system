@@ -35,10 +35,15 @@ try {
   assert.equal(createdResponse.status,201);const created=await createdResponse.json();ticketId=created.ticketId;
   const createdEvent=await nextTicketEvent('ticket.created');assert.equal(createdEvent.ticketId,ticketId);
   let list=await request('?page=1&pageSize=100');assert.ok((await list.json()).items.some(item=>item.ticketId===ticketId));
+  const technicians=await request('/asignacion/tecnicos');assert.equal(technicians.status,200);
+  const available=await technicians.json();assert.ok(available.length>=2);assert.ok(available.every(item=>item.availableCapacity>=0));
+  const automatic=await request('/'+ticketId+'/asignacion/automatica',{method:'POST'});assert.equal(automatic.status,200);
+  const assignmentEvent=await nextTicketEvent('ticket.assignment_changed');assert.equal(assignmentEvent.ticketId,ticketId);
+  const assigned=await automatic.json();assert.ok(available.some(item=>item.technicianId===assigned.assignedTo));
   const changed=await request('/'+ticketId+'/estado',{method:'PATCH',body:JSON.stringify({estado:'EN_PROCESO',motivo:'Atencion iniciada durante la demostracion'})});
   assert.equal(changed.status,200);assert.equal((await nextTicketEvent('ticket.state_changed')).ticketId,ticketId);
   const removed=await request('/'+ticketId,{method:'DELETE'});assert.equal(removed.status,204);
   assert.equal((await nextTicketEvent('ticket.deleted')).ticketId,ticketId);ticketId=undefined;
-  console.log('OK: interfaz, proxy protegido, persistencia y eventos SSE verificados de extremo a extremo.');
+  console.log('OK: interfaz, proxy protegido, asignacion por carga, persistencia y SSE verificados de extremo a extremo.');
 } catch {console.error('Fallo demo:check. Revisa demo:status y demo:logs; no se mostraron claves locales.');process.exitCode=1;}
 finally {controller.abort();if(ticketId)await request('/'+ticketId,{method:'DELETE'}).catch(()=>{});}

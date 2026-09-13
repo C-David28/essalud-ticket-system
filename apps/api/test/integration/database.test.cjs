@@ -123,8 +123,11 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
     const ctx=context();
     const c=await uow.run(ctx,tx=>tx.centroAsistencial.create({data:{redAsistencialId:redA,codigo:'TICKETS',nombre:'Centro tickets',tipo:'CAP'}}));
     const area=await uow.run(ctx,tx=>tx.area.create({data:{redAsistencialId:redA,centroAsistencialId:c.centroAsistencialId,codigo:'TICKETS',nombre:'Area tickets'}}));
+    const tech1=randomUUID(),tech2=randomUUID();
+    await admin.query(`INSERT INTO app.tecnicos_soporte(red_asistencial_id,tecnico_id,nombre,nivel,capacidad_maxima)
+      VALUES ($1,$2,'Tecnico integral 01','N1',3),($1,$3,'Tecnico integral 02','N2',3)`,[redA,tech1,tech2]);
     const parallel=new Database(process.env.DATABASE_URL,3);
-    try {await require('./tickets-flow.cjs').exerciseTickets({db:parallel,redA,redB,centro:c.centroAsistencialId,area:area.areaId});}
+    try {await require('./tickets-flow.cjs').exerciseTickets({db:parallel,redA,redB,centro:c.centroAsistencialId,area:area.areaId,tech1,tech2});}
     finally {await parallel.onApplicationShutdown();}
   });
   await t.test('HTTP real: readiness 200, Redis caido 503 y liveness 200',async()=>{

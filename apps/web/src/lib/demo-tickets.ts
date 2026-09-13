@@ -33,7 +33,10 @@ export type DemoTicket = {
   status: TicketStatus;
   createdAt: string;
   requester: string;
+  assigneeId?: string | null;
   assignee: string | null;
+  assignedAt?:string|null;
+  assignmentMode?:"MANUAL"|"AUTOMATICA"|null;
 };
 export type TicketDraft = Pick<
   DemoTicket,
@@ -56,6 +59,7 @@ export const seedTickets: DemoTicket[] = [
     createdAt: "2026-09-08T13:30:00Z",
     requester: DEMO_USER,
     assignee: null,
+    assigneeId: null,
   },
   {
     ticketId: "00000000-0000-4000-8000-000000000002",

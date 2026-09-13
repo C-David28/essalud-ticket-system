@@ -7,9 +7,13 @@ const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}
 
 function allowed(method:string,path:string[]) {
   if(path.length===0) return method==="GET"||method==="POST";
+  if(path.length===2&&path[0]==="asignacion"&&path[1]==="tecnicos") return method==="GET";
   if(path.length===1&&uuid.test(path[0]??"")) return ["GET","PATCH","DELETE"].includes(method);
   if(path.length===2&&uuid.test(path[0]??"")&&path[1]==="estado") return method==="PATCH";
-  return path.length===3&&uuid.test(path[0]??"")&&path[1]==="estado"&&path[2]==="historial"&&method==="GET";
+  if(path.length===2&&uuid.test(path[0]??"")&&path[1]==="asignacion") return method==="PATCH";
+  if(path.length===3&&uuid.test(path[0]??"")&&path[1]==="estado"&&path[2]==="historial") return method==="GET";
+  return path.length===3&&uuid.test(path[0]??"")&&path[1]==="asignacion"&&
+    ((path[2]==="automatica"&&method==="POST")||(path[2]==="historial"&&method==="GET"));
 }
 async function proxy(request:Request,context:Context) {
   try {
@@ -20,7 +24,7 @@ async function proxy(request:Request,context:Context) {
     if(!path.length&&request.method==="GET") for(const name of ["page","pageSize"])
       if(new URL(request.url).searchParams.has(name)) url.searchParams.set(name,new URL(request.url).searchParams.get(name)!);
     let body:string|undefined;
-    if(["POST","PATCH"].includes(request.method)) {
+    if(request.method==="PATCH"||(request.method==="POST"&&!path.length)) {
       let value:Record<string,unknown>;
       try {value=await request.json() as Record<string,unknown>;}
       catch {return Response.json({message:"Solicitud inválida"},{status:400,headers:{"Cache-Control":"no-store"}});}

@@ -3,7 +3,7 @@ export const CATEGORIES = ['SOPORTE','REDES','INFRAESTRUCTURA','BIOMEDICO'] as c
 export const PRIORITIES = ['BAJA','MEDIA','ALTA','CRITICA'] as const;
 export const TICKET_STATES = ['ABIERTO','EN_PROCESO','PENDIENTE','RESUELTO','CERRADO'] as const;
 export type TicketState = typeof TICKET_STATES[number];
-export const TICKET_EVENT_TYPES = ['ticket.created','ticket.updated','ticket.state_changed','ticket.deleted'] as const;
+export const TICKET_EVENT_TYPES = ['ticket.created','ticket.updated','ticket.state_changed','ticket.assignment_changed','ticket.deleted'] as const;
 export type TicketEventType = typeof TICKET_EVENT_TYPES[number];
 export type TicketEvent = Readonly<{
   version: 1;
@@ -32,7 +32,11 @@ export type TicketChanges = Partial<Pick<TicketInput,'titulo'|'descripcion'|'cat
 export interface Ticket extends TicketInput {
   redAsistencialId: string; ticketId: string; codigo: string; estado: TicketState; solicitanteId: string;
   createdAt: Date; updatedAt: Date; resolvedAt: Date|null; closedAt: Date|null;
+  assignedTo:string|null;assignedAt:Date|null;assignmentMode:'MANUAL'|'AUTOMATICA'|null;
 }
+export interface SupportTechnician {technicianId:string;name:string;level:'N1'|'N2';maxCapacity:number;activeLoad:number;availableCapacity:number}
+export interface TicketAssignment {assignmentId:string;ticketId:string;codigo:string;previousTechnicianId:string|null;
+  newTechnicianId:string;assignmentMode:'MANUAL'|'AUTOMATICA';motivo:string;changedBy:string;requestId:string;changedAt:Date}
 export interface TicketTransition { transitionId:string; ticketId:string; codigo:string;
   estadoAnterior:TicketState|null; estadoNuevo:TicketState; motivo:string; changedBy:string;
   requestId:string; changedAt:Date; }
@@ -47,5 +51,9 @@ export interface TicketRepository {
   update(context: TenantContext, id: string, input: TicketChanges): Promise<Ticket>;
   transition(context: TenantContext,id:string,state:TicketState,reason:string): Promise<Ticket>;
   history(context: TenantContext,id:string): Promise<TicketTransition[]>;
+  technicians(context:TenantContext):Promise<SupportTechnician[]>;
+  assign(context:TenantContext,id:string,technicianId:string,reason:string):Promise<Ticket>;
+  autoAssign(context:TenantContext,id:string):Promise<Ticket>;
+  assignmentHistory(context:TenantContext,id:string):Promise<TicketAssignment[]>;
   delete(context: TenantContext, id: string): Promise<void>;
 }

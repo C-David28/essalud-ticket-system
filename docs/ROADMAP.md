@@ -10,8 +10,8 @@
 | 1.6 | Cloud, dominio público y HTTPS verificado | Validado por el usuario; servicios cloud pausados |
 | 2.1 | CRUD de tickets INC-año-secuencia | Validado por el usuario en Docker local |
 | 2.2 | Máquina de estados | Validada por el usuario en Docker local |
-| 2.3 | Tiempo real y autorización de suscripciones | Implementada; pendiente checklist Docker del usuario |
-| 2.4 | Asignación manual y por carga | Pendiente |
+| 2.3 | Tiempo real y autorización de suscripciones | Validada por el usuario en Docker local |
+| 2.4 | Asignación manual y por carga | Implementada; pendiente checklist Docker del usuario |
 | 3.1 | JWT y RBAC | Pendiente |
 | 3.2 | Catálogo institucional validado | Pendiente |
 | 3.3 | Aislamiento estricto por sede y rol | Pendiente; base tenant desde 1.2 |

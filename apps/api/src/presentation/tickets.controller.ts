@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { interval, merge, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Tickets } from '../application/tickets';
-import { CreateTicketDto, UpdateTicketDto, TicketQuery, TransitionTicketDto } from './tickets.dto';
+import { AssignTicketDto,CreateTicketDto, UpdateTicketDto, TicketQuery, TransitionTicketDto } from './tickets.dto';
 import { LOCAL_TICKETS, LocalTicketsConfig, LocalTicketsGuard } from './local-tickets.guard';
 @ApiTags('Tickets locales')
 @ApiSecurity('local-key')
@@ -22,6 +22,8 @@ export class TicketsController {
   create(@Req() req: Request,@Body() body: CreateTicketDto) { return this.tickets.create(this.context(req),body); }
   @Get() @ApiResponse({status:200,description:'items, page, pageSize y hasMore'})
   list(@Req() req: Request,@Query() query: TicketQuery) { return this.tickets.list(this.context(req),query.page,query.pageSize); }
+  @Get('asignacion/tecnicos') @ApiOperation({summary:'Listar técnicos activos con carga y capacidad disponibles'})
+  technicians(@Req() req:Request) {return this.tickets.technicians(this.context(req));}
   @Sse('events') @ApiOperation({summary:'Recibir cambios de tickets en tiempo real mediante SSE'})
   @ApiProduces('text/event-stream') @ApiResponse({status:200,description:'Flujo SSE aislado por red asistencial'})
   events(@Req() req:Request):Observable<MessageEvent> {
@@ -49,6 +51,23 @@ export class TicketsController {
   @ApiResponse({status:200,description:'Historial cronologico, incluida la apertura'})
   history(@Req() req:Request,@Param('id',new ParseUUIDPipe()) id:string) {
     return this.tickets.history(this.context(req),id);
+  }
+  @Patch(':id/asignacion') @ApiOperation({summary:'Asignar o reasignar manualmente un ticket activo'})
+  @ApiResponse({status:200,description:'Asignación auditada'})
+  @ApiResponse({status:409,description:'Técnico sin capacidad, repetido o ticket terminal'})
+  assign(@Req() req:Request,@Param('id',new ParseUUIDPipe()) id:string,@Body() body:AssignTicketDto) {
+    return this.tickets.assign(this.context(req),id,body.tecnicoId,body.motivo);
+  }
+  @Post(':id/asignacion/automatica') @HttpCode(200)
+  @ApiOperation({summary:'Asignar al técnico activo con menor carga'})
+  @ApiResponse({status:200,description:'Asignación automática auditada'})
+  @ApiResponse({status:409,description:'Ticket ya asignado, terminal o sin capacidad disponible'})
+  autoAssign(@Req() req:Request,@Param('id',new ParseUUIDPipe()) id:string) {
+    return this.tickets.autoAssign(this.context(req),id);
+  }
+  @Get(':id/asignacion/historial') @ApiOperation({summary:'Consultar historial inmutable de asignaciones'})
+  assignmentHistory(@Req() req:Request,@Param('id',new ParseUUIDPipe()) id:string) {
+    return this.tickets.assignmentHistory(this.context(req),id);
   }
   @Delete(':id') @HttpCode(204) @ApiOperation({summary:'Eliminar ticket; conservar su historial de auditoria'})
   @ApiResponse({status:204,description:'Eliminado'}) @ApiResponse({status:404,description:'Ticket inexistente o de otra red'})

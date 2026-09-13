@@ -36,11 +36,12 @@ export class Database implements DependencyProbe, OnApplicationShutdown {
     try {
       await assertRuntimeRole(this.client);
       const rows = await this.client.$queryRaw<Array<{ ok: boolean }>>`
-        SELECT count(*)=6 AND bool_and(c.relrowsecurity AND c.relforcerowsecurity) AS ok
+        SELECT count(*)=8 AND bool_and(c.relrowsecurity AND c.relforcerowsecurity) AS ok
         FROM pg_class c WHERE c.oid IN (
           to_regclass('app.redes_asistenciales'),to_regclass('app.centros_asistenciales'),
           to_regclass('app.areas'),to_regclass('audit.audit_logs'),to_regclass('app.tickets'),
-          to_regclass('app.ticket_state_history')
+          to_regclass('app.ticket_state_history'),to_regclass('app.tecnicos_soporte'),
+          to_regclass('app.ticket_assignment_history')
         )
       `;
       return rows[0]?.ok === true;

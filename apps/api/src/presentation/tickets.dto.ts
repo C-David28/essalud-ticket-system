@@ -23,3 +23,7 @@ export class TransitionTicketDto {
   @ApiProperty({enum:TICKET_STATES}) @IsIn(TICKET_STATES) estado!: typeof TICKET_STATES[number];
   @ApiProperty({minLength:5,maxLength:500}) @Transform(trim) @IsString() @Length(5,500) motivo!: string;
 }
+export class AssignTicketDto {
+  @ApiProperty({format:'uuid'}) @IsUUID() tecnicoId!:string;
+  @ApiProperty({minLength:5,maxLength:500}) @Transform(trim) @IsString() @Length(5,500) motivo!:string;
+}

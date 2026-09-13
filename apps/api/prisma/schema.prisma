@@ -91,10 +91,48 @@ model Ticket {
   updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
   resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
   closedAt DateTime? @map("closed_at") @db.Timestamptz(6)
+  assignedTo String? @map("assigned_to") @db.Uuid
+  assignedAt DateTime? @map("assigned_at") @db.Timestamptz(6)
+  assignmentMode String? @map("assignment_mode") @db.VarChar(10)
   area Area @relation(fields:[redAsistencialId,centroAsistencialId,areaId], references:[redAsistencialId,centroAsistencialId,areaId],onDelete:Restrict,onUpdate:Restrict)
+  assignedTechnician SupportTechnician? @relation(fields:[redAsistencialId,assignedTo],references:[redAsistencialId,technicianId],onDelete:Restrict,onUpdate:Restrict)
   @@id([redAsistencialId,ticketId])
   @@index([redAsistencialId,createdAt(sort: Desc),ticketId(sort: Desc)],map:"tickets_tenant_created_idx")
   @@map("tickets")
+  @@schema("app")
+}
+
+model SupportTechnician {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  technicianId String @default(dbgenerated("gen_random_uuid()")) @map("tecnico_id") @db.Uuid
+  name String @map("nombre") @db.VarChar(160)
+  level String @map("nivel") @db.VarChar(2)
+  maxCapacity Int @default(10) @map("capacidad_maxima") @db.SmallInt
+  active Boolean @default(true) @map("activo")
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
+  tickets Ticket[]
+  @@id([redAsistencialId,technicianId])
+  @@unique([redAsistencialId,name])
+  @@map("tecnicos_soporte")
+  @@schema("app")
+}
+
+model TicketAssignmentHistory {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  assignmentId String @default(dbgenerated("gen_random_uuid()")) @map("assignment_id") @db.Uuid
+  ticketId String @map("ticket_id") @db.Uuid
+  codigo String @db.VarChar(40)
+  previousTechnicianId String? @map("previous_technician_id") @db.Uuid
+  newTechnicianId String @map("new_technician_id") @db.Uuid
+  assignmentMode String @map("assignment_mode") @db.VarChar(10)
+  motivo String @db.VarChar(500)
+  changedBy String @map("changed_by") @db.Uuid
+  requestId String @map("request_id") @db.Uuid
+  changedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("changed_at") @db.Timestamptz(6)
+  @@id([redAsistencialId,assignmentId])
+  @@index([redAsistencialId,ticketId,changedAt,assignmentId],map:"ticket_assignment_history_ticket_idx")
+  @@map("ticket_assignment_history")
   @@schema("app")
 }
 

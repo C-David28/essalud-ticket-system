@@ -20,6 +20,15 @@ try {
   const list=await req('?page=1&pageSize=1');assert.equal(list.status,200);
   assert.equal((await list.json()).items.length,1);
   assert.equal((await req('/'+created[0],{method:'PATCH',body:JSON.stringify({estado:'CERRADO'})})).status,400);
+  const technicians=await req('/asignacion/tecnicos');assert.equal(technicians.status,200);
+  const techs=await technicians.json();assert.ok(techs.length>=2);
+  const automatic=await req('/'+created[0]+'/asignacion/automatica',{method:'POST'});assert.equal(automatic.status,200);
+  const automaticTicket=await automatic.json();assert.equal(automaticTicket.assignmentMode,'AUTOMATICA');
+  const otherTechnician=techs.find(technician=>technician.technicianId!==automaticTicket.assignedTo);assert.ok(otherTechnician);
+  const manual=await req('/'+created[0]+'/asignacion',{method:'PATCH',body:JSON.stringify({tecnicoId:otherTechnician.technicianId,
+    motivo:'Reasignacion manual de prueba'})});assert.equal(manual.status,200);
+  const assignments=await req('/'+created[0]+'/asignacion/historial');assert.equal(assignments.status,200);
+  assert.deepEqual((await assignments.json()).map(item=>item.assignmentMode),['AUTOMATICA','MANUAL']);
   const update=await req('/'+created[0],{method:'PATCH',body:JSON.stringify({titulo:'Titulo corregido de prueba',prioridad:'ALTA'})});
   assert.equal(update.status,200);assert.equal((await update.json()).prioridad,'ALTA');
   const state='/'+created[0]+'/estado';
@@ -40,6 +49,6 @@ try {
     assert.equal((await req('/'+id,{method:'DELETE'})).status,204);
     assert.equal((await req('/'+id)).status,404);
   }
-  console.log('OK: CRUD, cinco estados, transiciones validas, saltos rechazados e historial local.');
+  console.log('OK: CRUD, estados, asignacion manual/automatica e historiales locales.');
 } catch { console.error('Fallo tickets:check. Revisar tickets:setup, tickets:up y la salud local de la API.');process.exitCode=1; }
 finally { for(const id of created) await req('/'+id,{method:'DELETE'}).catch(()=>{}); }

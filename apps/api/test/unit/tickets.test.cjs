@@ -8,6 +8,7 @@ const {TicketFailure}=require('../../dist/domain/ticket');
 const {Database}=require('../../dist/infrastructure/database');
 const {RedisProbe}=require('../../dist/infrastructure/redis-probe');
 const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
+const {PrismaTicketRepository}=require('../../dist/infrastructure/ticket-repository');
 const {readConfig}=require('../../dist/infrastructure/config');
 const {configureHttp}=require('../../dist/presentation/http');
 const env={NODE_ENV:'test',DATABASE_URL:'postgresql://runtime:example@localhost/db',REDIS_URL:'redis://:example@localhost',
@@ -19,6 +20,10 @@ async function fixture(t){
  get:async()=>{throw new TicketFailure('NOT_FOUND');},update:async(c,id,b)=>{if(!Object.keys(b).length)throw new TicketFailure('INVALID');return b;},
  transition:async(c,id,state,reason)=>{calls.push({state,reason});if(state==='CERRADO')throw new TicketFailure('CONFLICT');return {estado:state};},
  history:async()=>[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}],delete:async()=>{},
+ technicians:async()=>[{technicianId:body.areaId,name:'Tecnico 01',activeLoad:0,maxCapacity:4,availableCapacity:4}],
+ assign:async(c,id,technicianId,reason)=>{calls.push({technicianId,reason});return {ticketId:id,assignedTo:technicianId};},
+ autoAssign:async(c,id)=>({ticketId:id,assignedTo:body.areaId}),
+ assignmentHistory:async()=>[{assignmentMode:'MANUAL',newTechnicianId:body.areaId}],
  watch:(context,listener)=>{calls.push({watch:context.redAsistencialId,listener});return ()=>{};}};
  const config=readConfig(env);
  const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue({check:async()=>true})
@@ -89,20 +94,61 @@ test('historial usa la clave local y Swagger publica las dos operaciones de esta
   assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}/estado/historial']),['get']);
   assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/events']),['get']);
 });
+test('asignacion manual y automatica validan entrada, clave y publican contrato',async t=>{
+ const {http,calls}=await fixture(t),id=randomUUID(),base='/api/v1/tickets/'+id+'/asignacion';
+ await http.get('/api/v1/tickets/asignacion/tecnicos').expect(401);
+ const technicians=await http.get('/api/v1/tickets/asignacion/tecnicos').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(200);
+ assert.equal(technicians.body[0].name,'Tecnico 01');
+ for(const value of [{tecnicoId:'bad',motivo:'Motivo valido'},{tecnicoId:body.areaId,motivo:'x'},{tecnicoId:body.areaId}])
+  await http.patch(base).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).send(value).expect(400);
+ const assigned=await http.patch(base).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY)
+  .send({tecnicoId:body.areaId,motivo:'  Asignacion por especialidad  '}).expect(200);
+ assert.equal(assigned.body.assignedTo,body.areaId);assert.equal(calls.at(-1).reason,'Asignacion por especialidad');
+ await http.post(base+'/automatica').expect(401);
+ await http.post(base+'/automatica').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(200);
+ const history=await http.get(base+'/historial').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(200);
+ assert.equal(history.body[0].assignmentMode,'MANUAL');
+ const spec=(await http.get('/docs-json').expect(200)).body;
+ assert.ok(spec.paths['/api/v1/tickets/asignacion/tecnicos']);assert.ok(spec.paths['/api/v1/tickets/{id}/asignacion']);
+ assert.ok(spec.paths['/api/v1/tickets/{id}/asignacion/automatica']);assert.ok(spec.paths['/api/v1/tickets/{id}/asignacion/historial']);
+});
 
 test('aplicacion publica cambios confirmados con tenant y request, pero no publica fallos',async()=>{
  const published=[],listeners=new Map();
  const bus={publish:async event=>published.push(event),subscribe:(red,listener)=>{listeners.set(red,listener);return()=>listeners.delete(red);}};
  const ticket={ticketId:randomUUID()};
  const repository={create:async()=>ticket,list:async()=>({items:[]}),get:async()=>ticket,update:async()=>ticket,
-  transition:async()=>ticket,history:async()=>[],delete:async()=>{},};
+  transition:async()=>ticket,history:async()=>[],technicians:async()=>[],assign:async()=>ticket,autoAssign:async()=>ticket,
+  assignmentHistory:async()=>[],delete:async()=>{},};
  const service=new Tickets(repository,bus),context={redAsistencialId:randomUUID(),userId:randomUUID(),requestId:randomUUID()};
  await service.create(context,body);await service.update(context,ticket.ticketId,{titulo:'Actualizado'});
- await service.transition(context,ticket.ticketId,'EN_PROCESO','Atencion iniciada');await service.delete(context,ticket.ticketId);
- assert.deepEqual(published.map(event=>event.type),['ticket.created','ticket.updated','ticket.state_changed','ticket.deleted']);
+ await service.transition(context,ticket.ticketId,'EN_PROCESO','Atencion iniciada');
+ await service.assign(context,ticket.ticketId,randomUUID(),'Asignacion manual');await service.autoAssign(context,ticket.ticketId);
+ await service.delete(context,ticket.ticketId);
+ assert.deepEqual(published.map(event=>event.type),['ticket.created','ticket.updated','ticket.state_changed',
+  'ticket.assignment_changed','ticket.assignment_changed','ticket.deleted']);
  assert.ok(published.every(event=>event.redAsistencialId===context.redAsistencialId&&event.eventId===context.requestId));
  const received=[];const stop=service.watch(context,event=>received.push(event));
  listeners.get(context.redAsistencialId)(published[0]);stop();assert.equal(received.length,1);assert.equal(listeners.size,0);
  const failed=new Tickets({...repository,create:async()=>{throw new TicketFailure('INVALID');}},bus);
- await assert.rejects(failed.create(context,body));assert.equal(published.length,4);
+ await assert.rejects(failed.create(context,body));assert.equal(published.length,6);
+});
+
+test('asignacion automatica convierte el bloqueo PostgreSQL void a un tipo compatible con Prisma',async()=>{
+ const ticketId=randomUUID(),technicianId=randomUUID(),queries=[];
+ const tx={
+  $queryRaw:async(strings,...values)=>{
+   queries.push({sql:strings.join('?'),values});
+   if(queries.length===1)return[{acquired:''}];
+   if(queries.length===2)return[{estado:'ABIERTO',assignedTo:null}];
+   if(queries.length===3)return[{technicianId}];
+   return[{}];
+  },
+  ticket:{update:async({data})=>({ticketId,...data})},
+ };
+ const uow={run:async(_context,operation)=>operation(tx)};
+ const repository=new PrismaTicketRepository(uow);
+ const result=await repository.autoAssign({redAsistencialId:randomUUID(),userId:randomUUID(),requestId:randomUUID()},ticketId);
+ assert.match(queries[0].sql,/pg_advisory_xact_lock[\s\S]*::text AS acquired/);
+ assert.equal(result.assignedTo,technicianId);assert.equal(result.assignmentMode,'AUTOMATICA');
 });

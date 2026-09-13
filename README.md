@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 2.3 — actualización en tiempo real mediante SSE y Redis.** La 2.2 fue confirmada por el usuario y la nube continúa pausada. [Despliegue y demostración local](docs/SUBETAPA-2.3.md); [resultados y pendientes](docs/VALIDATION-2.3.md).
+**Entrega actual: subetapa 2.4 — asignación manual y automática por carga.** La 2.3 fue confirmada por el usuario y la nube continúa pausada. [Despliegue y demostración local](docs/SUBETAPA-2.4.md); [resultados y pendientes](docs/VALIDATION-2.4.md).
 
 ## Comenzar
 
-- Si ya completaste 2.2: seguir [la guía local de 2.3](docs/SUBETAPA-2.3.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste 2.3: seguir [la guía local de 2.4](docs/SUBETAPA-2.4.md). Conservar el mismo repositorio, `.env` y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -53,6 +53,7 @@ Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `np
 - Backend NestJS por capas, Prisma, runtime restringido y endpoints de salud/documentación.
 - Portal Next.js y Kanban técnico conectados al CRUD local mediante un proxy que no expone la clave.
 - Redis Pub/Sub y SSE por tenant, reconexión automática y refresco de React Query.
+- Catálogo de técnicos por tenant, capacidad activa y asignación manual o automática con historial inmutable.
 - Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
 La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. Esta demostración usa una identidad local ficticia fija; los tickets se guardan en PostgreSQL. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
@@ -80,6 +81,10 @@ NestJS y Prisma están implementados desde 1.4 y Next.js en 1.5; Node-RED se inc
 erDiagram
   REDES_ASISTENCIALES ||--o{ CENTROS_ASISTENCIALES : contiene
   CENTROS_ASISTENCIALES ||--o{ AREAS : contiene
+  REDES_ASISTENCIALES ||--o{ TICKETS : registra
+  REDES_ASISTENCIALES ||--o{ TECNICOS_SOPORTE : organiza
+  TECNICOS_SOPORTE ||--o{ TICKETS : atiende
+  TICKETS ||--o{ HISTORIAL_ASIGNACION : conserva
   REDES_ASISTENCIALES {
     uuid red_asistencial_id PK
     varchar codigo UK
@@ -99,6 +104,23 @@ erDiagram
     varchar codigo
     varchar nombre
   }
+  TICKETS {
+    uuid ticket_id PK
+    varchar codigo UK
+    varchar estado
+    uuid assigned_to FK
+  }
+  TECNICOS_SOPORTE {
+    uuid tecnico_id PK
+    varchar nivel
+    smallint capacidad_maxima
+  }
+  HISTORIAL_ASIGNACION {
+    uuid assignment_id PK
+    uuid ticket_id
+    uuid new_technician_id
+    varchar assignment_mode
+  }
 ```
 
 Cada tabla incluye `activo`, `created_at` y `updated_at`. Las claves compuestas de los hijos preservan su jerarquía institucional. La pertenencia debe conservarse también en futuras tablas de tickets. Los índices de PK y UNIQUE comienzan por la red en los hijos y sirven a las consultas por tenant.
@@ -110,8 +132,7 @@ apps/api/src/{domain,application,infrastructure,presentation}/
 apps/web/src/
 packages/contracts/
 infra/postgres/init/001-bootstrap.sql
-infra/postgres/migrations/0001_multi_tenant.sql
-infra/postgres/migrations/0002_audit_logs.sql
+infra/postgres/migrations/0001_multi_tenant.sql ... 0005_ticket_assignment.sql
 infra/postgres/verify.sql
 infra/postgres/verify-multi-tenant.sql
 infra/postgres/verify-audit.sql

@@ -5,7 +5,10 @@ import { Providers } from "../src/components/providers";
 import { TicketWorkspace } from "../src/components/ticket-workspace";
 import { initialTickets, makeDemoTicket, type DemoTicket } from "../src/lib/demo-tickets";
 
-const api=vi.hoisted(()=>({listTickets:vi.fn(),createTicket:vi.fn(),transitionTicket:vi.fn()}));
+const api=vi.hoisted(()=>({
+  listTickets:vi.fn(),listTechnicians:vi.fn(),createTicket:vi.fn(),transitionTicket:vi.fn(),
+  assignTicket:vi.fn(),autoAssignTicket:vi.fn(),
+}));
 vi.mock("../src/lib/ticket-client",()=>api);
 class FakeEventSource {
   onopen:null|(()=>void)=null;onerror:null|(()=>void)=null;
@@ -16,12 +19,23 @@ let server:DemoTicket[]=[];
 beforeEach(()=>{
   server=initialTickets();
   api.listTickets.mockReset().mockImplementation(async()=>server.map(ticket=>({...ticket})));
+  api.listTechnicians.mockReset().mockResolvedValue([
+    {technicianId:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",name:"Técnico local 01",level:"N1",maxCapacity:4,activeLoad:1,availableCapacity:3},
+    {technicianId:"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",name:"Técnico local 02",level:"N1",maxCapacity:4,activeLoad:0,availableCapacity:4},
+  ]);
   api.createTicket.mockReset().mockImplementation(async draft=>{
     const ticket=makeDemoTicket(draft,"NEW","2026-09-11T12:00:00Z");server=[ticket,...server];return ticket;
   });
   api.transitionTicket.mockReset().mockImplementation(async(ticketId,status)=>{
     server=server.map(ticket=>ticket.ticketId===ticketId?{...ticket,status}:ticket);
     return server.find(ticket=>ticket.ticketId===ticketId);
+  });
+  api.assignTicket.mockReset().mockImplementation(async(ticketId,technicianId)=>{
+    server=server.map(ticket=>ticket.ticketId===ticketId?{...ticket,assigneeId:technicianId,assignmentMode:"MANUAL" as const}:ticket);
+  });
+  api.autoAssignTicket.mockReset().mockImplementation(async ticketId=>{
+    server=server.map(ticket=>ticket.ticketId===ticketId?{...ticket,
+      assigneeId:"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",assignmentMode:"AUTOMATICA" as const}:ticket);
   });
   vi.stubGlobal("EventSource",FakeEventSource);
 });
@@ -63,4 +77,13 @@ it("Kanban filtra y aplica solo la siguiente transición con motivo",async()=>{
   await user.click(screen.getByRole("button",{name:"Cerrar detalle"}));
   const moved=within(screen.getByRole("region",{name:"En Proceso"})).getByRole("button",{name:/Ver DEMO-001/});
   expect(moved).toBeTruthy();expect(api.transitionTicket).toHaveBeenCalledOnce();
+});
+it("Kanban muestra capacidad y asigna automáticamente por carga",async()=>{
+  const user=setup("tecnico");
+  const workload=await screen.findByLabelText("Carga activa por técnico");
+  expect(workload.textContent).toContain("Técnico local 02N1");
+  await user.click(screen.getByRole("button",{name:/Ver DEMO-001/}));
+  await user.click(screen.getByRole("button",{name:"Asignar por menor carga"}));
+  expect(api.autoAssignTicket).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000001");
+  expect(await screen.findByText(/Actual: Técnico local 02 · Automática/)).toBeTruthy();
 });
