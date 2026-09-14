@@ -31,15 +31,15 @@ function response(url, init) {
   if (u.pathname === '/api/v1') body = { service: 'essalud-ticket-api' };
   if (u.pathname.startsWith('/docs')) status = 404;
   if (init.headers?.Origin === web) headers['access-control-allow-origin'] = web;
-  if (['/portal', '/tecnico'].includes(u.pathname)) {
+  if (['/portal', '/acceso', '/tecnico'].includes(u.pathname)) {
     headers['content-type'] = 'text/html';
-    return new Response('Datos ficticios · Mis solicitudes · Tablero de atención', { headers });
+    return new Response('Demostración · ¿Qué necesitas reportar? · Espacio del personal autorizado · Tablero de atención', { headers });
   }
   return new Response(JSON.stringify(body), { status, headers });
 }
-test('verificador produce 12 resultados solo si toda la cadena pasa', async () => {
+test('verificador produce 13 resultados solo si toda la cadena pasa', async () => {
   const evidence = await verifyCloud(web, api, response);
-  assert.equal(evidence.checks.length, 12); assert.equal(evidence.web, web);
+  assert.equal(evidence.checks.length, 13); assert.equal(evidence.web, web);
 });
 test('rechaza API degradada, frontend desconectado, login del proveedor y certificado invalido', async () => {
   for (const path of ['/api/v1/health/ready', '/api/backend-health', '/portal']) {

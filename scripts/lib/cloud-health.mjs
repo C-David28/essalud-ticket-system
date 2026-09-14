@@ -51,11 +51,11 @@ export async function verifyCloud(webInput, apiInput, request = fetch) {
     const r = await get(api, '/api/v1/health/live', { headers: { Origin: 'https://untrusted.invalid' } });
     assert.equal(r.headers.get('access-control-allow-origin'), null);
   });
-  for (const [path, text] of [['/portal', 'Mis solicitudes'], ['/tecnico', 'Tablero de atención']]) {
+  for (const [path, text] of [['/portal', '¿Qué necesitas reportar?'], ['/acceso', 'Espacio del personal autorizado'], ['/tecnico', 'Tablero de atención']]) {
     await check('frontend ' + path, async () => {
       const r = await get(web, path); assert.equal(r.status, 200);
       assert.ok(r.headers.get('content-type')?.includes('text/html'));
-      const html = await r.text(); assert.ok(html.includes(text) && html.includes('Datos ficticios'));
+      const html = await r.text(); assert.ok(html.includes(text) && html.includes('Demostración'));
     });
   }
   await check('frontend conecta con API', async () => {

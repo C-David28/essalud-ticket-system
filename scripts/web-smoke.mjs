@@ -91,14 +91,15 @@ try {
   const get = (path) =>
     fetch(base + path, { signal: AbortSignal.timeout(10000) });
   for (const [path, text] of [
-    ["/portal", "Mis solicitudes"],
+    ["/portal", "¿Qué necesitas reportar?"],
+    ["/acceso", "Espacio del personal autorizado"],
     ["/tecnico", "Tablero de atención"],
   ]) {
     const response = await get(path);
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.ok(html.includes(text));
-    assert.ok(html.includes("sincronizan en tiempo real"));
+    assert.ok(html.includes("Demostración local") || html.includes("Acceso local de demostración"));
     assert.ok(!html.includes("Application error"));
     assert.equal(response.headers.get("x-content-type-options"), "nosniff");
     console.log("PASS: " + path + " renderiza en produccion");

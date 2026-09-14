@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 2.4 — asignación manual y automática por carga.** La 2.3 fue confirmada por el usuario y la nube continúa pausada. [Despliegue y demostración local](docs/SUBETAPA-2.4.md); [resultados y pendientes](docs/VALIDATION-2.4.md).
+**Entrega actual: subetapa 3.1 — portal institucional y experiencias de acceso.** La Etapa 2 fue validada por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.1.md); [evidencia y límites](docs/VALIDATION-3.1.md).
 
 ## Comenzar
 
-- Si ya completaste 2.3: seguir [la guía local de 2.4](docs/SUBETAPA-2.4.md). Conservar el mismo repositorio, `.env` y volúmenes.
+- Si ya completaste la Etapa 2: seguir [la guía local de 3.1](docs/SUBETAPA-3.1.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -56,7 +56,7 @@ Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `np
 - Catálogo de técnicos por tenant, capacidad activa y asignación manual o automática con historial inmutable.
 - Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
-La creación de usuarios, autenticación JWT, roles institucionales y alcance por sede pertenecen a la etapa 3. Esta demostración usa una identidad local ficticia fija; los tickets se guardan en PostgreSQL. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
+La autenticación institucional, el RBAC y el alcance por sede se aplicarán en la subetapa 3.3. Esta demostración usa una identidad local ficticia fija; los tickets se guardan en PostgreSQL. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
 
 ## Arquitectura prevista
 

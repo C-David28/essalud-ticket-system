@@ -112,7 +112,7 @@ const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
 
 export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
   const tech = mode === "tecnico";
-  const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets();
+  const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets({technical:tech});
   const [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
     [center, setCenter] = useState(""),
@@ -214,13 +214,13 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
       <div className="page-heading">
         <div>
           <div className="eyebrow">
-            {tech ? "GESTIÓN DE ATENCIONES" : "PORTAL DEL USUARIO"}
+            {tech ? "GESTIÓN DE ATENCIONES" : "PORTAL PÚBLICO DE SOPORTE"}
           </div>
-          <h1>{tech ? "Tablero de atención" : "¿En qué podemos ayudarte?"}</h1>
+          <h1>{tech ? "Tablero de atención" : "¿Qué necesitas reportar?"}</h1>
           <p>
             {tech
               ? "Organiza el trabajo y consulta cada solicitud."
-              : "Registra una solicitud y sigue el estado de tu atención."}
+              : "Reporta una incidencia sin crear una cuenta y conserva tu código de atención."}
           </p>
         </div>
         <Dialog
@@ -236,16 +236,16 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
           <DialogTrigger asChild>
             <Button>
               <Plus />
-              Nueva solicitud de prueba
+              Reportar incidencia
             </Button>
           </DialogTrigger>
           <DialogContent>
             <div className="dialog-heading">
-              <span className="eyebrow">PORTAL DEL USUARIO</span>
-              <DialogTitle>Nueva solicitud de prueba</DialogTitle>
+              <span className="eyebrow">{tech ? "REGISTRO TÉCNICO DE DEMOSTRACIÓN" : "REPORTE SIN INICIO DE SESIÓN"}</span>
+              <DialogTitle>Reportar una incidencia</DialogTitle>
               <DialogDescription>
-                Usa información ficticia. La solicitud se guardará en la base
-                local y aparecerá en el tablero técnico en tiempo real.
+                {tech ? "Registra un caso ficticio para comprobar el flujo operativo." :
+                  "No necesitas iniciar sesión. Usa información ficticia; recibirás un código para identificar la solicitud."}
               </DialogDescription>
             </div>
             <form onSubmit={submit} noValidate className="request-form">
@@ -350,7 +350,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={busy}>
-                  {busy ? "Guardando…" : "Crear solicitud de prueba"}
+                  {busy ? "Guardando…" : "Enviar solicitud"}
                   <ArrowRight />
                 </Button>
               </div>
@@ -358,6 +358,13 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
           </DialogContent>
         </Dialog>
       </div>
+      {!tech && (
+        <section className="public-journey" aria-label="Cómo funciona el portal">
+          <div><span>1</span><strong>Describe la incidencia</strong><small>Completa solo los datos necesarios.</small></div>
+          <div><span>2</span><strong>Recibe tu código</strong><small>Guárdalo para identificar la atención.</small></div>
+          <div><span>3</span><strong>Sigue el avance</strong><small>Consulta los cambios de tu solicitud.</small></div>
+        </section>
+      )}
       {message && (
         <div className="feedback" role="status">
           <CheckCircle2 size={18} />
@@ -369,7 +376,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
       )}
       {!tech && (
         <>
-          <section className="category-grid" aria-label="Categorías de soporte">
+          <section id="reportar" className="category-grid" aria-label="Categorías de soporte">
             {CATEGORIES.map((category, i) => {
               const Icon = categoryIcons[category];
               return (
@@ -448,7 +455,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
           </section>
         </>
       )}
-      <div className={tech ? "board-section" : "portal-columns"}>
+      <div id={tech ? undefined : "mis-solicitudes"} className={tech ? "board-section" : "portal-columns"}>
         <section className="ticket-section" aria-labelledby="ticket-list-title">
           <div className="section-heading">
             <div>

@@ -13,11 +13,11 @@ const key = ["tickets", "local-api"] as const;
 const technicianKey=["technicians","local-api"] as const;
 export type RealtimeStatus = "connecting" | "live" | "reconnecting" | "unsupported";
 
-export function useTickets() {
+export function useTickets({ technical = false }: { technical?: boolean } = {}) {
   const client = useQueryClient();
   const [realtime,setRealtime]=useState<RealtimeStatus>("connecting");
   const query=useQuery({queryKey:key,queryFn:listTickets,staleTime:10000,refetchInterval:30000});
-  const technicianQuery=useQuery({queryKey:technicianKey,queryFn:listTechnicians,staleTime:10000,refetchInterval:30000});
+  const technicianQuery=useQuery({queryKey:technicianKey,queryFn:listTechnicians,enabled:technical,staleTime:10000,refetchInterval:30000});
   useEffect(()=>{
     if(typeof EventSource==="undefined") {setRealtime("unsupported");return;}
     const source=new EventSource("/api/tickets/events");

@@ -11,19 +11,19 @@
 | 2.1 | CRUD de tickets INC-año-secuencia | Validado por el usuario en Docker local |
 | 2.2 | Máquina de estados | Validada por el usuario en Docker local |
 | 2.3 | Tiempo real y autorización de suscripciones | Validada por el usuario en Docker local |
-| 2.4 | Asignación manual y por carga | Implementada; pendiente checklist Docker del usuario |
-| 3.1 | JWT y RBAC | Pendiente |
-| 3.2 | Catálogo institucional validado | Pendiente |
-| 3.3 | Aislamiento estricto por sede y rol | Pendiente; base tenant desde 1.2 |
-| 3.4 | PWA, cola offline y conflictos | Pendiente |
-| 4.1 | Motor de SLA | Pendiente |
-| 4.2 | Node-RED y webhooks | Pendiente |
-| 4.3 | Escalamiento programado | Pendiente |
-| 4.4 | Semaforización técnica | Pendiente |
-| 5.1 | Correo y WhatsApp | Pendiente |
-| 5.2 | Categorización y sugerencias IA | Pendiente |
-| 5.3 | CMDB | Pendiente |
-| 5.4 | Analítica GCTIC | Pendiente |
+| 2.4 | Asignación manual y por carga | Validada por el usuario; Etapa 2 completada |
+| 3.1 | Portal institucional y experiencias de acceso | Implementada; pendiente checklist local del usuario |
+| 3.2 | Estructura organizacional configurable | Pendiente |
+| 3.3 | Control de acceso, roles, sedes y entornos | Pendiente; base tenant desde 1.2 |
+| 3.4 | Google Maps opcional para sedes e incidencias | Pendiente |
+| 4.1 | Motor configurable de SLA y prioridades | Pendiente |
+| 4.2 | Panel operativo de técnicos y supervisores | Pendiente |
+| 4.3 | Node-RED, alertas y escalamiento | Pendiente |
+| 4.4 | Primer entregable funcional consolidado | Pendiente |
+| 5.1 | Omnicanalidad con correo y WhatsApp | Pendiente |
+| 5.2 | Asistencia con IA | Pendiente |
+| 5.3 | CMDB tecnológico y biomédico | Pendiente |
+| 5.4 | Preparación del piloto institucional y analítica | Pendiente |
 
 ## Criterios de cierre de 1.1
 

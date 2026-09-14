@@ -1,6 +1,6 @@
 {
   "name": "essalud-ticket-system",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "Piloto académico e institucional de soporte — Red Asistencial Pasco",
   "engines": {

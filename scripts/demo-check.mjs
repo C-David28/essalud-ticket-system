@@ -26,8 +26,8 @@ async function nextTicketEvent(type) {
 }
 let ticketId;
 try {
-  for(const path of ['/portal','/tecnico']) {const response=await fetch(new URL(path,base),{signal:AbortSignal.timeout(10000)});
-    assert.equal(response.status,200);assert.ok((await response.text()).includes(path==='/portal'?'Mis solicitudes':'Tablero de atención'));}
+  for(const path of ['/portal','/acceso','/tecnico']) {const response=await fetch(new URL(path,base),{signal:AbortSignal.timeout(10000)});
+    assert.equal(response.status,200);assert.ok((await response.text()).includes(path==='/portal'?'¿Qué necesitas reportar?':path==='/acceso'?'Espacio del personal autorizado':'Tablero de atención'));}
   const stream=await fetch(new URL('/api/tickets/events',base),{headers:{Accept:'text/event-stream'},signal:controller.signal});
   assert.equal(stream.status,200);assert.match(stream.headers.get('content-type')??'',/^text\/event-stream/);reader=stream.body.getReader();
   const createdResponse=await request('',{method:'POST',body:JSON.stringify({titulo:'Demostracion SSE local',

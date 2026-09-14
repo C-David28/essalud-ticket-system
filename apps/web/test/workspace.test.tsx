@@ -46,6 +46,7 @@ function setup(mode:"portal"|"tecnico"="portal") {
 it("portal carga solicitudes persistentes y recupera un filtro vacío",async()=>{
   const user=setup();
   expect(await screen.findAllByRole("button",{name:/^Ver DEMO/})).toHaveLength(3);
+  expect(api.listTechnicians).not.toHaveBeenCalled();
   await user.type(screen.getByRole("textbox",{name:"Buscar solicitudes"}),"sin coincidencias");
   expect(screen.getByText("No encontramos solicitudes")).toBeTruthy();
   await user.click(screen.getByRole("button",{name:"Limpiar filtros"}));
@@ -53,13 +54,13 @@ it("portal carga solicitudes persistentes y recupera un filtro vacío",async()=>
 });
 it("formulario valida y persiste una solicitud mediante el API",async()=>{
   const user=setup();await screen.findAllByRole("button",{name:/^Ver DEMO/});
-  await user.click(screen.getByRole("button",{name:"Nueva solicitud de prueba"}));
-  await user.click(screen.getByRole("button",{name:"Crear solicitud de prueba"}));
+  await user.click(screen.getByRole("button",{name:"Reportar incidencia"}));
+  await user.click(screen.getByRole("button",{name:"Enviar solicitud"}));
   expect(screen.getByText("Escribe un título de 5 a 120 caracteres.")).toBeTruthy();
   expect(document.activeElement?.id).toBe("draft-title");
   await user.type(screen.getByLabelText(/Qué necesitas resolver/),"Estación de trabajo de prueba");
   await user.type(screen.getByLabelText(/Describe el problema/),"El equipo ficticio no responde al abrir una aplicación local.");
-  await user.click(screen.getByRole("button",{name:"Crear solicitud de prueba"}));
+  await user.click(screen.getByRole("button",{name:"Enviar solicitud"}));
   expect(await screen.findByText(/guardada en PostgreSQL/)).toBeTruthy();
   expect(api.createTicket).toHaveBeenCalledOnce();
   expect(await screen.findAllByRole("button",{name:/^Ver (DEMO|DEMO-NEW)/})).toHaveLength(4);
