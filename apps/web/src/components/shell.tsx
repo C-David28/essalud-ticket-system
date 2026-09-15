@@ -10,6 +10,7 @@ import {
   Headset,
   KeyRound,
   LayoutDashboard,
+  Network,
   ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -82,7 +83,7 @@ function PublicShell({ children, path }: { children: ReactNode; path: string }) 
   );
 }
 
-function StaffShell({ children }: { children: ReactNode }) {
+function StaffShell({ children, path }: { children: ReactNode; path: string }) {
   return (
     <div className="app-shell">
       <a href="#contenido" className="skip-link">Saltar al contenido</a>
@@ -90,8 +91,11 @@ function StaffShell({ children }: { children: ReactNode }) {
         <Brand />
         <div className="workspace-label">ESPACIO DEL PERSONAL</div>
         <nav aria-label="Herramientas de personal">
-          <Link href="/tecnico" className="active" aria-current="page">
+          <Link href="/tecnico" className={path === "/tecnico" ? "active" : ""} aria-current={path === "/tecnico" ? "page" : undefined}>
             <LayoutDashboard size={19} /> Gestión de tickets
+          </Link>
+          <Link href="/organizacion" className={path === "/organizacion" ? "active" : ""} aria-current={path === "/organizacion" ? "page" : undefined}>
+            <Network size={19} /> Organización
           </Link>
         </nav>
         <div className="sidebar-bottom">
@@ -99,7 +103,7 @@ function StaffShell({ children }: { children: ReactNode }) {
           <strong>Vista técnica de demostración</strong>
           <p>Identidad ficticia local. La autenticación institucional se incorpora en 3.3.</p>
           <Link href="/portal" className="sidebar-return"><ArrowLeft size={15} /> Volver al portal público</Link>
-          <span className="sidebar-version">SUBETAPA 3.1</span>
+          <span className="sidebar-version">SUBETAPA 3.2</span>
         </div>
       </aside>
       <div className="app-main">
@@ -125,5 +129,5 @@ function StaffShell({ children }: { children: ReactNode }) {
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  return isPublicExperience(path) ? <PublicShell path={path}>{children}</PublicShell> : <StaffShell>{children}</StaffShell>;
+  return isPublicExperience(path) ? <PublicShell path={path}>{children}</PublicShell> : <StaffShell path={path}>{children}</StaffShell>;
 }

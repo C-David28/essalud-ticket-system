@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { parseEnv } from 'node:util';
 import { postgres, run } from './lib/postgres.mjs';
+import { organizationSeedSql } from './lib/organization-config.mjs';
 const file=new URL('../apps/api/.env.tickets',import.meta.url);
 run(()=>{
   let env;
@@ -40,6 +41,7 @@ run(()=>{
         ('${red}','${env.TICKETS_LOCAL_TECH_3_ID}','Tecnico local 03','N2',6)
       ON CONFLICT(red_asistencial_id,nombre) DO UPDATE
         SET nivel=EXCLUDED.nivel,capacidad_maxima=EXCLUDED.capacidad_maxima,activo=true;
+    ${organizationSeedSql(env)}
     COMMIT;`);
-  console.log('OK: catalogo ficticio local y apps/api/.env.tickets disponibles; claves conservadas.');
+  console.log('OK: catálogo organizacional ficticio, técnicos y configuración local disponibles; claves conservadas.');
 });

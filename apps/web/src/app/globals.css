@@ -1732,3 +1732,35 @@ h1 {
     padding: 22px;
   }
 }
+
+/* Subetapa 3.2: catálogo organizacional configurable. */
+.organization-page {padding:35px 36px 48px;max-width:1500px;margin:0 auto;width:100%;}
+.catalog-code {font:700 12px ui-monospace,monospace;background:#e6f3f2;color:#087478;padding:9px 12px;border-radius:8px;}
+.organization-summary {display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 24px;}
+.organization-summary>div {background:#fff;border:1px solid var(--border);border-radius:11px;padding:18px;display:flex;align-items:center;gap:13px;}
+.organization-summary svg {color:#087e82;}
+.organization-summary span {font-size:12px;color:var(--secondary-text);}
+.organization-summary strong {display:block;color:var(--foreground);font-size:24px;line-height:1.2;}
+.catalog-section {background:#fff;border:1px solid var(--border);border-radius:13px;margin-top:20px;overflow:hidden;}
+.center-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:0 24px 25px;}
+.center-grid article,.role-catalog article {border:1px solid #e0e8ee;border-radius:10px;padding:18px;}
+.center-heading {display:flex;gap:12px;align-items:flex-start;}
+.center-heading>span {width:38px;height:38px;display:grid;place-items:center;border-radius:9px;background:#e9f5f4;color:#087e82;}
+.center-heading small {color:var(--secondary-text);font-size:11px;text-transform:uppercase;letter-spacing:.6px;}
+.center-heading h3,.role-catalog h3 {font-size:15px;margin:2px 0 3px;}
+.center-heading code,.role-catalog code {font-size:10px;color:#687d8b;}
+.center-grid ul {list-style:none;margin:16px 0 0;padding:13px 0 0;border-top:1px solid #edf1f4;display:grid;gap:10px;}
+.center-grid li {display:flex;gap:8px;color:#31485b;font-size:13px;}
+.center-grid li svg {margin-top:2px;color:#6b9698;}
+.center-grid li small {display:block;color:#71828e;font-size:10px;}
+.role-catalog {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0 24px 25px;}
+.role-catalog article>div {display:flex;justify-content:space-between;color:#087e82;}
+.role-catalog p {font-size:12px;color:var(--secondary-text);margin-top:11px;}
+.scope {font-size:10px;font-weight:750;letter-spacing:.5px;padding:4px 7px;border-radius:999px;background:#edf3f6;color:#49606f;}
+.scope-nacional {background:#e8edfa;color:#425691;}
+.scope-red {background:#e7f5ef;color:#247053;}
+.organization-state {margin:40px;padding:35px;background:#fff;border:1px solid var(--border);border-radius:12px;text-align:center;}
+.organization-state.error {color:#933;}
+.organization-state .inline-flex {margin-top:15px;}
+@media(max-width:1050px){.role-catalog{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){.organization-page{padding:26px 16px}.organization-summary,.center-grid,.role-catalog{grid-template-columns:1fr}.organization-summary{gap:9px}.center-grid,.role-catalog{padding:0 16px 18px}.catalog-code{align-self:flex-start}}

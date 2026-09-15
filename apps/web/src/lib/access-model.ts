@@ -38,7 +38,7 @@ export const ACCESS_EXPERIENCES: readonly AccessExperience[] = [
 ] as const;
 
 export const PUBLIC_PATHS = ["/portal", "/acceso"] as const;
-export const STAFF_PATHS = ["/tecnico"] as const;
+export const STAFF_PATHS = ["/tecnico", "/organizacion"] as const;
 
 export function isStaffExperience(pathname: string) {
   return STAFF_PATHS.some((path) => pathname === path || pathname.startsWith(path + "/"));

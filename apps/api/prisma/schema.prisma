@@ -16,6 +16,7 @@ model RedAsistencial {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   centros CentroAsistencial[]
+  roles InstitutionalRole[]
   @@map("redes_asistenciales")
   @@schema("app")
 }
@@ -51,6 +52,23 @@ model Area {
   @@map("areas")
   @@schema("app")
 }
+model InstitutionalRole {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  roleId String @default(dbgenerated("gen_random_uuid()")) @map("role_id") @db.Uuid
+  codigo String @db.VarChar(30)
+  nombre String @db.VarChar(120)
+  descripcion String @db.VarChar(500)
+  alcance String @db.VarChar(12)
+  activo Boolean @default(true)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
+  red RedAsistencial @relation(fields:[redAsistencialId],references:[redAsistencialId],onDelete:Restrict,onUpdate:Restrict)
+  @@id([redAsistencialId,roleId])
+  @@unique([redAsistencialId,codigo])
+  @@map("roles_institucionales")
+  @@schema("app")
+}
+
 model AuditLog {
   auditId String @id @default(dbgenerated("gen_random_uuid()")) @map("audit_id") @db.Uuid
   redAsistencialId String @map("red_asistencial_id") @db.Uuid

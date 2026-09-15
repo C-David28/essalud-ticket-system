@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 3.1 — portal institucional y experiencias de acceso.** La Etapa 2 fue validada por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.1.md); [evidencia y límites](docs/VALIDATION-3.1.md).
+**Entrega actual: subetapa 3.2 — estructura organizacional configurable.** Las subetapas anteriores fueron validadas por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.2.md); [evidencia y límites](docs/VALIDATION-3.2.md).
 
 ## Comenzar
 
-- Si ya completaste la Etapa 2: seguir [la guía local de 3.1](docs/SUBETAPA-3.1.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
+- Si ya completaste 3.1: seguir [la guía local de 3.2](docs/SUBETAPA-3.2.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -21,6 +21,7 @@ npm run db:migrate
 npm run db:status
 npm run db:check
 npm run db:audit:check
+npm run db:organization:check
 ```
 
 En Windows se puede usar `npm.cmd` en lugar de `npm`. El generador conserva cualquier `.env` existente. Los scripts de infraestructura usan módulos nativos; el backend requiere instalar las dependencias del lockfile:
@@ -37,13 +38,13 @@ npm run api:start
 
 En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs. Las URLs de conexión están en apps/api/.env, ignorado por Git. Alternativa Docker y checklist: [SUBETAPA-1.4.md](docs/SUBETAPA-1.4.md).
 
-Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal y el Kanban usan PostgreSQL, reciben cambios por SSE y conservan las claves únicamente en el servidor Next.js.
+Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal, el Kanban y `/organizacion` usan PostgreSQL y conservan las claves únicamente en el servidor Next.js.
 
 ## Qué contiene esta entrega
 
 - PostgreSQL 17 y Redis 7.4 con volúmenes persistentes y healthchecks.
 - Migración transaccional con bloqueo y registro SHA-256; repetirla no duplica objetos.
-- Tres tablas: redes asistenciales, centros asistenciales y áreas.
+- Catálogo configurable de redes asistenciales, sedes, áreas y roles institucionales.
 - UUID, códigos únicos por ámbito y claves foráneas compuestas.
 - Roles de propietario, migración y runtime separados.
 - RLS habilitado y forzado; lecturas y escrituras limitadas al contexto de red.
@@ -54,6 +55,7 @@ Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `np
 - Portal Next.js y Kanban técnico conectados al CRUD local mediante un proxy que no expone la clave.
 - Redis Pub/Sub y SSE por tenant, reconexión automática y refresco de React Query.
 - Catálogo de técnicos por tenant, capacidad activa y asignación manual o automática con historial inmutable.
+- Endpoint y vista de estructura organizacional con datos demo reemplazables por configuración.
 - Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
 La autenticación institucional, el RBAC y el alcance por sede se aplicarán en la subetapa 3.3. Esta demostración usa una identidad local ficticia fija; los tickets se guardan en PostgreSQL. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
@@ -83,6 +85,7 @@ erDiagram
   CENTROS_ASISTENCIALES ||--o{ AREAS : contiene
   REDES_ASISTENCIALES ||--o{ TICKETS : registra
   REDES_ASISTENCIALES ||--o{ TECNICOS_SOPORTE : organiza
+  REDES_ASISTENCIALES ||--o{ ROLES_INSTITUCIONALES : configura
   TECNICOS_SOPORTE ||--o{ TICKETS : atiende
   TICKETS ||--o{ HISTORIAL_ASIGNACION : conserva
   REDES_ASISTENCIALES {
@@ -115,6 +118,12 @@ erDiagram
     varchar nivel
     smallint capacidad_maxima
   }
+  ROLES_INSTITUCIONALES {
+    uuid red_asistencial_id PK,FK
+    uuid role_id PK
+    varchar codigo
+    varchar alcance
+  }
   HISTORIAL_ASIGNACION {
     uuid assignment_id PK
     uuid ticket_id
@@ -123,7 +132,7 @@ erDiagram
   }
 ```
 
-Cada tabla incluye `activo`, `created_at` y `updated_at`. Las claves compuestas de los hijos preservan su jerarquía institucional. La pertenencia debe conservarse también en futuras tablas de tickets. Los índices de PK y UNIQUE comienzan por la red en los hijos y sirven a las consultas por tenant.
+Las entidades del catálogo incluyen `activo`, `created_at` y `updated_at`. Las claves compuestas de los hijos preservan su jerarquía institucional. Los índices de PK y UNIQUE comienzan por la red en los hijos y sirven a las consultas por tenant.
 
 ## Estructura
 
@@ -132,7 +141,7 @@ apps/api/src/{domain,application,infrastructure,presentation}/
 apps/web/src/
 packages/contracts/
 infra/postgres/init/001-bootstrap.sql
-infra/postgres/migrations/0001_multi_tenant.sql ... 0005_ticket_assignment.sql
+infra/postgres/migrations/0001_multi_tenant.sql ... 0006_organizational_catalog.sql
 infra/postgres/verify.sql
 infra/postgres/verify-multi-tenant.sql
 infra/postgres/verify-audit.sql
@@ -166,6 +175,7 @@ Si hay conflicto de puertos, cambiarlos en `.env`. Modificar la contraseña de `
 - [Git y publicación personal en GitHub](docs/GITHUB.md).
 - [Cloud: preparación para 1.6](docs/CLOUD.md).
 - [Estado de la hoja de ruta](docs/ROADMAP.md).
+- [Guía de estructura organizacional 3.2](docs/SUBETAPA-3.2.md).
 - [Evidencia y límites de las pruebas](docs/VALIDATION.md).
 
 Fuentes: [RLS en PostgreSQL 17](https://www.postgresql.org/docs/17/ddl-rowsecurity.html), [imagen oficial PostgreSQL](https://hub.docker.com/_/postgres) y [healthchecks Docker](https://docs.docker.com/compose/how-tos/startup-order/).

@@ -7,6 +7,7 @@ const {Database,PrismaTenantUnitOfWork}=require('../../dist/infrastructure/datab
 const {createApplication}=require('../../dist/bootstrap');
 const {readConfig}=require('../../dist/infrastructure/config');
 const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
+const {PrismaOrganizationRepository}=require('../../dist/infrastructure/organization-repository');
 
 test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>{
   assert.equal(process.env.ESSALUD_DISPOSABLE_TEST,'true','Ejecutar npm run api:test:integration desde la raiz');
@@ -73,6 +74,19 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
     assert.equal(loaded.centro.centroAsistencialId,centro.centroAsistencialId);
     await uow.run(ctx,tx=>tx.area.delete({where}));
     assert.equal(await uow.run(ctx,tx=>tx.auditLog.count({where:{requestId:ctx.requestId,entity:'app.areas'}})),2);
+  });
+  await t.test('catalogo organizacional respeta el tenant y mapea roles, sedes y areas',async()=>{
+    const roleId=randomUUID();
+    await admin.query(`INSERT INTO app.roles_institucionales
+      (red_asistencial_id,role_id,codigo,nombre,descripcion,alcance)
+      VALUES ($1,$2,'TECNICO_TEST','Tecnico de prueba','Rol ficticio para integracion organizacional.','SEDE')`,[redA,roleId]);
+    const repository=new PrismaOrganizationRepository(uow);
+    const catalog=await repository.catalog(context());
+    assert.equal(catalog.network.networkId,redA);
+    assert.ok(catalog.centers.some(item=>item.centerId===centro.centroAsistencialId));
+    assert.deepEqual(catalog.roles.map(role=>({id:role.roleId,code:role.code,scope:role.scope})),
+      [{id:roleId,code:'TECNICO_TEST',scope:'SEDE'}]);
+    assert.deepEqual((await repository.catalog(context(redB))).roles,[]);
   });
   await t.test('rollback revierte negocio y auditoria',async()=>{
     const ctx=context();

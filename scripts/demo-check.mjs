@@ -26,8 +26,8 @@ async function nextTicketEvent(type) {
 }
 let ticketId;
 try {
-  for(const path of ['/portal','/acceso','/tecnico']) {const response=await fetch(new URL(path,base),{signal:AbortSignal.timeout(10000)});
-    assert.equal(response.status,200);assert.ok((await response.text()).includes(path==='/portal'?'¿Qué necesitas reportar?':path==='/acceso'?'Espacio del personal autorizado':'Tablero de atención'));}
+  for(const path of ['/portal','/acceso','/tecnico','/organizacion']) {const response=await fetch(new URL(path,base),{signal:AbortSignal.timeout(10000)});
+    assert.equal(response.status,200);assert.ok((await response.text()).includes(path==='/portal'?'¿Qué necesitas reportar?':path==='/acceso'?'Espacio del personal autorizado':path==='/organizacion'?'Cargando estructura organizacional':'Tablero de atención'));}
   const stream=await fetch(new URL('/api/tickets/events',base),{headers:{Accept:'text/event-stream'},signal:controller.signal});
   assert.equal(stream.status,200);assert.match(stream.headers.get('content-type')??'',/^text\/event-stream/);reader=stream.body.getReader();
   const createdResponse=await request('',{method:'POST',body:JSON.stringify({titulo:'Demostracion SSE local',
@@ -35,6 +35,8 @@ try {
   assert.equal(createdResponse.status,201);const created=await createdResponse.json();ticketId=created.ticketId;
   const createdEvent=await nextTicketEvent('ticket.created');assert.equal(createdEvent.ticketId,ticketId);
   let list=await request('?page=1&pageSize=100');assert.ok((await list.json()).items.some(item=>item.ticketId===ticketId));
+  const organization=await fetch(new URL('/api/organization',base),{signal:AbortSignal.timeout(10000)});assert.equal(organization.status,200);
+  const catalog=await organization.json();assert.ok(catalog.centers.length>=4);assert.ok(catalog.roles.length>=5);
   const technicians=await request('/asignacion/tecnicos');assert.equal(technicians.status,200);
   const available=await technicians.json();assert.ok(available.length>=2);assert.ok(available.every(item=>item.availableCapacity>=0));
   const automatic=await request('/'+ticketId+'/asignacion/automatica',{method:'POST'});assert.equal(automatic.status,200);

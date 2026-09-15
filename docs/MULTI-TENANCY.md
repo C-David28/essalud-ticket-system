@@ -1,8 +1,8 @@
-# Modelo multi-tenant de 1.2
+# Modelo multi-tenant actualizado en 3.2
 
 ## Jerarquía e integridad
 
-La red asistencial es el tenant. La PK de redes es `red_asistencial_id`. Centros usa PK `(red_asistencial_id, centro_asistencial_id)`. Áreas usa PK `(red_asistencial_id, centro_asistencial_id, area_id)`.
+La red asistencial es el tenant. La PK de redes es `red_asistencial_id`. Centros usa PK `(red_asistencial_id, centro_asistencial_id)`. Áreas usa PK `(red_asistencial_id, centro_asistencial_id, area_id)`. El catálogo de roles usa PK `(red_asistencial_id, role_id)` y código único dentro de cada red.
 
 La FK de áreas contiene red y centro: un UUID de centro de otra red no puede introducirse declarando una red distinta. Las futuras tablas de tickets deben referenciar la clave completa de área, no solo su UUID. Las FK usan RESTRICT para conservar hijos cuando se intenta borrar o cambiar la clave de un padre.
 
@@ -23,7 +23,7 @@ El campo activo permite marcar inactividad, pero el flujo de bajas y el control 
 
 La API futura usará un login separado con los privilegios de essalud_app; sus credenciales se crearán al conectar el backend. Esta entrega no genera contraseñas nuevas ni cambia las actuales.
 
-El runtime puede leer su red y realizar SELECT, INSERT, UPDATE y DELETE de sus centros y áreas. Crear o modificar redes está reservado a administración. El RBAC de solicitantes, técnicos y jefes se añade en 3.1; estos son roles de base de datos, no usuarios institucionales.
+El runtime puede leer su red y realizar SELECT, INSERT, UPDATE y DELETE de sus centros y áreas. Los roles institucionales son de solo lectura para el runtime y su configuración se carga mediante el proceso administrativo local. Crear o modificar redes está reservado a administración. El RBAC de solicitantes, técnicos y supervisores se añade en 3.3; el catálogo no concede permisos por sí mismo y es distinto de los roles PostgreSQL.
 
 El historial `infra_meta.schema_migrations` permanece bajo el administrador de bootstrap. No está disponible al runtime. El script inicial requiere un cluster local dedicado; si alguno de los nombres de rol ya existe sin el historial esperado, falla para evitar reutilizar privilegios desconocidos.
 
@@ -31,7 +31,7 @@ El historial `infra_meta.schema_migrations` permanece bajo el administrador de b
 
 La política usa `app.current_red_asistencial_id()`, que lee `app.red_asistencial_id`. Ausente o vacío devuelve NULL: no se ven filas ni se admiten inserciones. Un valor inválido produce error de conversión UUID.
 
-El patrón para la API de 1.4/3.1 será una transacción y una única conexión:
+El patrón para la API de 1.4/3.3 será una transacción y una única conexión:
 
 ```sql
 BEGIN;
@@ -50,7 +50,7 @@ RLS es una defensa de aislamiento frente a omisiones de filtros. **El contexto n
 
 Los superusuarios y roles BYPASSRLS eluden las políticas. FORCE RLS somete al propietario durante el acceso ordinario, pero el propietario conserva capacidad DDL para modificarlas. Las pruebas cambian a essalud_app antes de comprobar el acceso; comprobarlo como bootstrap_admin daría una conclusión incorrecta.
 
-Las FK y restricciones UNIQUE operan independientemente de RLS para garantizar integridad. La API futura debe traducir sus errores sin exponer detalles de otras redes. El acceso GCTIC entre redes deberá tener un flujo autorizado explícito en 3.1; no se habilita una bandera de bypass libre.
+Las FK y restricciones UNIQUE operan independientemente de RLS para garantizar integridad. La API futura debe traducir sus errores sin exponer detalles de otras redes. El acceso GCTIC entre redes deberá tener un flujo autorizado explícito en 3.3; no se habilita una bandera de bypass libre.
 
 ## Migraciones
 

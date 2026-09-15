@@ -8,8 +8,20 @@ const root = new URL("../", import.meta.url),
   require = createRequire(new URL("apps/web/package.json", root));
 let health = true,
   ticketKeySeen = false,
+  organizationKeySeen = false,
   child;
 const backend = createServer((req, res) => {
+  if (req.url === "/api/v1/organization") {
+    organizationKeySeen = req.headers["x-local-api-key"] === "a".repeat(64);
+    if (!organizationKeySeen) { res.writeHead(401).end(); return; }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      network: { networkId:"demo", code:"PASCO_DEMO", name:"Red demo", active:true },
+      centers: [{ centerId:"center", code:"SEDE_DEMO", name:"Sede demo", type:"CAP", active:true, areas:[] }],
+      roles: [{ roleId:"role", code:"TECNICO_N1", name:"Técnico N1", description:"Rol demo", scope:"SEDE", active:true }],
+    }));
+    return;
+  }
   if (req.url?.startsWith("/api/v1/tickets")) {
     ticketKeySeen = req.headers["x-local-api-key"] === "a".repeat(64);
     if (!ticketKeySeen) { res.writeHead(401).end(); return; }
@@ -93,6 +105,7 @@ try {
   for (const [path, text] of [
     ["/portal", "¿Qué necesitas reportar?"],
     ["/acceso", "Espacio del personal autorizado"],
+    ["/organizacion", "Cargando estructura organizacional"],
     ["/tecnico", "Tablero de atención"],
   ]) {
     const response = await get(path);
@@ -125,11 +138,13 @@ try {
   assert.equal(response.status,200);assert.equal((await response.json()).items.length,0);assert.equal(ticketKeySeen,true);
   response=await get("/api/tickets/events");assert.equal(response.status,200);
   assert.match(await response.text(),/ticket\.updated/);
+  response=await get("/api/organization");assert.equal(response.status,200);
+  assert.equal((await response.json()).network.code,"PASCO_DEMO");assert.equal(organizationKeySeen,true);
   console.log(
     "PASS: indicador de API 200 -> 503 -> 200, redireccion y rutas HTTP",
   );
   console.log(
-    "OK: frontend de produccion, proxy protegido y transporte SSE verificados con backend simulado.",
+    "OK: frontend de produccion, proxies protegidos y transporte SSE verificados con backend simulado.",
   );
 } catch (error) {
   console.error("Fallo web:smoke: " + error.message);

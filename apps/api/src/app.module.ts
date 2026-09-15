@@ -1,3 +1,6 @@
+import { GetOrganizationCatalog } from './application/get-organization-catalog';
+import { PrismaOrganizationRepository } from './infrastructure/organization-repository';
+import { OrganizationController } from './presentation/organization.controller';
 import { Tickets } from './application/tickets';
 import { PrismaTicketRepository } from './infrastructure/ticket-repository';
 import { TicketsController } from './presentation/tickets.controller';
@@ -14,10 +17,12 @@ export class AppModule {
   static register(config: ApiConfig): DynamicModule {
     return {
       module:AppModule,
-      controllers:[HealthController,SystemController,...(config.localTickets ? [TicketsController] : [])],
+      controllers:[HealthController,SystemController,...(config.localTickets ? [TicketsController,OrganizationController] : [])],
       providers:[
         ...(config.localTickets ? [{provide:LOCAL_TICKETS,useValue:config.localTickets},LocalTicketsGuard,
           {provide:RedisTicketEvents,useFactory:()=>new RedisTicketEvents(config.redisUrl)},
+          {provide:GetOrganizationCatalog,useFactory:(uow:PrismaTenantUnitOfWork)=>
+            new GetOrganizationCatalog(new PrismaOrganizationRepository(uow)),inject:[PrismaTenantUnitOfWork]},
           {provide:Tickets,useFactory:(uow:PrismaTenantUnitOfWork,events:RedisTicketEvents)=>
             new Tickets(new PrismaTicketRepository(uow),events),inject:[PrismaTenantUnitOfWork,RedisTicketEvents]}] : []),
         {provide:Database,useFactory:() => new Database(config.databaseUrl)},
