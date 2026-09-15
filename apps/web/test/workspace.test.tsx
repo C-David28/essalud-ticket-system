@@ -41,7 +41,10 @@ beforeEach(()=>{
 });
 function setup(mode:"portal"|"tecnico"="portal") {
   const user=userEvent.setup();
-  render(<Providers><TicketWorkspace mode={mode}/></Providers>);return user;
+  const access=mode==="tecnico"?{authenticated:true as const,redAsistencialId:"30000000-0000-4000-8000-000000000001",userId:"34000000-0000-4000-8000-000000000001",
+    displayName:"Supervisor demo",roles:["SUPERVISOR_RED" as const],scope:"RED" as const,centerIds:[],
+    permissions:["tickets:transition","tickets:assign"]}:undefined;
+  render(<Providers><TicketWorkspace mode={mode} access={access}/></Providers>);return user;
 }
 it("portal carga solicitudes persistentes y recupera un filtro vacío",async()=>{
   const user=setup();

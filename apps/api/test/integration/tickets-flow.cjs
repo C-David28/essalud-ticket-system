@@ -5,16 +5,21 @@ const {AppModule}=require('../../dist/app.module'),{Database,PrismaTenantUnitOfW
 const {RedisProbe}=require('../../dist/infrastructure/redis-probe');
 const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
 const {readConfig}=require('../../dist/infrastructure/config'),{configureHttp}=require('../../dist/presentation/http');
+const {HmacAccessToken}=require('../../dist/infrastructure/access-token');
 exports.exerciseTickets=async function({db,redA,redB,centro,area,tech1,tech2,concurrent=true}){
- const key='a'.repeat(64),user=randomUUID(),apps=[];
+ const key='a'.repeat(64),secret='b'.repeat(64),user=randomUUID(),apps=[];
  async function appFor(red){
   const config=readConfig({NODE_ENV:'test',DATABASE_URL:'postgresql://unused:unused@localhost/db',REDIS_URL:'redis://:unused@localhost',
-   TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:key,TICKETS_LOCAL_RED_ID:red,TICKETS_LOCAL_USER_ID:user});
+   TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:key,ACCESS_TOKEN_SECRET:secret,TICKETS_LOCAL_RED_ID:red,TICKETS_LOCAL_USER_ID:user});
   const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue(db)
    .overrideProvider(RedisProbe).useValue({check:async()=>true})
    .overrideProvider(RedisTicketEvents).useValue({publish:async()=>{},subscribe:()=>()=>{}}).compile();
   const app=mod.createNestApplication({logger:false,bodyParser:false});configureHttp(app,config,false);await app.init();apps.push(app);
-  return request(app.getHttpServer());
+  const permissions=['tickets:create','tickets:list','tickets:read','tickets:update','tickets:transition','tickets:history','tickets:assign','tickets:technicians','tickets:delete','tickets:events','organization:read'];
+  const token=new HmacAccessToken(secret,900).issue({authenticated:true,redAsistencialId:red,userId:user,displayName:'Administrador integral',roles:['ADMIN_GCTIC'],scope:'NACIONAL',centerIds:[],permissions});
+  const raw=request(app.getHttpServer());return new Proxy(raw,{get(target,property){const value=Reflect.get(target,property);
+    if(typeof value==='function'&&['get','post','patch','delete'].includes(property))return(...args)=>value.apply(target,args).set('Authorization','Bearer '+token);
+    return typeof value==='function'?value.bind(target):value;}});
  }
  // Los modulos comparten db; cerrar cada app llamaria al shutdown de db varias veces.
  // El llamador mantiene/cierra la conexion; el proxy conserva los metodos y omite solo shutdown.

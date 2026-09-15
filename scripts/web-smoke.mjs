@@ -9,11 +9,27 @@ const root = new URL("../", import.meta.url),
 let health = true,
   ticketKeySeen = false,
   organizationKeySeen = false,
+  bearerSeen = false,
   child;
 const backend = createServer((req, res) => {
+  if (req.url === "/api/v1/auth/login" && req.method === "POST") {
+    if (req.headers["x-local-api-key"] !== "a".repeat(64)) { res.writeHead(401).end(); return; }
+    res.writeHead(201, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({token:"demo.signed.token",expiresIn:900,session:{authenticated:true,redAsistencialId:"demo",
+      userId:"staff",displayName:"Supervisor demo",roles:["SUPERVISOR_RED"],scope:"RED",centerIds:[],
+      permissions:["tickets:list","tickets:events","organization:read"]}}));return;
+  }
+  if (req.url === "/api/v1/auth/me") {
+    bearerSeen=req.headers.authorization === "Bearer demo.signed.token";
+    if (!bearerSeen || req.headers["x-local-api-key"] !== "a".repeat(64)) { res.writeHead(401).end(); return; }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({authenticated:true,redAsistencialId:"demo",userId:"staff",displayName:"Supervisor demo",
+      roles:["SUPERVISOR_RED"],scope:"RED",centerIds:[],permissions:["tickets:list","tickets:events","organization:read"]}));return;
+  }
   if (req.url === "/api/v1/organization") {
     organizationKeySeen = req.headers["x-local-api-key"] === "a".repeat(64);
-    if (!organizationKeySeen) { res.writeHead(401).end(); return; }
+    bearerSeen = req.headers.authorization === "Bearer demo.signed.token";
+    if (!organizationKeySeen || !bearerSeen) { res.writeHead(401).end(); return; }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
       network: { networkId:"demo", code:"PASCO_DEMO", name:"Red demo", active:true },
@@ -24,6 +40,7 @@ const backend = createServer((req, res) => {
   }
   if (req.url?.startsWith("/api/v1/tickets")) {
     ticketKeySeen = req.headers["x-local-api-key"] === "a".repeat(64);
+    if(req.headers.authorization)bearerSeen=req.headers.authorization === "Bearer demo.signed.token";
     if (!ticketKeySeen) { res.writeHead(401).end(); return; }
     if (req.url === "/api/v1/tickets/events") {
       res.writeHead(200, { "Content-Type": "text/event-stream" });
@@ -100,15 +117,20 @@ try {
     await pause(500);
   }
   assert.ok(started, "Next.js no estuvo listo en 60 segundos");
-  const get = (path) =>
-    fetch(base + path, { signal: AbortSignal.timeout(10000) });
+  const get = (path,cookie) => fetch(base + path, {headers:cookie?{Cookie:cookie}:{},signal:AbortSignal.timeout(10000) });
+  for(const path of ["/tecnico","/organizacion"]){const response=await fetch(base+path,{redirect:"manual"});
+    assert.ok([307,308].includes(response.status));assert.equal(response.headers.get("location"),"/acceso");}
+  const login=await fetch(base+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({username:"supervisor.red",password:"Demo-RAP-2026!"})});
+  assert.equal(login.status,200);const cookie=(login.headers.get("set-cookie")??"").split(";",1)[0];
+  assert.match(cookie,/^essalud_staff_session=/);assert.equal((await login.json()).session.scope,"RED");
   for (const [path, text] of [
     ["/portal", "¿Qué necesitas reportar?"],
     ["/acceso", "Espacio del personal autorizado"],
     ["/organizacion", "Cargando estructura organizacional"],
     ["/tecnico", "Tablero de atención"],
   ]) {
-    const response = await get(path);
+    const response = await get(path,path==="/tecnico"||path==="/organizacion"?cookie:undefined);
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.ok(html.includes(text));
@@ -121,7 +143,8 @@ try {
   assert.ok([307, 308].includes(home.status));
   assert.equal(home.headers.get("location"), "/portal");
   assert.equal((await get("/no-existe")).status, 404);
-  let response = await get("/api/backend-health");
+  let response=await get("/api/auth/session",cookie);assert.equal(response.status,200);assert.equal((await response.json()).scope,"RED");
+  response = await get("/api/backend-health");
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { status: "ok" });
   health = false;
@@ -134,12 +157,12 @@ try {
     (await fetch(base + "/api/backend-health", { method: "POST" })).status,
     405,
   );
-  response=await get("/api/tickets?page=1&pageSize=100");
+  response=await get("/api/tickets?page=1&pageSize=100",cookie);
   assert.equal(response.status,200);assert.equal((await response.json()).items.length,0);assert.equal(ticketKeySeen,true);
-  response=await get("/api/tickets/events");assert.equal(response.status,200);
+  response=await get("/api/tickets/events",cookie);assert.equal(response.status,200);
   assert.match(await response.text(),/ticket\.updated/);
-  response=await get("/api/organization");assert.equal(response.status,200);
-  assert.equal((await response.json()).network.code,"PASCO_DEMO");assert.equal(organizationKeySeen,true);
+  response=await get("/api/organization",cookie);assert.equal(response.status,200);
+  assert.equal((await response.json()).network.code,"PASCO_DEMO");assert.equal(organizationKeySeen,true);assert.equal(bearerSeen,true);
   console.log(
     "PASS: indicador de API 200 -> 503 -> 200, redireccion y rutas HTTP",
   );

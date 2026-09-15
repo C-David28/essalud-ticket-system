@@ -30,7 +30,7 @@ try {
   started=true;
   docker(['-p',project,'up','-d','--wait','--wait-timeout','120']);
   sql(buildMigrationSql());sql(buildMigrationSql());
-  for(const file of ['verify-multi-tenant.sql','verify-audit.sql','verify-tickets.sql','verify-ticket-states.sql','verify-ticket-assignment.sql','verify-organization.sql']) {
+  for(const file of ['verify-multi-tenant.sql','verify-audit.sql','verify-tickets.sql','verify-ticket-states.sql','verify-ticket-assignment.sql','verify-organization.sql','verify-access.sql']) {
     const result=sql(readFileSync(new URL('../infra/postgres/'+file,import.meta.url),'utf8'));
     process.stdout.write(result.stderr);
   }
@@ -40,7 +40,7 @@ try {
       cwd:projectRoot,stdio:'inherit',env:{...process.env,ESSALUD_DISPOSABLE_TEST:'true',
         TEST_ADMIN_DATABASE_URL:`postgresql://bootstrap_admin:${password}@127.0.0.1:${pgPort}/essalud_test`,
         DATABASE_URL:`postgresql://essalud_api:${apiPassword}@127.0.0.1:${pgPort}/essalud_test`,
-        REDIS_URL:`redis://:${redisPassword}@127.0.0.1:${redisPort}/0`,NODE_ENV:'test',PORT:'0'},
+        REDIS_URL:`redis://:${redisPassword}@127.0.0.1:${redisPort}/0`,NODE_ENV:'test',APP_ENVIRONMENT:'demo',PORT:'0'},
     });
     child.once('error',()=>resolve(1));child.once('exit',code=>resolve(code??1));
   });

@@ -2,7 +2,7 @@
 
 ## Alcance y garantía
 
-La migración 0002 incorpora audit.audit_logs y los triggers iniciales. Las migraciones posteriores amplían la cobertura a tickets, técnicos y roles institucionales. Cada fila afectada produce un evento dentro de la transacción de negocio. Si el trigger falla, la modificación falla; si la transacción se revierte, también se revierten sus eventos.
+La migración 0002 incorpora audit.audit_logs y los triggers iniciales. Las migraciones posteriores amplían la cobertura a tickets, técnicos, roles, usuarios y membresías institucionales. Cada fila afectada produce un evento dentro de la transacción de negocio. Si el trigger falla, la modificación falla; si la transacción se revierte, también se revierten sus eventos.
 
 El runtime essalud_app no tiene INSERT, UPDATE, DELETE ni TRUNCATE sobre audit_logs. Solo un rol interno NOLOGIN, essalud_audit_writer, puede insertar mediante una función de trigger SECURITY DEFINER. No se concede membresía de este rol al runtime. La función tiene search_path fijo, referencias calificadas y ejecución directa revocada al runtime.
 
@@ -24,7 +24,7 @@ La auditoría comienza al aplicar 0002. No reconstruye acciones anteriores ni in
 | db_session_user | Login de la conexión PostgreSQL |
 | db_effective_role | Rol SQL del llamador antes de entrar al trigger privilegiado |
 | action | INSERT, UPDATE o DELETE |
-| entity | Nombre calificado de una de las seis tablas de negocio auditadas |
+| entity | Nombre calificado de una de las ocho tablas de negocio auditadas |
 | entity_id | Objeto JSON con la clave institucional completa |
 | old_values | Valores anteriores; NULL para INSERT |
 | new_values | Valores nuevos; NULL para DELETE |
@@ -32,7 +32,7 @@ La auditoría comienza al aplicar 0002. No reconstruye acciones anteriores ni in
 | request_id | UUID de correlación del caso de uso |
 | transaction_id | Identificador PostgreSQL de la transacción |
 
-Los eventos no tienen FK hacia entidades o usuarios: deben permanecer aunque desaparezca la entidad o la cuenta. user_id todavía no valida pertenencia a un usuario institucional porque la autenticación está prevista en 3.3. Los campos db_session_user y db_effective_role conservan la procedencia técnica.
+Los eventos no tienen FK hacia entidades o usuarios: deben permanecer aunque desaparezca la entidad o la cuenta. Desde 3.3, la API deriva `user_id` de una sesión verificada; el modo público demo conserva su identidad técnica configurada. `password_hash` se excluye expresamente de los snapshots. Los campos db_session_user y db_effective_role conservan la procedencia técnica.
 
 Los campos copiados se limitan a los identificadores institucionales y campos de negocio aprobados por cada migración. Una columna añadida posteriormente no se copia automáticamente. Incorporar otra entidad exige una nueva migración que revise campos sensibles, amplíe la lista de entidades admitidas y cree sus triggers.
 
@@ -49,15 +49,15 @@ SELECT set_config('app.request_id', $3, true);
 COMMIT;
 ```
 
-Los tres valores son UUID serializados. El backend obtendrá la red y el usuario de identidad y pertenencia verificadas; generará el request_id. Son parámetros, no concatenación SQL. El true limita su duración a la transacción y evita arrastrar contexto al reutilizar conexiones.
+Los tres valores son UUID serializados. El backend obtiene la red y el usuario de identidad y pertenencia verificadas; genera el request_id. Son parámetros, no concatenación SQL. El true limita su duración a la transacción y evita arrastrar contexto al reutilizar conexiones.
 
 Sin usuario o solicitud, una mutación del runtime se rechaza con SQLSTATE 42501. Un UUID inválido falla con 22P02. El bootstrap como superusuario puede operar sin contexto de usuario; el evento se identifica como DATABASE y conserva login y rol, sin inventar una persona responsable.
 
-Estos parámetros personalizados no autentican por sí mismos. Una persona con las credenciales SQL del runtime podría fijar un UUID arbitrario: esas credenciales deben quedar en el backend, y el backend debe controlar los valores. La atribución institucional se completará con autenticación y RBAC en 3.3. Tampoco se deben entregar funciones SQL arbitrarias al cliente.
+Estos parámetros personalizados no autentican por sí mismos. Una persona con las credenciales SQL del runtime podría fijar un UUID arbitrario: esas credenciales deben quedar en el backend, y el backend controla los valores después de verificar la sesión y el permiso. Tampoco se deben entregar funciones SQL arbitrarias al cliente.
 
 ## Lectura y estabilidad
 
-La política SELECT de audit_logs filtra por red y deniega filas cuando falta contexto. El alcance por sede y qué roles institucionales pueden consultar auditoría se implementarán en 3.3; hoy solo existe la frontera entre tenants.
+La política SELECT de audit_logs filtra por red y deniega filas cuando falta contexto. La API no publica todavía un endpoint de auditoría; cuando se incorpore, deberá aplicar además los permisos y filtros por sede de 3.3.
 
 Las claves institucionales se consideran estables. 0002 rechaza cambiar la identidad primaria de una fila, incluso dentro de una red, para mantener una referencia histórica inequívoca. Los cambios ordinarios de nombre, tipo y estado continúan permitidos y auditados.
 

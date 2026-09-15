@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "users": [
+    {
+      "id": "$DEMO_TECH_USER_ID",
+      "username": "tecnico.n1",
+      "displayName": "Técnico N1 de demostración",
+      "accesses": [
+        { "id": "35000000-0000-4000-8000-000000000001", "role": "TECNICO_N1", "centerId": "$LOCAL_CENTER_ID" }
+      ]
+    },
+    {
+      "id": "$DEMO_SUPERVISOR_USER_ID",
+      "username": "supervisor.red",
+      "displayName": "Supervisor de red de demostración",
+      "accesses": [
+        { "id": "35000000-0000-4000-8000-000000000002", "role": "SUPERVISOR_RED" }
+      ]
+    },
+    {
+      "id": "$DEMO_ADMIN_USER_ID",
+      "username": "admin.gctic",
+      "displayName": "Administrador GCTIC de demostración",
+      "accesses": [
+        { "id": "35000000-0000-4000-8000-000000000003", "role": "ADMIN_GCTIC" }
+      ]
+    }
+  ]
+}

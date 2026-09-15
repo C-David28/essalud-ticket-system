@@ -12,10 +12,12 @@ beforeEach(()=>api.getOrganizationCatalog.mockReset().mockResolvedValue({
   roles:[{roleId:"4",code:"TECNICO_N1",name:"Técnico N1",description:"Atiende incidencias de demostración.",scope:"SEDE",active:true}],
 }));
 it("presenta red, sedes, áreas y roles desde el catálogo configurable",async()=>{
-  render(<Providers><OrganizationView/></Providers>);
+  const session={authenticated:true as const,redAsistencialId:"1",userId:"user",displayName:"Técnico demo",roles:["TECNICO_N1" as const],scope:"SEDE" as const,centerIds:["2"],permissions:["organization:read"]};
+  render(<Providers><OrganizationView session={session}/></Providers>);
   expect(await screen.findByRole("heading",{name:"Red Pasco - demostración"})).toBeTruthy();
   expect(screen.getByText("Hospital demo")).toBeTruthy();
   expect(screen.getByText("Tecnologías de información")).toBeTruthy();
   expect(screen.getByText("Técnico N1")).toBeTruthy();
   expect(screen.getByText("Sede")).toBeTruthy();
+  expect(screen.getByText("Técnico demo · SEDE")).toBeTruthy();
 });

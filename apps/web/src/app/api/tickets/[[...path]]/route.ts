@@ -1,4 +1,5 @@
 import { apiHeaders, localApiConfig } from "@/lib/local-api";
+import { staffToken } from "@/lib/staff-session";
 
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -20,6 +21,7 @@ async function proxy(request:Request,context:Context) {
     const path=(await context.params).path??[];
     if(!allowed(request.method,path)) return Response.json({message:"Ruta no disponible"},{status:404});
     const config=localApiConfig();
+    const token=await staffToken();
     const url=new URL("/api/v1/tickets"+(path.length?"/"+path.map(encodeURIComponent).join("/"):""),config.base);
     if(!path.length&&request.method==="GET") for(const name of ["page","pageSize"])
       if(new URL(request.url).searchParams.has(name)) url.searchParams.set(name,new URL(request.url).searchParams.get(name)!);
@@ -31,7 +33,7 @@ async function proxy(request:Request,context:Context) {
       if(request.method==="POST"&&!path.length) Object.assign(value,{centroAsistencialId:config.centroAsistencialId,areaId:config.areaId});
       body=JSON.stringify(value);
     }
-    const response=await fetch(url,{method:request.method,headers:{...apiHeaders(config),...(body?{"Content-Type":"application/json"}:{})},
+    const response=await fetch(url,{method:request.method,headers:{...apiHeaders(config),...(token?{Authorization:"Bearer "+token}:{}),...(body?{"Content-Type":"application/json"}:{})},
       body,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(12000)});
     const responseBody=response.status===204?null:await response.arrayBuffer();
     return new Response(responseBody,{status:response.status,headers:{

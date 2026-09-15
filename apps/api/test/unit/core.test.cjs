@@ -6,16 +6,19 @@ const {tenantContext}=require('../../dist/domain/tenant-context');
 const {CheckReadiness}=require('../../dist/application/check-readiness');
 const env={DATABASE_URL:'postgresql://essalud_api:example@127.0.0.1/db',REDIS_URL:'redis://:example@127.0.0.1:6379'};
 test('configuracion valida y Swagger desactivado por defecto en produccion',()=>{
-  assert.equal(readConfig({...env,NODE_ENV:'production'}).swaggerEnabled,false);
-  assert.equal(readConfig(env).host,'127.0.0.1');
+  const production=readConfig({...env,NODE_ENV:'production'});assert.equal(production.swaggerEnabled,false);assert.equal(production.applicationEnvironment,'institutional');
+  const development=readConfig(env);assert.equal(development.host,'127.0.0.1');assert.equal(development.applicationEnvironment,'development');
 });
 test('configuracion rechaza puertos, origenes y URLs invalidos sin revelar claves',()=>{
   for(const override of [{PORT:'-1'},{PORT:'70000'},{PORT:'0'},{CORS_ORIGINS:'*'},
-    {CORS_ORIGINS:'https://example.com/path'},{SWAGGER_ENABLED:'yes'},
+    {CORS_ORIGINS:'https://example.com/path'},{SWAGGER_ENABLED:'yes'},{APP_ENVIRONMENT:'unknown'},{SITE_RESOLUTION_MODE:'guess'},
     {DATABASE_URL:'invalid-secret-value'},{DATABASE_URL:'postgresql://admin@localhost/db'},
     {REDIS_URL:'http://:secret@localhost'}]) {
     assert.throws(()=>readConfig({...env,...override}),error=>!error.message.includes('secret')&&error.message.startsWith('Configuracion'));
   }
+  assert.throws(()=>readConfig({...env,NODE_ENV:'test',APP_ENVIRONMENT:'demo',TICKETS_LOCAL_ENABLED:'true',
+    TICKETS_LOCAL_KEY:'a'.repeat(64),ACCESS_TOKEN_SECRET:'b'.repeat(64),TICKETS_LOCAL_RED_ID:randomUUID(),
+    TICKETS_LOCAL_USER_ID:randomUUID(),SITE_RESOLUTION_MODE:'network'}),/adaptador network no configurado/);
 });
 test('contexto valida UUID y no acepta un tenant arbitrario',()=>{
   const context={redAsistencialId:randomUUID().toUpperCase(),userId:randomUUID(),requestId:randomUUID()};

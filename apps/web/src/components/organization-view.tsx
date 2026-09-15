@@ -3,13 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, MapPin, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getOrganizationCatalog } from "@/lib/organization-client";
+import type { StaffSession } from "@/lib/staff-session";
 
 const typeLabel: Record<string,string> = {
   HOSPITAL: "Hospital", CAP: "CAP", POLICLINICO: "Policlínico", POSTA: "Posta", OTRO: "Otro",
 };
 const scopeLabel = { PROPIO: "Propio", SEDE: "Sede", RED: "Red", NACIONAL: "Nacional" };
 
-export function OrganizationView() {
+export function OrganizationView({session}:{session:StaffSession}) {
   const query = useQuery({ queryKey: ["organization-catalog"], queryFn: getOrganizationCatalog, staleTime: 60000 });
   if (query.isPending) return <div className="organization-state" role="status">Cargando estructura organizacional…</div>;
   if (query.isError) return <div className="organization-state error" role="alert">
@@ -25,7 +26,7 @@ export function OrganizationView() {
           <h1>{catalog.network.name}</h1>
           <p>Red, sedes, áreas y roles cargados desde el catálogo local de demostración.</p>
         </div>
-        <span className="catalog-code">{catalog.network.code}</span>
+        <div className="catalog-identity"><span className="catalog-code">{catalog.network.code}</span><small>{session.displayName} · {session.scope}</small></div>
       </div>
       <section className="organization-summary" aria-label="Resumen organizacional">
         <div><Building2 /><span>Sedes activas<strong>{catalog.centers.filter(item => item.active).length}</strong></span></div>
@@ -44,7 +45,7 @@ export function OrganizationView() {
       </section>
       <section className="catalog-section" aria-labelledby="roles-title">
         <div className="section-heading"><div><span className="eyebrow">ROLES INSTITUCIONALES</span><h2 id="roles-title">Catálogo de responsabilidades</h2>
-          <p>Los alcances se aplicarán como permisos efectivos en la Subetapa 3.3.</p></div></div>
+          <p>La sesión aplica estos roles como permisos efectivos y limita las sedes visibles.</p></div></div>
         <div className="role-catalog">{catalog.roles.map(role => <article key={role.roleId}>
           <div><ShieldCheck size={18} /><span className={"scope scope-"+role.scope.toLowerCase()}>{scopeLabel[role.scope]}</span></div>
           <h3>{role.name}</h3><code>{role.code}</code><p>{role.description}</p>

@@ -69,6 +69,36 @@ model InstitutionalRole {
   @@schema("app")
 }
 
+model InstitutionalUser {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  userId String @default(dbgenerated("gen_random_uuid()")) @map("usuario_id") @db.Uuid
+  username String @db.VarChar(120)
+  displayName String @map("display_name") @db.VarChar(160)
+  passwordHash String @map("password_hash") @db.VarChar(200)
+  active Boolean @default(true) @map("activo")
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
+  @@id([redAsistencialId,userId])
+  @@unique([redAsistencialId,username])
+  @@map("usuarios_institucionales")
+  @@schema("app")
+}
+
+model UserAccess {
+  redAsistencialId String @map("red_asistencial_id") @db.Uuid
+  accessId String @default(dbgenerated("gen_random_uuid()")) @map("access_id") @db.Uuid
+  userId String @map("usuario_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+  centerId String? @map("centro_asistencial_id") @db.Uuid
+  active Boolean @default(true) @map("activo")
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("updated_at") @db.Timestamptz(6)
+  @@id([redAsistencialId,accessId])
+  @@index([redAsistencialId,userId,active],map:"usuario_accesos_user_idx")
+  @@map("usuario_accesos")
+  @@schema("app")
+}
+
 model AuditLog {
   auditId String @id @default(dbgenerated("gen_random_uuid()")) @map("audit_id") @db.Uuid
   redAsistencialId String @map("red_asistencial_id") @db.Uuid

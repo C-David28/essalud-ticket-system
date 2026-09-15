@@ -38,7 +38,8 @@ export class RedisTicketEvents implements TicketEventBus,OnModuleInit,OnApplicat
     if(!value||typeof value!=='object') return false;
     const event=value as Partial<TicketEvent>;
     return event.version===1&&UUID.test(event.eventId??'')&&UUID.test(event.ticketId??'')&&
-      UUID.test(event.redAsistencialId??'')&&typeof event.occurredAt==='string'&&!Number.isNaN(Date.parse(event.occurredAt))&&
+      UUID.test(event.redAsistencialId??'')&&UUID.test(event.centroAsistencialId??'')&&UUID.test(event.solicitanteId??'')&&
+      typeof event.occurredAt==='string'&&!Number.isNaN(Date.parse(event.occurredAt))&&
       TICKET_EVENT_TYPES.includes(event.type as TicketEvent['type']);
   }
   private deliver(event:TicketEvent) {

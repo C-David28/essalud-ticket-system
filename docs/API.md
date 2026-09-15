@@ -1,4 +1,4 @@
-# Backend local — subetapa 3.2
+# Backend local — subetapa 3.3
 
 NestJS 11, TypeScript estricto, Prisma 7 con adaptador PostgreSQL y Redis mediante ioredis. Versiones exactas y árbol reproducible en package-lock.json. Requiere Node.js 24 y npm con soporte de workspaces.
 
@@ -28,7 +28,7 @@ flowchart LR
 
 | Método y ruta | Resultado |
 | --- | --- |
-| GET `/api/v1` | Identificación, versión 0.7.0 y subetapa 3.2 |
+| GET `/api/v1` | Identificación, versión 0.8.0 y subetapa 3.3 |
 | GET `/api/v1/health/live` | 200 si el proceso responde |
 | GET `/api/v1/health/ready` | 200 si PostgreSQL y Redis están disponibles; 503 si falla una dependencia o el rol SQL es inseguro |
 | GET `/docs` y `/docs-json` | Swagger UI y OpenAPI cuando SWAGGER_ENABLED=true |
@@ -42,18 +42,20 @@ flowchart LR
 | POST `/api/v1/tickets/:id/asignacion/automatica` | Asignación al técnico disponible con menor carga |
 | GET `/api/v1/tickets/:id/asignacion/historial` | Historial cronológico e inmutable de asignaciones |
 | GET `/api/v1/organization` | Red, sedes, áreas y roles del tenant local configurado |
+| POST `/api/v1/auth/login` | Valida una identidad demo y entrega un token firmado de corta duración |
+| GET `/api/v1/auth/me` | Devuelve la identidad, roles, permisos y alcance de la sesión |
 
 Los eventos SSE usan `event: ticket` y un cuerpo con `version`, `type`, `ticketId`, `requestId` y `occurredAt`. Las asignaciones publican `ticket.assignment_changed`. Hay heartbeats cada 15 segundos y una recomendación de reconexión de tres segundos. No existe replay en esta subetapa; el cliente vuelve a consultar el listado y las cargas al conectarse.
 
-La sonda SQL comprueba permisos efectivos y RLS forzado en las nueve tablas existentes. Redis debe responder PONG. Las sondas no sustituyen las suites de integridad SQL. Readiness limita su espera a 2,5 segundos; liveness no consulta dependencias.
+La sonda SQL comprueba permisos efectivos y RLS forzado en las once tablas existentes. Redis debe responder PONG. Las sondas no sustituyen las suites de integridad SQL. Readiness limita su espera a 2,5 segundos; liveness no consulta dependencias.
 
 Cada solicitud recibe un UUID nuevo en `X-Request-Id`. Los errores no devuelven stack, consultas SQL ni configuración. Helmet agrega cabeceras de seguridad; CORS permite únicamente los orígenes configurados, sin credenciales. Los logs incluyen método, ruta sin query string, estado y duración; no registran cuerpos ni cabeceras. Swagger está desactivado por defecto en producción. CORS no es autenticación.
 
-Los endpoints de tickets solo se habilitan con `TICKETS_LOCAL_ENABLED=true`, una clave local y una identidad fija validada en el servidor. La configuración rechaza este modo en producción y cloud. Los headers de tenant o usuario se ignoran como autoridad; la autenticación y el RBAC se incorporan en 3.3.
+Los endpoints de tickets solo se habilitan con `TICKETS_LOCAL_ENABLED=true` y una clave interna entre Next.js y la API. La configuración rechaza este modo en producción, cloud y entornos distintos de `demo`. Los headers de tenant o usuario se ignoran como autoridad: una sesión firmada define al personal y la ausencia de sesión usa únicamente el perfil público limitado.
 
 ## PostgreSQL y compatibilidad
 
-Las migraciones 0001–0005 permanecen intactas. La 0006 añade el catálogo de roles por red, RLS y auditoría. `npm run db:migrate` continúa siendo el único mecanismo DDL. El schema Prisma mapea las tablas existentes; **no ejecutar `prisma db push` ni `prisma migrate`**: no representan los CHECK, triggers, permisos y RLS institucionales.
+Las migraciones 0001–0006 permanecen intactas. La 0007 añade identidades y membresías por red, RLS y auditoría. `npm run db:migrate` continúa siendo el único mecanismo DDL. El schema Prisma mapea las tablas existentes; **no ejecutar `prisma db push` ni `prisma migrate`**: no representan los CHECK, triggers, permisos y RLS institucionales.
 
 `api:setup` genera `apps/api/.env` con una clave aleatoria separada y aprovisiona el LOGIN `essalud_api`, que hereda `essalud_app`. No altera el `.env` raíz. El SQL está en `scripts/lib/api-role.mjs`: se envía por stdin, no como argumento visible del proceso. Se ejecuta dentro de una transacción con bloqueo asesor. Repetir conserva las claves de la API. Un rol preexistente sin la marca del proyecto o con membresías inesperadas se rechaza. La API verifica permisos efectivos y rechaza usar superusuarios, propietarios, migradores o escritores de auditoría.
 
@@ -61,7 +63,7 @@ Prisma no representa el tipo PostgreSQL `name` como escalar nativo soportado. `d
 
 `PrismaTenantUnitOfWork.run(context, operation)` valida UUIDs, abre una transacción interactiva y establece `app.red_asistencial_id`, `app.user_id` y `app.request_id` con `set_config(..., true)` sobre la misma conexión. La operación recibe el cliente de esa transacción. El commit conserva negocio y auditoría juntos; el rollback revierte ambos y el contexto local no pasa a la siguiente solicitud del pool.
 
-El contexto debe venir de la futura capa de identidad autorizada. La validación UUID solo verifica forma. Los casos de negocio futuros introducirán sus puertos de repositorio sin depender de tipos Prisma; hoy este adaptador permanece dentro de infraestructura y las pruebas.
+El contexto proviene del principal autenticado o de la identidad pública local. El servidor verifica firma, expiración, tenant, rol y permiso antes de construirlo; el repositorio añade filtros por solicitante, sede o red. La validación UUID solo verifica forma y RLS mantiene una segunda frontera entre redes.
 
 ## Configuración
 
@@ -75,12 +77,16 @@ El contexto debe venir de la futura capa de identidad autorizada. La validación
 | SWAGGER_ENABLED | true/false; por defecto false en producción |
 | TICKETS_LOCAL_ENABLED / TICKETS_LOCAL_KEY | Habilitación y clave del CRUD exclusivamente local |
 | TICKETS_LOCAL_RED_ID / TICKETS_LOCAL_USER_ID | Identidad ficticia fija del servidor local |
+| APP_ENVIRONMENT | `demo`, `development` o `institutional`; el CRUD local solo se habilita en `demo` |
+| SITE_RESOLUTION_MODE | `configured` en esta entrega; `network` queda reservado para un adaptador futuro |
+| ACCESS_TOKEN_SECRET / ACCESS_TOKEN_TTL_SECONDS | Firma HS256 independiente y vigencia de 300 a 3600 segundos |
+| TICKETS_DEMO_PASSWORD | Contraseña de las cuentas ficticias sembradas por `tickets:setup` |
 
 Mantener copia privada de ambos `.env`. api:setup conserva un archivo existente: si cambian puertos o credenciales de infraestructura, actualizar de forma coordinada las URLs de apps/api/.env y reiniciar. Las claves generadas del LOGIN son hexadecimales; el script rechaza formatos ajenos. No compartir URLs con claves ni archivos .env.
 
 ## Pruebas
 
-`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta las seis suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba aislamiento, auditoría, catálogo organizacional, CRUD, estados, asignación concurrente con capacidad, historial, Redis Pub/Sub entre instancias y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
+`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta siete suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba aislamiento, auditoría, autenticación scrypt/JWT, alcance por sede, catálogo organizacional, CRUD, estados, asignación concurrente con capacidad, historial, Redis Pub/Sub entre instancias y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
 
 Si se interrumpe abruptamente, puede quedar el proyecto temporal; su nombre aparece al comienzo. Limpiarlo solo con el comando que incluye ese nombre, nunca usando el proyecto local con `down --volumes`.
 

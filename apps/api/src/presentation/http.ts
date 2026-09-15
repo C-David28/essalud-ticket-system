@@ -5,6 +5,7 @@ import { json, NextFunction, Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import helmet from 'helmet';
 import { ApiConfig } from '../infrastructure/config';
+import { AuthenticationFailure } from '../domain/access';
 type RequestWithId = Request & { requestId?: string };
 @Catch()
 export class PublicExceptionFilter implements ExceptionFilter {
@@ -12,7 +13,7 @@ export class PublicExceptionFilter implements ExceptionFilter {
     const http = host.switchToHttp();
     const request = http.getRequest<RequestWithId>();
     const response = http.getResponse<Response>();
-    const status = error instanceof TicketFailure ? ({NOT_FOUND:404,INVALID:400,CONFLICT:409}[error.kind]) : error instanceof HttpException ? error.getStatus() :
+    const status = error instanceof AuthenticationFailure ? 401 : error instanceof TicketFailure ? ({NOT_FOUND:404,INVALID:400,CONFLICT:409}[error.kind]) : error instanceof HttpException ? error.getStatus() :
       (typeof error === 'object' && error !== null && 'status' in error &&
         (error.status === 400 || error.status === 413) ? error.status : 500);
     const messages: Record<number,string> = {
@@ -47,8 +48,9 @@ export function configureHttp(app: INestApplication, config: ApiConfig, accessLo
   app.useGlobalFilters(new PublicExceptionFilter());
   if (config.swaggerEnabled) {
     const options = new DocumentBuilder().setTitle('EsSalud Ticket API')
-      .setDescription('Subetapa 3.2: tickets y estructura organizacional configurable por tenant.')
-      .setVersion('0.7.0').addApiKey({type:'apiKey',in:'header',name:'X-Local-Api-Key'},'local-key').build();
+      .setDescription('Subetapa 3.3: sesiones firmadas, RBAC y alcance por sede.')
+      .setVersion('0.8.0').addApiKey({type:'apiKey',in:'header',name:'X-Local-Api-Key'},'local-key')
+      .addBearerAuth({type:'http',scheme:'bearer',bearerFormat:'JWT'},'staff-session').build();
     SwaggerModule.setup('docs',app,() => SwaggerModule.createDocument(app,options), {
       jsonDocumentUrl:'docs-json', swaggerOptions:{persistAuthorization:false},
     });

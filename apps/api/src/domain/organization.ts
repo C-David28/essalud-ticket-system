@@ -1,4 +1,4 @@
-import { TenantContext } from "./tenant-context";
+import { AuthorizedContext } from "./access";
 
 export type OrganizationArea = { areaId: string; code: string; name: string; active: boolean };
 export type OrganizationCenter = {
@@ -15,5 +15,5 @@ export type OrganizationCatalog = {
   roles: InstitutionalRole[];
 };
 export interface OrganizationRepository {
-  catalog(context: TenantContext): Promise<OrganizationCatalog>;
+  catalog(context: AuthorizedContext): Promise<OrganizationCatalog>;
 }

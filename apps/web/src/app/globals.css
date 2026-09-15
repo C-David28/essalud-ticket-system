@@ -1764,3 +1764,7 @@ h1 {
 .organization-state .inline-flex {margin-top:15px;}
 @media(max-width:1050px){.role-catalog{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:700px){.organization-page{padding:26px 16px}.organization-summary,.center-grid,.role-catalog{grid-template-columns:1fr}.organization-summary{gap:9px}.center-grid,.role-catalog{padding:0 16px 18px}.catalog-code{align-self:flex-start}}
+
+/* Subetapa 3.3: sesión local y RBAC. */
+.demo-account-list{display:grid;gap:.55rem;margin:.8rem 0}.demo-account-list button{display:grid;gap:.12rem;padding:.7rem .8rem;text-align:left;color:inherit;background:rgba(255,255,255,.72);border:1px solid var(--border);border-radius:.75rem;cursor:pointer}.demo-account-list button:hover,.demo-account-list button:focus-visible{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px rgba(16,110,77,.12)}.demo-account-list span,.demo-account-list small{color:var(--secondary-text)}
+.login-error{margin:0;color:#933;font-size:.9rem}.catalog-identity{display:grid;justify-items:end;gap:.35rem}.catalog-identity small{color:var(--secondary-text)}.sidebar-bottom form{margin:0}.sidebar-bottom form .sidebar-return{width:100%;border:0;cursor:pointer;font:inherit}

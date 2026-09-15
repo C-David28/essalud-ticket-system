@@ -44,6 +44,7 @@ import {
   type TicketDraft,
   type TicketStatus,
 } from "@/lib/demo-tickets";
+import type { StaffSession } from "@/lib/staff-session";
 
 const categoryIcons: Record<Category, ComponentType<{ size?: number }>> = {
   "Soporte técnico": Monitor,
@@ -110,9 +111,10 @@ const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
   priority: "Media",
 });
 
-export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
+export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";access?:StaffSession }) {
   const tech = mode === "tecnico";
-  const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets({technical:tech});
+  const canAssign=!!access?.permissions.includes("tickets:assign"),canTransition=!tech||!!access?.permissions.includes("tickets:transition");
+  const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets({technical:tech,canAssign});
   const [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
     [center, setCenter] = useState(""),
@@ -219,7 +221,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
           <h1>{tech ? "Tablero de atención" : "¿Qué necesitas reportar?"}</h1>
           <p>
             {tech
-              ? "Organiza el trabajo y consulta cada solicitud."
+              ? `Sesión: ${access?.displayName??"personal autorizado"}. Solo se muestran las sedes permitidas.`
               : "Reporta una incidencia sin crear una cuenta y conserva tu código de atención."}
           </p>
         </div>
@@ -460,7 +462,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
           <div className="section-heading">
             <div>
               <h2 id="ticket-list-title">
-                {tech ? "Solicitudes de la red" : "Mis solicitudes"}
+                {tech ? "Solicitudes autorizadas" : "Mis solicitudes"}
                 <span>{tech ? tickets.length : own.length}</span>
               </h2>
               <p>
@@ -746,7 +748,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                 <h3>Descripción</h3>
                 <p>{detail.description}</p>
               </section>
-              {tech && (
+              {tech && canAssign && (
                 <div className="demo-change assignment-control">
                   <strong>Asignación técnica</strong>
                   <p>Actual: {detail.assignee??"Sin asignar"}{detail.assignmentMode?" · "+(detail.assignmentMode==="AUTOMATICA"?"Automática":"Manual"):""}</p>
@@ -770,7 +772,7 @@ export function TicketWorkspace({ mode }: { mode: "portal" | "tecnico" }) {
                   </>}
                 </div>
               )}
-              {tech && (
+              {tech && canTransition && (
                 <div className="demo-change">
                   <label htmlFor="demo-status">
                     Siguiente estado

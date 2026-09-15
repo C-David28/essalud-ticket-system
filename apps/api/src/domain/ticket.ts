@@ -1,4 +1,4 @@
-import { TenantContext } from './tenant-context';
+import { AuthorizedContext } from './access';
 export const CATEGORIES = ['SOPORTE','REDES','INFRAESTRUCTURA','BIOMEDICO'] as const;
 export const PRIORITIES = ['BAJA','MEDIA','ALTA','CRITICA'] as const;
 export const TICKET_STATES = ['ABIERTO','EN_PROCESO','PENDIENTE','RESUELTO','CERRADO'] as const;
@@ -11,6 +11,8 @@ export type TicketEvent = Readonly<{
   type: TicketEventType;
   redAsistencialId: string;
   ticketId: string;
+  centroAsistencialId:string;
+  solicitanteId:string;
   occurredAt: string;
 }>;
 export interface TicketEventBus {
@@ -45,15 +47,15 @@ export class TicketFailure extends Error {
   constructor(readonly kind: 'NOT_FOUND'|'INVALID'|'CONFLICT') { super(kind); }
 }
 export interface TicketRepository {
-  create(context: TenantContext, input: TicketInput): Promise<Ticket>;
-  list(context: TenantContext, page: number, pageSize: number): Promise<TicketPage>;
-  get(context: TenantContext, id: string): Promise<Ticket>;
-  update(context: TenantContext, id: string, input: TicketChanges): Promise<Ticket>;
-  transition(context: TenantContext,id:string,state:TicketState,reason:string): Promise<Ticket>;
-  history(context: TenantContext,id:string): Promise<TicketTransition[]>;
-  technicians(context:TenantContext):Promise<SupportTechnician[]>;
-  assign(context:TenantContext,id:string,technicianId:string,reason:string):Promise<Ticket>;
-  autoAssign(context:TenantContext,id:string):Promise<Ticket>;
-  assignmentHistory(context:TenantContext,id:string):Promise<TicketAssignment[]>;
-  delete(context: TenantContext, id: string): Promise<void>;
+  create(context: AuthorizedContext, input: TicketInput): Promise<Ticket>;
+  list(context: AuthorizedContext, page: number, pageSize: number): Promise<TicketPage>;
+  get(context: AuthorizedContext, id: string): Promise<Ticket>;
+  update(context: AuthorizedContext, id: string, input: TicketChanges): Promise<Ticket>;
+  transition(context: AuthorizedContext,id:string,state:TicketState,reason:string): Promise<Ticket>;
+  history(context: AuthorizedContext,id:string): Promise<TicketTransition[]>;
+  technicians(context:AuthorizedContext):Promise<SupportTechnician[]>;
+  assign(context:AuthorizedContext,id:string,technicianId:string,reason:string):Promise<Ticket>;
+  autoAssign(context:AuthorizedContext,id:string):Promise<Ticket>;
+  assignmentHistory(context:AuthorizedContext,id:string):Promise<TicketAssignment[]>;
+  delete(context: AuthorizedContext, id: string): Promise<void>;
 }

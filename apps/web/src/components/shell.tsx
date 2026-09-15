@@ -101,9 +101,10 @@ function StaffShell({ children, path }: { children: ReactNode; path: string }) {
         <div className="sidebar-bottom">
           <ShieldCheck size={21} />
           <strong>Vista técnica de demostración</strong>
-          <p>Identidad ficticia local. La autenticación institucional se incorpora en 3.3.</p>
+          <p>Sesión demo firmada. El proveedor institucional se conectará mediante el adaptador de identidad.</p>
           <Link href="/portal" className="sidebar-return"><ArrowLeft size={15} /> Volver al portal público</Link>
-          <span className="sidebar-version">SUBETAPA 3.2</span>
+          <form action="/api/auth/logout" method="post"><button className="sidebar-return" type="submit">Cerrar sesión</button></form>
+          <span className="sidebar-version">SUBETAPA 3.3</span>
         </div>
       </aside>
       <div className="app-main">

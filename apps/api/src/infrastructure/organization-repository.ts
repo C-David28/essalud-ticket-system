@@ -1,17 +1,19 @@
 import { OrganizationCatalog, OrganizationRepository } from "../domain/organization";
-import { TenantContext } from "../domain/tenant-context";
+import { AuthorizedContext } from "../domain/access";
 import { PrismaTenantUnitOfWork } from "./database";
 
 export class PrismaOrganizationRepository implements OrganizationRepository {
   constructor(private readonly uow: PrismaTenantUnitOfWork) {}
-  catalog(context: TenantContext): Promise<OrganizationCatalog> {
+  catalog(context: AuthorizedContext): Promise<OrganizationCatalog> {
     return this.uow.run(context, async tx => {
       const network = await tx.redAsistencial.findUnique({
         where: { redAsistencialId: context.redAsistencialId },
         include: {
-          centros: { orderBy: [{ nombre: "asc" }, { centroAsistencialId: "asc" }],
+          centros: { where:context.principal.scope==='SEDE'?{centroAsistencialId:{in:[...context.principal.centerIds]}}:undefined,
+            orderBy: [{ nombre: "asc" }, { centroAsistencialId: "asc" }],
             include: { areas: { orderBy: [{ nombre: "asc" }, { areaId: "asc" }] } } },
-          roles: { orderBy: [{ codigo: "asc" }, { roleId: "asc" }] },
+          roles: { where:context.principal.scope==='SEDE'?{codigo:{in:[...context.principal.roles]}}:undefined,
+            orderBy: [{ codigo: "asc" }, { roleId: "asc" }] },
         },
       });
       if (!network) throw new Error("Catálogo organizacional no disponible");

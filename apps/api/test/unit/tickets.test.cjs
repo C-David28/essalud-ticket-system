@@ -11,8 +11,11 @@ const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
 const {PrismaTicketRepository}=require('../../dist/infrastructure/ticket-repository');
 const {readConfig}=require('../../dist/infrastructure/config');
 const {configureHttp}=require('../../dist/presentation/http');
+const {ACCESS_TOKEN}=require('../../dist/presentation/access.guard');
 const env={NODE_ENV:'test',DATABASE_URL:'postgresql://runtime:example@localhost/db',REDIS_URL:'redis://:example@localhost',
- TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:'a'.repeat(64),TICKETS_LOCAL_RED_ID:randomUUID(),TICKETS_LOCAL_USER_ID:randomUUID()};
+ TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:'a'.repeat(64),ACCESS_TOKEN_SECRET:'b'.repeat(64),TICKETS_LOCAL_RED_ID:randomUUID(),TICKETS_LOCAL_USER_ID:randomUUID()};
+const admin={authenticated:true,redAsistencialId:env.TICKETS_LOCAL_RED_ID,userId:env.TICKETS_LOCAL_USER_ID,displayName:'Administrador demo',
+ roles:['ADMIN_GCTIC'],scope:'NACIONAL',centerIds:[],permissions:['tickets:create','tickets:list','tickets:read','tickets:update','tickets:transition','tickets:history','tickets:assign','tickets:technicians','tickets:delete','tickets:events','organization:read']};
 const body={centroAsistencialId:randomUUID(),areaId:randomUUID(),titulo:'Ticket de prueba',descripcion:'Descripcion suficientemente larga',categoria:'SOPORTE',prioridad:'MEDIA'};
 async function fixture(t){
  const calls=[];
@@ -29,22 +32,29 @@ async function fixture(t){
  const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue({check:async()=>true})
  .overrideProvider(RedisProbe).useValue({check:async()=>true})
  .overrideProvider(RedisTicketEvents).useValue({publish:async()=>{},subscribe:()=>()=>{}})
+ .overrideProvider(ACCESS_TOKEN).useValue({verify:()=>admin,issue:()=>''})
  .overrideProvider(Tickets).useValue(service).compile();
  const app=mod.createNestApplication({logger:false,bodyParser:false});configureHttp(app,config,false);await app.init();t.after(()=>app.close());
- return {http:request(app.getHttpServer()),calls};
+ const raw=request(app.getHttpServer());
+ const http=new Proxy(raw,{get(target,property){const value=Reflect.get(target,property);if(typeof value==='function'&&['get','post','patch','delete'].includes(property))
+   return (...args)=>value.apply(target,args).set('Authorization','Bearer aaa.bbb.ccc');return typeof value==='function'?value.bind(target):value;}});
+ return {http,raw,calls};
 }
 test('tickets local no puede activarse en produccion o cloud',()=>{
  for(const change of [{NODE_ENV:'production'},{RAILWAY_PROJECT_ID:'project'},{VERCEL:'1'},{HOST:'0.0.0.0'},
- {TICKETS_LOCAL_KEY:'secret'},{TICKETS_LOCAL_RED_ID:'invalid'}]) assert.throws(()=>readConfig({...env,...change}));
+ {TICKETS_LOCAL_KEY:'secret'},{ACCESS_TOKEN_SECRET:'a'.repeat(64)},{TICKETS_LOCAL_RED_ID:'invalid'},{APP_ENVIRONMENT:'institutional'}]) assert.throws(()=>readConfig({...env,...change}));
 });
-test('clave requerida para todos los endpoints; identidad solo del servidor',async t=>{
- const {http,calls}=await fixture(t);
+test('clave requerida, solicitante público limitado e identidad solo del servidor',async t=>{
+ const {http,raw,calls}=await fixture(t);
  await http.get('/api/v1/tickets').expect(401);
  await http.post('/api/v1/tickets').send(body).expect(401);
+ const publicResult=await raw.post('/api/v1/tickets').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).send(body).expect(201);
+ assert.equal(calls[0].principal.authenticated,false);assert.equal(calls[0].userId,env.TICKETS_LOCAL_USER_ID);
+ await raw.patch('/api/v1/tickets/'+randomUUID()).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).send({titulo:'Intento público'}).expect(403);
  const res=await http.post('/api/v1/tickets').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY)
  .set('X-Tenant-Id',randomUUID()).set('X-User-Id',randomUUID()).send(body).expect(201);
- assert.equal(calls[0].redAsistencialId,env.TICKETS_LOCAL_RED_ID);
- assert.equal(calls[0].userId,env.TICKETS_LOCAL_USER_ID);assert.equal(calls[0].requestId,res.headers['x-request-id']);
+ assert.equal(publicResult.body.codigo,'INC-2026-0001');assert.equal(calls[1].redAsistencialId,env.TICKETS_LOCAL_RED_ID);
+ assert.equal(calls[1].userId,env.TICKETS_LOCAL_USER_ID);assert.equal(calls[1].requestId,res.headers['x-request-id']);
 });
 test('DTO rechaza sobreescritura de identidad/codigo/estado y contenido invalido',async t=>{
  const {http}=await fixture(t);
@@ -116,11 +126,11 @@ test('asignacion manual y automatica validan entrada, clave y publican contrato'
 test('aplicacion publica cambios confirmados con tenant y request, pero no publica fallos',async()=>{
  const published=[],listeners=new Map();
  const bus={publish:async event=>published.push(event),subscribe:(red,listener)=>{listeners.set(red,listener);return()=>listeners.delete(red);}};
- const ticket={ticketId:randomUUID()};
+ const ticket={ticketId:randomUUID(),centroAsistencialId:body.centroAsistencialId,solicitanteId:env.TICKETS_LOCAL_USER_ID};
  const repository={create:async()=>ticket,list:async()=>({items:[]}),get:async()=>ticket,update:async()=>ticket,
   transition:async()=>ticket,history:async()=>[],technicians:async()=>[],assign:async()=>ticket,autoAssign:async()=>ticket,
   assignmentHistory:async()=>[],delete:async()=>{},};
- const service=new Tickets(repository,bus),context={redAsistencialId:randomUUID(),userId:randomUUID(),requestId:randomUUID()};
+ const service=new Tickets(repository,bus),context={redAsistencialId:env.TICKETS_LOCAL_RED_ID,userId:env.TICKETS_LOCAL_USER_ID,requestId:randomUUID(),principal:admin};
  await service.create(context,body);await service.update(context,ticket.ticketId,{titulo:'Actualizado'});
  await service.transition(context,ticket.ticketId,'EN_PROCESO','Atencion iniciada');
  await service.assign(context,ticket.ticketId,randomUUID(),'Asignacion manual');await service.autoAssign(context,ticket.ticketId);
@@ -144,11 +154,26 @@ test('asignacion automatica convierte el bloqueo PostgreSQL void a un tipo compa
    if(queries.length===3)return[{technicianId}];
    return[{}];
   },
-  ticket:{update:async({data})=>({ticketId,...data})},
+  ticket:{findFirst:async()=>({ticketId,centroAsistencialId:body.centroAsistencialId,solicitanteId:env.TICKETS_LOCAL_USER_ID}),update:async({data})=>({ticketId,...data})},
  };
  const uow={run:async(_context,operation)=>operation(tx)};
  const repository=new PrismaTicketRepository(uow);
- const result=await repository.autoAssign({redAsistencialId:randomUUID(),userId:randomUUID(),requestId:randomUUID()},ticketId);
+ const result=await repository.autoAssign({redAsistencialId:env.TICKETS_LOCAL_RED_ID,userId:env.TICKETS_LOCAL_USER_ID,requestId:randomUUID(),principal:admin},ticketId);
  assert.match(queries[0].sql,/pg_advisory_xact_lock[\s\S]*::text AS acquired/);
  assert.equal(result.assignedTo,technicianId);assert.equal(result.assignmentMode,'AUTOMATICA');
+});
+
+test('repositorio limita listados por solicitante y por sedes autorizadas',async()=>{
+ const filters=[];const tx={ticket:{findMany:async options=>{filters.push(options.where);return[];}}};
+ const repository=new PrismaTicketRepository({run:async(_context,operation)=>operation(tx)}),base={redAsistencialId:env.TICKETS_LOCAL_RED_ID,
+  userId:env.TICKETS_LOCAL_USER_ID,requestId:randomUUID()};
+ await repository.list({...base,principal:{...admin,authenticated:false,roles:['SOLICITANTE'],scope:'PROPIO',centerIds:[],permissions:['tickets:list']}},1,20);
+ const centerA=randomUUID(),centerB=randomUUID();
+ await repository.list({...base,principal:{...admin,roles:['TECNICO_N1'],scope:'SEDE',centerIds:[centerA,centerB],permissions:['tickets:list']}},1,20);
+ await repository.list({...base,principal:{...admin,roles:['SUPERVISOR_RED'],scope:'RED',centerIds:[],permissions:['tickets:list']}},1,20);
+ assert.deepEqual(filters,[
+  {redAsistencialId:env.TICKETS_LOCAL_RED_ID,solicitanteId:env.TICKETS_LOCAL_USER_ID},
+  {redAsistencialId:env.TICKETS_LOCAL_RED_ID,centroAsistencialId:{in:[centerA,centerB]}},
+  {redAsistencialId:env.TICKETS_LOCAL_RED_ID},
+ ]);
 });

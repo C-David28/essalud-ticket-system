@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { parseEnv } from 'node:util';
 import { postgres, run } from './lib/postgres.mjs';
 import { organizationSeedSql } from './lib/organization-config.mjs';
+import { accessSeedSql } from './lib/access-config.mjs';
 const file=new URL('../apps/api/.env.tickets',import.meta.url);
 run(()=>{
   let env;
@@ -24,6 +25,11 @@ run(()=>{
       throw new Error('Identificador de tecnico local invalido; revisar .env.tickets');
   }
   if(updated) writeFileSync(file,Object.entries(env).map(([k,v])=>k+'='+v).join('\n')+'\n',{mode:0o600});
+  const accessDefaults={APP_ENVIRONMENT:'demo',SITE_RESOLUTION_MODE:'configured',ACCESS_TOKEN_SECRET:randomBytes(32).toString('hex'),
+    TICKETS_DEMO_PASSWORD:'Demo-RAP-2026!',TICKETS_DEMO_TECH_USER_ID:randomUUID(),
+    TICKETS_DEMO_SUPERVISOR_USER_ID:randomUUID(),TICKETS_DEMO_ADMIN_USER_ID:randomUUID()};
+  for(const [key,value] of Object.entries(accessDefaults)) if(!env[key]) {env[key]=value;updated=true;}
+  if(updated) writeFileSync(file,Object.entries(env).map(([k,v])=>k+'='+v).join('\n')+'\n',{mode:0o600});
   if(env.TICKETS_LOCAL_ENABLED!=='true'||!/^[a-f0-9]{64}$/.test(env.TICKETS_LOCAL_KEY??'')) throw new Error('Configuracion local invalida');
   const red=env.TICKETS_LOCAL_RED_ID, centro=env.TICKETS_LOCAL_CENTRO_ID, area=env.TICKETS_LOCAL_AREA_ID;
   postgres(`BEGIN;
@@ -42,6 +48,7 @@ run(()=>{
       ON CONFLICT(red_asistencial_id,nombre) DO UPDATE
         SET nivel=EXCLUDED.nivel,capacidad_maxima=EXCLUDED.capacidad_maxima,activo=true;
     ${organizationSeedSql(env)}
+    ${accessSeedSql(env)}
     COMMIT;`);
-  console.log('OK: catálogo organizacional ficticio, técnicos y configuración local disponibles; claves conservadas.');
+  console.log('OK: catálogo, accesos demo, técnicos y configuración local disponibles; claves conservadas.');
 });

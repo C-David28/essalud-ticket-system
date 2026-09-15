@@ -37,5 +37,5 @@ export class SystemController {
   @ApiOkResponse({ schema:{type:'object',properties:{
     service:{type:'string'},version:{type:'string'},stage:{type:'string'},
   }} })
-  info() { return { service:'essalud-ticket-api', version:'0.7.0', stage:'3.2' }; }
+  info() { return { service:'essalud-ticket-api', version:'0.8.0', stage:'3.3' }; }
 }

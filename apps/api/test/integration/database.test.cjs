@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {randomUUID}=require('node:crypto');
+const {randomUUID,scryptSync}=require('node:crypto');
 const {Client}=require('pg');
 const request=require('supertest');
 const {Database,PrismaTenantUnitOfWork}=require('../../dist/infrastructure/database');
@@ -8,6 +8,9 @@ const {createApplication}=require('../../dist/bootstrap');
 const {readConfig}=require('../../dist/infrastructure/config');
 const {RedisTicketEvents}=require('../../dist/infrastructure/ticket-events');
 const {PrismaOrganizationRepository}=require('../../dist/infrastructure/organization-repository');
+const {PrismaIdentityRepository}=require('../../dist/infrastructure/access-repository');
+const {AuthenticateStaff}=require('../../dist/application/authenticate-staff');
+const {HmacAccessToken,ScryptPasswordVerifier}=require('../../dist/infrastructure/access-token');
 
 test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>{
   assert.equal(process.env.ESSALUD_DISPOSABLE_TEST,'true','Ejecutar npm run api:test:integration desde la raiz');
@@ -21,9 +24,11 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
   const db=new Database(process.env.DATABASE_URL,1);t.after(()=>db.onApplicationShutdown());
   const uow=new PrismaTenantUnitOfWork(db);
   const redA=randomUUID(),redB=randomUUID(),user=randomUUID();
-  const context=(red=redA)=>({redAsistencialId:red,userId:user,requestId:randomUUID()});
+  const permissions=['tickets:create','tickets:list','tickets:read','tickets:update','tickets:transition','tickets:history','tickets:assign','tickets:technicians','tickets:delete','tickets:events','organization:read'];
+  const context=(red=redA)=>({redAsistencialId:red,userId:user,requestId:randomUUID(),principal:{authenticated:true,
+    redAsistencialId:red,userId:user,displayName:'Administrador integral',roles:['ADMIN_GCTIC'],scope:'NACIONAL',centerIds:[],permissions}});
   await admin.query('INSERT INTO app.redes_asistenciales(red_asistencial_id,codigo,nombre) VALUES ($1,\'TEST_A\',\'Red ficticia A\'),($2,\'TEST_B\',\'Red ficticia B\')',[redA,redB]);
-  let centro;
+  let centro,roleId;
   await t.test('conexion autentica essalud_api y rechaza salud de superusuario',async()=>{
     assert.equal(await db.check(),true);
     assert.deepEqual(await db.client.$queryRaw`SELECT current_user::text AS role`,[{role:'essalud_api'}]);
@@ -39,7 +44,8 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
     await sender.onModuleInit();await receiver.onModuleInit();
     try {
       const received=[],foreign=[];
-      const event={version:1,eventId:randomUUID(),type:'ticket.created',redAsistencialId:redA,ticketId:randomUUID(),occurredAt:new Date().toISOString()};
+      const event={version:1,eventId:randomUUID(),type:'ticket.created',redAsistencialId:redA,ticketId:randomUUID(),
+        centroAsistencialId:randomUUID(),solicitanteId:user,occurredAt:new Date().toISOString()};
       const delivered=new Promise((resolve,reject)=>{
         const timeout=setTimeout(()=>reject(new Error('Evento Redis no recibido')),3000);
         receiver.subscribe(redA,value=>{received.push(value);clearTimeout(timeout);resolve();});
@@ -76,17 +82,49 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
     assert.equal(await uow.run(ctx,tx=>tx.auditLog.count({where:{requestId:ctx.requestId,entity:'app.areas'}})),2);
   });
   await t.test('catalogo organizacional respeta el tenant y mapea roles, sedes y areas',async()=>{
-    const roleId=randomUUID();
+    roleId=randomUUID();
     await admin.query(`INSERT INTO app.roles_institucionales
       (red_asistencial_id,role_id,codigo,nombre,descripcion,alcance)
-      VALUES ($1,$2,'TECNICO_TEST','Tecnico de prueba','Rol ficticio para integracion organizacional.','SEDE')`,[redA,roleId]);
+      VALUES ($1,$2,'TECNICO_N1','Tecnico de prueba','Rol ficticio para integracion organizacional.','SEDE')`,[redA,roleId]);
     const repository=new PrismaOrganizationRepository(uow);
     const catalog=await repository.catalog(context());
     assert.equal(catalog.network.networkId,redA);
     assert.ok(catalog.centers.some(item=>item.centerId===centro.centroAsistencialId));
     assert.deepEqual(catalog.roles.map(role=>({id:role.roleId,code:role.code,scope:role.scope})),
-      [{id:roleId,code:'TECNICO_TEST',scope:'SEDE'}]);
+      [{id:roleId,code:'TECNICO_N1',scope:'SEDE'}]);
     assert.deepEqual((await repository.catalog(context(redB))).roles,[]);
+  });
+  await t.test('identidad PostgreSQL inicia sesion y el token conserva rol y sede',async()=>{
+    const identityId=randomUUID(),accessId=randomUUID(),password='Integracion-3.3!',salt='0123456789abcdef0123456789abcdef';
+    const encoded=`scrypt$v1$${salt}$${scryptSync(password,Buffer.from(salt,'hex'),32).toString('hex')}`;
+    await admin.query(`INSERT INTO app.usuarios_institucionales
+      (red_asistencial_id,usuario_id,username,display_name,password_hash) VALUES ($1,$2,'tecnico.integracion','Tecnico de integracion',$3)`,
+      [redA,identityId,encoded]);
+    await admin.query(`INSERT INTO app.usuario_accesos
+      (red_asistencial_id,access_id,usuario_id,role_id,centro_asistencial_id) VALUES ($1,$2,$3,$4,$5)`,
+      [redA,accessId,identityId,roleId,centro.centroAsistencialId]);
+    const secret='b'.repeat(64),tokens=new HmacAccessToken(secret,900);
+    const authentication=new AuthenticateStaff(new PrismaIdentityRepository(uow),new ScryptPasswordVerifier(),tokens,900);
+    await assert.rejects(authentication.execute(context(),'tecnico.integracion','credencial-invalida'),/AUTHENTICATION_FAILED/);
+    const result=await authentication.execute(context(),'TECNICO.INTEGRACION',password);
+    assert.equal(result.expiresIn,900);assert.equal(result.session.userId,identityId);
+    assert.deepEqual(result.session.roles,['TECNICO_N1']);
+    assert.deepEqual(result.session.centerIds,[centro.centroAsistencialId]);
+    assert.deepEqual(tokens.verify(result.token),result.session);
+    const app=await createApplication(readConfig({...process.env,APP_ENVIRONMENT:'demo',HOST:'127.0.0.1',PORT:'0',
+      TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:'a'.repeat(64),ACCESS_TOKEN_SECRET:secret,
+      TICKETS_LOCAL_RED_ID:redA,TICKETS_LOCAL_USER_ID:user,ACCESS_TOKEN_TTL_SECONDS:'900'}),true);
+    try {
+      await app.init();const http=request(app.getHttpServer()),key={'X-Local-Api-Key':'a'.repeat(64)};
+      await http.post('/api/v1/auth/login').set(key).send({username:'tecnico.integracion',password:'incorrecta-123'}).expect(401);
+      const login=await http.post('/api/v1/auth/login').set(key).send({username:'tecnico.integracion',password}).expect(201);
+      assert.equal(login.body.session.userId,identityId);assert.equal(typeof login.body.token,'string');
+      const me=await http.get('/api/v1/auth/me').set(key).set('Authorization',`Bearer ${login.body.token}`).expect(200);
+      assert.equal(me.body.scope,'SEDE');assert.deepEqual(me.body.centerIds,[centro.centroAsistencialId]);
+      await http.get('/api/v1/auth/me').set(key).set('Authorization','Bearer invalid.token.value').expect(401);
+    } finally {await app.close();}
+    await admin.query('DELETE FROM app.usuario_accesos WHERE red_asistencial_id=$1 AND access_id=$2',[redA,accessId]);
+    await admin.query('DELETE FROM app.usuarios_institucionales WHERE red_asistencial_id=$1 AND usuario_id=$2',[redA,identityId]);
   });
   await t.test('rollback revierte negocio y auditoria',async()=>{
     const ctx=context();

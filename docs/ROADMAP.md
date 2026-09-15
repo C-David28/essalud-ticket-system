@@ -13,8 +13,8 @@
 | 2.3 | Tiempo real y autorización de suscripciones | Validada por el usuario en Docker local |
 | 2.4 | Asignación manual y por carga | Validada por el usuario; Etapa 2 completada |
 | 3.1 | Portal institucional y experiencias de acceso | Validada por el usuario |
-| 3.2 | Estructura organizacional configurable | Implementada; pendiente checklist Docker local del usuario |
-| 3.3 | Control de acceso, roles, sedes y entornos | Pendiente; base tenant desde 1.2 |
+| 3.2 | Estructura organizacional configurable | Validada por el usuario |
+| 3.3 | Control de acceso, roles, sedes y entornos | Implementada; pendiente checklist Docker local del usuario |
 | 3.4 | Google Maps opcional para sedes e incidencias | Pendiente |
 | 4.1 | Motor configurable de SLA y prioridades | Pendiente |
 | 4.2 | Panel operativo de técnicos y supervisores | Pendiente |

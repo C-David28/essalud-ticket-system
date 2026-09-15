@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 3.2 — estructura organizacional configurable.** Las subetapas anteriores fueron validadas por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.2.md); [evidencia y límites](docs/VALIDATION-3.2.md).
+**Entrega actual: subetapa 3.3 — autenticación local, RBAC y alcance por sede.** Las subetapas anteriores fueron validadas por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.3.md); [evidencia y límites](docs/VALIDATION-3.3.md).
 
 ## Comenzar
 
-- Si ya completaste 3.1: seguir [la guía local de 3.2](docs/SUBETAPA-3.2.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
+- Si ya completaste 3.2: seguir [la guía local de 3.3](docs/SUBETAPA-3.3.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -22,6 +22,7 @@ npm run db:status
 npm run db:check
 npm run db:audit:check
 npm run db:organization:check
+npm run db:access:check
 ```
 
 En Windows se puede usar `npm.cmd` en lugar de `npm`. El generador conserva cualquier `.env` existente. Los scripts de infraestructura usan módulos nativos; el backend requiere instalar las dependencias del lockfile:
@@ -56,9 +57,11 @@ Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `np
 - Redis Pub/Sub y SSE por tenant, reconexión automática y refresco de React Query.
 - Catálogo de técnicos por tenant, capacidad activa y asignación manual o automática con historial inmutable.
 - Endpoint y vista de estructura organizacional con datos demo reemplazables por configuración.
+- Identidades demo con hash scrypt, sesiones JWT breves en cookie HttpOnly y permisos por rol.
+- Filtrado de tickets, eventos y catálogo por solicitante, sede o red, además del RLS por tenant.
 - Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
-La autenticación institucional, el RBAC y el alcance por sede se aplicarán en la subetapa 3.3. Esta demostración usa una identidad local ficticia fija; los tickets se guardan en PostgreSQL. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
+La demostración ofrece tres cuentas ficticias para técnico, supervisor y administrador. El modo institucional rechaza este adaptador local y queda preparado para sustituirlo por el proveedor de identidad aprobado. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
 
 ## Arquitectura prevista
 
@@ -86,6 +89,10 @@ erDiagram
   REDES_ASISTENCIALES ||--o{ TICKETS : registra
   REDES_ASISTENCIALES ||--o{ TECNICOS_SOPORTE : organiza
   REDES_ASISTENCIALES ||--o{ ROLES_INSTITUCIONALES : configura
+  REDES_ASISTENCIALES ||--o{ USUARIOS_INSTITUCIONALES : registra
+  USUARIOS_INSTITUCIONALES ||--o{ USUARIO_ACCESOS : recibe
+  ROLES_INSTITUCIONALES ||--o{ USUARIO_ACCESOS : concede
+  CENTROS_ASISTENCIALES ||--o{ USUARIO_ACCESOS : limita
   TECNICOS_SOPORTE ||--o{ TICKETS : atiende
   TICKETS ||--o{ HISTORIAL_ASIGNACION : conserva
   REDES_ASISTENCIALES {
@@ -124,6 +131,19 @@ erDiagram
     varchar codigo
     varchar alcance
   }
+  USUARIOS_INSTITUCIONALES {
+    uuid red_asistencial_id PK,FK
+    uuid usuario_id PK
+    varchar username
+    varchar password_hash
+  }
+  USUARIO_ACCESOS {
+    uuid red_asistencial_id PK,FK
+    uuid access_id PK
+    uuid usuario_id FK
+    uuid role_id FK
+    uuid centro_asistencial_id FK
+  }
   HISTORIAL_ASIGNACION {
     uuid assignment_id PK
     uuid ticket_id
@@ -141,7 +161,7 @@ apps/api/src/{domain,application,infrastructure,presentation}/
 apps/web/src/
 packages/contracts/
 infra/postgres/init/001-bootstrap.sql
-infra/postgres/migrations/0001_multi_tenant.sql ... 0006_organizational_catalog.sql
+infra/postgres/migrations/0001_multi_tenant.sql ... 0007_access_control.sql
 infra/postgres/verify.sql
 infra/postgres/verify-multi-tenant.sql
 infra/postgres/verify-audit.sql
@@ -176,6 +196,7 @@ Si hay conflicto de puertos, cambiarlos en `.env`. Modificar la contraseña de `
 - [Cloud: preparación para 1.6](docs/CLOUD.md).
 - [Estado de la hoja de ruta](docs/ROADMAP.md).
 - [Guía de estructura organizacional 3.2](docs/SUBETAPA-3.2.md).
+- [Guía de autenticación, RBAC y alcance 3.3](docs/SUBETAPA-3.3.md).
 - [Evidencia y límites de las pruebas](docs/VALIDATION.md).
 
 Fuentes: [RLS en PostgreSQL 17](https://www.postgresql.org/docs/17/ddl-rowsecurity.html), [imagen oficial PostgreSQL](https://hub.docker.com/_/postgres) y [healthchecks Docker](https://docs.docker.com/compose/how-tos/startup-order/).

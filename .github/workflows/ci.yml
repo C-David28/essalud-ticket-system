@@ -59,6 +59,7 @@ jobs:
           npm run db:ticket-states:check
           npm run db:ticket-assignment:check
           npm run db:organization:check
+          npm run db:access:check
       - name: Show migration history
         run: npm run db:status
       - name: Provision runtime credentials (repeatable)

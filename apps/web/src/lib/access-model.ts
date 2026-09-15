@@ -19,7 +19,7 @@ export const ACCESS_EXPERIENCES: readonly AccessExperience[] = [
     label: "Técnico N1 / N2",
     access: "authenticated",
     purpose: "Atender, actualizar y documentar tickets dentro de su alcance autorizado.",
-    capabilities: ["Ver su cola de atención", "Cambiar estados", "Registrar asignaciones"],
+    capabilities: ["Ver su cola de atención", "Cambiar estados", "Documentar el seguimiento"],
   },
   {
     id: "supervisor",
@@ -33,7 +33,7 @@ export const ACCESS_EXPERIENCES: readonly AccessExperience[] = [
     label: "Administrador GCTIC",
     access: "authenticated",
     purpose: "Administrar configuración institucional según permisos explícitos.",
-    capabilities: ["Configurar catálogos", "Gestionar accesos", "Consultar alcance nacional"],
+    capabilities: ["Gestionar tickets", "Asignar atenciones", "Consultar el catálogo completo"],
   },
 ] as const;
 

@@ -1,9 +1,9 @@
 import { OrganizationRepository } from "../domain/organization";
-import { TenantContext } from "../domain/tenant-context";
+import { AuthorizedContext } from "../domain/access";
 
 export class GetOrganizationCatalog {
   constructor(private readonly repository: OrganizationRepository) {}
-  execute(context: TenantContext) {
+  execute(context: AuthorizedContext) {
     return this.repository.catalog(context);
   }
 }
