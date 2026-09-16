@@ -15,6 +15,7 @@ describe("modelo de experiencias institucionales", () => {
     expect(isPublicExperience("/portal/consulta")).toBe(true);
     expect(isPublicExperience("/acceso")).toBe(true);
     expect(isPublicExperience("/tecnico")).toBe(false);
+    expect(isPublicExperience("/mapa")).toBe(false);
     expect(isPublicExperience("/ruta-inexistente")).toBe(true);
   });
 });

@@ -2,11 +2,11 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 3.3 — autenticación local, RBAC y alcance por sede.** Las subetapas anteriores fueron validadas por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.3.md); [evidencia y límites](docs/VALIDATION-3.3.md).
+**Entrega actual: subetapa 3.4 — mapa opcional de sedes e incidencias.** Las subetapas anteriores fueron validadas por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.4.md); [evidencia y límites](docs/VALIDATION-3.4.md).
 
 ## Comenzar
 
-- Si ya completaste 3.2: seguir [la guía local de 3.3](docs/SUBETAPA-3.3.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
+- Si ya completaste 3.3: seguir [la guía local de 3.4](docs/SUBETAPA-3.4.md). Conservar el mismo repositorio, archivo de entorno y volúmenes.
 - Si es una instalación nueva: Git, Node.js 24 y Docker Compose v2 con contenedores Linux. Desde esta carpeta, ejecutar los comandos siguientes uno por uno. Si alguno falla, detenerse y revisar su salida.
 
 ```sh
@@ -23,6 +23,7 @@ npm run db:check
 npm run db:audit:check
 npm run db:organization:check
 npm run db:access:check
+npm run db:geography:check
 ```
 
 En Windows se puede usar `npm.cmd` en lugar de `npm`. El generador conserva cualquier `.env` existente. Los scripts de infraestructura usan módulos nativos; el backend requiere instalar las dependencias del lockfile:
@@ -39,7 +40,7 @@ npm run api:start
 
 En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs. Las URLs de conexión están en apps/api/.env, ignorado por Git. Alternativa Docker y checklist: [SUBETAPA-1.4.md](docs/SUBETAPA-1.4.md).
 
-Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal, el Kanban y `/organizacion` usan PostgreSQL y conservan las claves únicamente en el servidor Next.js.
+Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal, el Kanban, `/organizacion` y `/mapa` usan PostgreSQL. Google Maps es opcional: sin clave, `/mapa` conserva la lista geográfica funcional.
 
 ## Qué contiene esta entrega
 
@@ -59,6 +60,7 @@ Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `np
 - Endpoint y vista de estructura organizacional con datos demo reemplazables por configuración.
 - Identidades demo con hash scrypt, sesiones JWT breves en cookie HttpOnly y permisos por rol.
 - Filtrado de tickets, eventos y catálogo por solicitante, sede o red, además del RLS por tenant.
+- Coordenadas configurables por sede, auditadas y protegidas por RLS; mapa interactivo opcional y lista geográfica de respaldo.
 - Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
 La demostración ofrece tres cuentas ficticias para técnico, supervisor y administrador. El modo institucional rechaza este adaptador local y queda preparado para sustituirlo por el proveedor de identidad aprobado. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
@@ -76,6 +78,7 @@ flowchart LR
   APP --> REDIS[(Redis Pub/Sub)]
   REDIS --> SSE[SSE por tenant]
   SSE --> WEB
+  WEB -. Adaptador opcional .-> MAPS[Google Maps Platform]
   NR[Node-RED] -. Webhooks autenticados .-> API
   NR -.-> INT[SMTP / WhatsApp / Zabbix / IA]
 ```
@@ -106,6 +109,9 @@ erDiagram
     varchar codigo
     varchar nombre
     varchar tipo
+    numeric latitude
+    numeric longitude
+    varchar location_source
   }
   AREAS {
     uuid red_asistencial_id PK,FK
@@ -161,7 +167,7 @@ apps/api/src/{domain,application,infrastructure,presentation}/
 apps/web/src/
 packages/contracts/
 infra/postgres/init/001-bootstrap.sql
-infra/postgres/migrations/0001_multi_tenant.sql ... 0007_access_control.sql
+infra/postgres/migrations/0001_multi_tenant.sql ... 0008_geographic_locations.sql
 infra/postgres/verify.sql
 infra/postgres/verify-multi-tenant.sql
 infra/postgres/verify-audit.sql
@@ -197,6 +203,7 @@ Si hay conflicto de puertos, cambiarlos en `.env`. Modificar la contraseña de `
 - [Estado de la hoja de ruta](docs/ROADMAP.md).
 - [Guía de estructura organizacional 3.2](docs/SUBETAPA-3.2.md).
 - [Guía de autenticación, RBAC y alcance 3.3](docs/SUBETAPA-3.3.md).
+- [Guía de mapa opcional 3.4](docs/SUBETAPA-3.4.md).
 - [Evidencia y límites de las pruebas](docs/VALIDATION.md).
 
 Fuentes: [RLS en PostgreSQL 17](https://www.postgresql.org/docs/17/ddl-rowsecurity.html), [imagen oficial PostgreSQL](https://hub.docker.com/_/postgres) y [healthchecks Docker](https://docs.docker.com/compose/how-tos/startup-order/).

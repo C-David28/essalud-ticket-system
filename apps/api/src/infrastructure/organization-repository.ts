@@ -1,4 +1,4 @@
-import { OrganizationCatalog, OrganizationRepository } from "../domain/organization";
+import { OrganizationCatalog, OrganizationLocation, OrganizationRepository } from "../domain/organization";
 import { AuthorizedContext } from "../domain/access";
 import { PrismaTenantUnitOfWork } from "./database";
 
@@ -22,6 +22,10 @@ export class PrismaOrganizationRepository implements OrganizationRepository {
         centers: network.centros.map(center => ({
           centerId: center.centroAsistencialId, code: center.codigo, name: center.nombre,
           type: center.tipo, active: center.activo,
+          location: center.latitude !== null && center.longitude !== null && center.locationSource !== null
+            ? { latitude:Number(center.latitude), longitude:Number(center.longitude),
+                source:center.locationSource as OrganizationLocation["source"] }
+            : null,
           areas: center.areas.map(area => ({ areaId: area.areaId, code: area.codigo, name: area.nombre, active: area.activo })),
         })),
         roles: network.roles.map(role => ({

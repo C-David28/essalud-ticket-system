@@ -10,6 +10,7 @@ import {
   Headset,
   KeyRound,
   LayoutDashboard,
+  MapPinned,
   Network,
   ShieldCheck,
 } from "lucide-react";
@@ -97,6 +98,9 @@ function StaffShell({ children, path }: { children: ReactNode; path: string }) {
           <Link href="/organizacion" className={path === "/organizacion" ? "active" : ""} aria-current={path === "/organizacion" ? "page" : undefined}>
             <Network size={19} /> Organización
           </Link>
+          <Link href="/mapa" className={path === "/mapa" ? "active" : ""} aria-current={path === "/mapa" ? "page" : undefined}>
+            <MapPinned size={19} /> Mapa operativo
+          </Link>
         </nav>
         <div className="sidebar-bottom">
           <ShieldCheck size={21} />
@@ -104,7 +108,7 @@ function StaffShell({ children, path }: { children: ReactNode; path: string }) {
           <p>Sesión demo firmada. El proveedor institucional se conectará mediante el adaptador de identidad.</p>
           <Link href="/portal" className="sidebar-return"><ArrowLeft size={15} /> Volver al portal público</Link>
           <form action="/api/auth/logout" method="post"><button className="sidebar-return" type="submit">Cerrar sesión</button></form>
-          <span className="sidebar-version">SUBETAPA 3.3</span>
+          <span className="sidebar-version">SUBETAPA 3.4</span>
         </div>
       </aside>
       <div className="app-main">

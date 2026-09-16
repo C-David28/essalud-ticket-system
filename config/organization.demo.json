@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "network": {
     "code": "PASCO_DEMO",
     "name": "Red Asistencial Pasco - demostración"
@@ -10,6 +10,7 @@
       "code": "HOSPITAL_II_DEMO",
       "name": "Hospital II Pasco - demostración",
       "type": "HOSPITAL",
+      "location": { "latitude": -10.686800, "longitude": -76.256500, "source": "CONFIGURED" },
       "areas": [
         { "id": "$LOCAL_AREA_ID", "code": "TI_DEMO", "name": "Tecnologías de información - demostración" },
         { "id": "32000000-0000-4000-8000-000000000002", "code": "ADMISION_DEMO", "name": "Admisión - demostración" },
@@ -21,6 +22,7 @@
       "code": "CAP_OXAPAMPA_DEMO",
       "name": "CAP Oxapampa - demostración",
       "type": "CAP",
+      "location": { "latitude": -10.575500, "longitude": -75.405300, "source": "CONFIGURED" },
       "areas": [
         { "id": "32000000-0000-4000-8000-000000000004", "code": "SOPORTE_DEMO", "name": "Soporte local - demostración" }
       ]
@@ -30,6 +32,7 @@
       "code": "CAP_VILLA_RICA_DEMO",
       "name": "CAP Villa Rica - demostración",
       "type": "CAP",
+      "location": { "latitude": -10.738900, "longitude": -75.269200, "source": "CONFIGURED" },
       "areas": [
         { "id": "32000000-0000-4000-8000-000000000005", "code": "SOPORTE_DEMO", "name": "Soporte local - demostración" }
       ]
@@ -39,6 +42,7 @@
       "code": "POSTA_YARUSYACAN_DEMO",
       "name": "Posta Yarusyacán - demostración",
       "type": "POSTA",
+      "location": { "latitude": -10.489800, "longitude": -76.196500, "source": "CONFIGURED" },
       "areas": [
         { "id": "32000000-0000-4000-8000-000000000006", "code": "SOPORTE_DEMO", "name": "Soporte local - demostración" }
       ]

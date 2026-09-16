@@ -4,6 +4,7 @@ const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{1
 const code = /^[A-Z][A-Z0-9_]{2,29}$/;
 const centerTypes = new Set(["HOSPITAL", "CAP", "POLICLINICO", "POSTA", "OTRO"]);
 const scopes = new Set(["PROPIO", "SEDE", "RED", "NACIONAL"]);
+const locationSources = new Set(["CONFIGURED", "NETWORK", "GEOCODED"]);
 const text = (value, min, max, field) => {
   if (typeof value !== "string" || value.trim().length < min || value.trim().length > max)
     throw new Error("Configuración organizacional inválida: " + field);
@@ -18,10 +19,15 @@ const catalogCode = (value, field) => {
   return value;
 };
 const sql = value => "'" + value.replaceAll("'", "''") + "'";
+const coordinate = (value, min, max, field) => {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max)
+    throw new Error("Configuración organizacional inválida: " + field);
+  return value;
+};
 
 export function loadOrganizationConfig(env, source = new URL("../../config/organization.demo.json", import.meta.url)) {
   const config = JSON.parse(readFileSync(source, "utf8"));
-  if (config.version !== 1 || !Array.isArray(config.centers) || !Array.isArray(config.roles))
+  if (config.version !== 2 || !Array.isArray(config.centers) || !Array.isArray(config.roles))
     throw new Error("Versión de configuración organizacional no soportada");
   const redId = identifier(env.TICKETS_LOCAL_RED_ID, "red local");
   const localCenter = identifier(env.TICKETS_LOCAL_CENTRO_ID, "centro local");
@@ -35,6 +41,16 @@ export function loadOrganizationConfig(env, source = new URL("../../config/organ
     seenCenterIds.add(id); seenCenterCodes.add(centerCode);
     if (!centerTypes.has(center.type) || !Array.isArray(center.areas) || center.areas.length === 0)
       throw new Error("Centro organizacional inválido");
+    let location = null;
+    if (center.location !== undefined) {
+      if (!locationSources.has(center.location?.source))
+        throw new Error("Configuración organizacional inválida: origen de ubicación");
+      location = {
+        latitude: coordinate(center.location.latitude, -90, 90, "latitud de centro"),
+        longitude: coordinate(center.location.longitude, -180, 180, "longitud de centro"),
+        source: center.location.source,
+      };
+    }
     const seenAreaIds = new Set(), seenAreaCodes = new Set();
     const areas = center.areas.map((area, areaIndex) => {
       const areaId = resolve(area.id, "$LOCAL_AREA_ID", localArea, "área " + areaIndex);
@@ -43,7 +59,7 @@ export function loadOrganizationConfig(env, source = new URL("../../config/organ
       seenAreaIds.add(areaId); seenAreaCodes.add(areaCode);
       return { id: areaId, code: areaCode, name: text(area.name, 2, 200, "nombre de área") };
     });
-    return { id, code: centerCode, name: text(center.name, 2, 200, "nombre de centro"), type: center.type, areas };
+    return { id, code: centerCode, name: text(center.name, 2, 200, "nombre de centro"), type: center.type, location, areas };
   });
   const roles = config.roles.map((role, index) => {
     const id = identifier(role.id, "rol " + index), roleCode = catalogCode(role.code, "código de rol");
@@ -66,9 +82,12 @@ export function organizationSeedSql(env, source) {
       ",activo=true WHERE red_asistencial_id=" + sql(config.red.id) + "::uuid;"
   ];
   for (const center of config.centers) {
-    statements.push("INSERT INTO app.centros_asistenciales(red_asistencial_id,centro_asistencial_id,codigo,nombre,tipo,activo) VALUES (" +
-      [sql(config.red.id)+"::uuid",sql(center.id)+"::uuid",sql(center.code),sql(center.name),sql(center.type),"true"].join(",") +
-      ") ON CONFLICT(red_asistencial_id,centro_asistencial_id) DO UPDATE SET codigo=EXCLUDED.codigo,nombre=EXCLUDED.nombre,tipo=EXCLUDED.tipo,activo=true;");
+    statements.push("INSERT INTO app.centros_asistenciales(red_asistencial_id,centro_asistencial_id,codigo,nombre,tipo,latitude,longitude,location_source,activo) VALUES (" +
+      [sql(config.red.id)+"::uuid",sql(center.id)+"::uuid",sql(center.code),sql(center.name),sql(center.type),
+        center.location?String(center.location.latitude):"NULL",center.location?String(center.location.longitude):"NULL",
+        center.location?sql(center.location.source):"NULL","true"].join(",") +
+      ") ON CONFLICT(red_asistencial_id,centro_asistencial_id) DO UPDATE SET codigo=EXCLUDED.codigo,nombre=EXCLUDED.nombre,tipo=EXCLUDED.tipo,"+
+      "latitude=EXCLUDED.latitude,longitude=EXCLUDED.longitude,location_source=EXCLUDED.location_source,activo=true;");
     for (const area of center.areas) statements.push("INSERT INTO app.areas(red_asistencial_id,centro_asistencial_id,area_id,codigo,nombre,activo) VALUES (" +
       [sql(config.red.id)+"::uuid",sql(center.id)+"::uuid",sql(area.id)+"::uuid",sql(area.code),sql(area.name),"true"].join(",") +
       ") ON CONFLICT(red_asistencial_id,centro_asistencial_id,area_id) DO UPDATE SET codigo=EXCLUDED.codigo,nombre=EXCLUDED.nombre,activo=true;");

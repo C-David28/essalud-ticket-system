@@ -48,8 +48,8 @@ export function configureHttp(app: INestApplication, config: ApiConfig, accessLo
   app.useGlobalFilters(new PublicExceptionFilter());
   if (config.swaggerEnabled) {
     const options = new DocumentBuilder().setTitle('EsSalud Ticket API')
-      .setDescription('Subetapa 3.3: sesiones firmadas, RBAC y alcance por sede.')
-      .setVersion('0.8.0').addApiKey({type:'apiKey',in:'header',name:'X-Local-Api-Key'},'local-key')
+      .setDescription('Subetapa 3.4: catálogo geográfico opcional con sesiones RBAC y alcance por sede.')
+      .setVersion('0.9.0').addApiKey({type:'apiKey',in:'header',name:'X-Local-Api-Key'},'local-key')
       .addBearerAuth({type:'http',scheme:'bearer',bearerFormat:'JWT'},'staff-session').build();
     SwaggerModule.setup('docs',app,() => SwaggerModule.createDocument(app,options), {
       jsonDocumentUrl:'docs-json', swaggerOptions:{persistAuthorization:false},

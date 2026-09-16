@@ -1,4 +1,4 @@
-# Backend local — subetapa 3.3
+# Backend local — subetapa 3.4
 
 NestJS 11, TypeScript estricto, Prisma 7 con adaptador PostgreSQL y Redis mediante ioredis. Versiones exactas y árbol reproducible en package-lock.json. Requiere Node.js 24 y npm con soporte de workspaces.
 
@@ -28,7 +28,7 @@ flowchart LR
 
 | Método y ruta | Resultado |
 | --- | --- |
-| GET `/api/v1` | Identificación, versión 0.8.0 y subetapa 3.3 |
+| GET `/api/v1` | Identificación, versión 0.9.0 y subetapa 3.4 |
 | GET `/api/v1/health/live` | 200 si el proceso responde |
 | GET `/api/v1/health/ready` | 200 si PostgreSQL y Redis están disponibles; 503 si falla una dependencia o el rol SQL es inseguro |
 | GET `/docs` y `/docs-json` | Swagger UI y OpenAPI cuando SWAGGER_ENABLED=true |
@@ -55,7 +55,7 @@ Los endpoints de tickets solo se habilitan con `TICKETS_LOCAL_ENABLED=true` y un
 
 ## PostgreSQL y compatibilidad
 
-Las migraciones 0001–0006 permanecen intactas. La 0007 añade identidades y membresías por red, RLS y auditoría. `npm run db:migrate` continúa siendo el único mecanismo DDL. El schema Prisma mapea las tablas existentes; **no ejecutar `prisma db push` ni `prisma migrate`**: no representan los CHECK, triggers, permisos y RLS institucionales.
+Las migraciones 0001–0007 permanecen intactas. La 0008 añade coordenadas opcionales y origen controlado a las sedes, manteniendo RLS y auditoría. `npm run db:migrate` continúa siendo el único mecanismo DDL. El schema Prisma mapea las tablas existentes; **no ejecutar `prisma db push` ni `prisma migrate`**: no representan los CHECK, triggers, permisos y RLS institucionales.
 
 `api:setup` genera `apps/api/.env` con una clave aleatoria separada y aprovisiona el LOGIN `essalud_api`, que hereda `essalud_app`. No altera el `.env` raíz. El SQL está en `scripts/lib/api-role.mjs`: se envía por stdin, no como argumento visible del proceso. Se ejecuta dentro de una transacción con bloqueo asesor. Repetir conserva las claves de la API. Un rol preexistente sin la marca del proyecto o con membresías inesperadas se rechaza. La API verifica permisos efectivos y rechaza usar superusuarios, propietarios, migradores o escritores de auditoría.
 
@@ -86,7 +86,7 @@ Mantener copia privada de ambos `.env`. api:setup conserva un archivo existente:
 
 ## Pruebas
 
-`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta siete suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba aislamiento, auditoría, autenticación scrypt/JWT, alcance por sede, catálogo organizacional, CRUD, estados, asignación concurrente con capacidad, historial, Redis Pub/Sub entre instancias y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
+`api:test` ejecuta lógica y HTTP con sondas sustituidas. `api:test:integration` crea un proyecto Compose con nombre aleatorio y puertos libres: aplica dos veces las migraciones, ejecuta ocho suites SQL, aprovisiona el LOGIN dos veces y prueba Prisma con PostgreSQL y Redis reales. Comprueba aislamiento, auditoría, autenticación scrypt/JWT, alcance por sede, catálogo y coordenadas, CRUD, estados, asignación concurrente con capacidad, historial, Redis Pub/Sub entre instancias y salud HTTP. Elimina exclusivamente ese proyecto desechable al terminar. No copia datos institucionales a pruebas.
 
 Si se interrumpe abruptamente, puede quedar el proyecto temporal; su nombre aparece al comienzo. Limpiarlo solo con el comando que incluye ese nombre, nunca usando el proyecto local con `down --volumes`.
 

@@ -62,7 +62,8 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
   });
   await t.test('escritura Prisma genera auditoria con usuario y request de la misma transaccion',async()=>{
     const ctx=context();
-    centro=await uow.run(ctx,tx=>tx.centroAsistencial.create({data:{redAsistencialId:redA,codigo:'TEST_CENTRO',nombre:'Centro ficticio',tipo:'CAP'}}));
+    centro=await uow.run(ctx,tx=>tx.centroAsistencial.create({data:{redAsistencialId:redA,codigo:'TEST_CENTRO',nombre:'Centro ficticio',tipo:'CAP',
+      latitude:-10.6868,longitude:-76.2565,locationSource:'CONFIGURED'}}));
     const logs=await uow.run(ctx,tx=>tx.auditLog.findMany({where:{requestId:ctx.requestId}}));
     assert.equal(logs.length,1);assert.equal(logs[0].userId,user);assert.equal(logs[0].action,'INSERT');
     assert.equal(logs[0].oldValues,null);assert.equal(logs[0].newValues.nombre,'Centro ficticio');
@@ -89,7 +90,8 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
     const repository=new PrismaOrganizationRepository(uow);
     const catalog=await repository.catalog(context());
     assert.equal(catalog.network.networkId,redA);
-    assert.ok(catalog.centers.some(item=>item.centerId===centro.centroAsistencialId));
+    assert.deepEqual(catalog.centers.find(item=>item.centerId===centro.centroAsistencialId).location,
+      {latitude:-10.6868,longitude:-76.2565,source:'CONFIGURED'});
     assert.deepEqual(catalog.roles.map(role=>({id:role.roleId,code:role.code,scope:role.scope})),
       [{id:roleId,code:'TECNICO_N1',scope:'SEDE'}]);
     assert.deepEqual((await repository.catalog(context(redB))).roles,[]);

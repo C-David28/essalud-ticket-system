@@ -8,6 +8,7 @@ vi.mock("../src/lib/organization-client",()=>api);
 beforeEach(()=>api.getOrganizationCatalog.mockReset().mockResolvedValue({
   network:{networkId:"1",code:"PASCO_DEMO",name:"Red Pasco - demostración",active:true},
   centers:[{centerId:"2",code:"HOSPITAL_DEMO",name:"Hospital demo",type:"HOSPITAL",active:true,
+    location:{latitude:-10.6868,longitude:-76.2565,source:"CONFIGURED"},
     areas:[{areaId:"3",code:"TI_DEMO",name:"Tecnologías de información",active:true}]}],
   roles:[{roleId:"4",code:"TECNICO_N1",name:"Técnico N1",description:"Atiende incidencias de demostración.",scope:"SEDE",active:true}],
 }));

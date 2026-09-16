@@ -1,8 +1,12 @@
 import { AuthorizedContext } from "./access";
 
 export type OrganizationArea = { areaId: string; code: string; name: string; active: boolean };
+export type OrganizationLocation = {
+  latitude: number; longitude: number; source: "CONFIGURED" | "NETWORK" | "GEOCODED";
+};
 export type OrganizationCenter = {
   centerId: string; code: string; name: string; type: string; active: boolean;
+  location: OrganizationLocation | null;
   areas: OrganizationArea[];
 };
 export type InstitutionalRole = {

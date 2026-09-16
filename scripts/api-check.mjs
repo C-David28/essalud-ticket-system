@@ -8,7 +8,7 @@ try {
     const body=await response.json();
     if (path.endsWith('/ready')) assert.deepEqual(body,{status:'ok',checks:{postgres:'up',redis:'up'}});
     if (path.endsWith('/live')) assert.deepEqual(body,{status:'ok'});
-    if (path==='/api/v1') assert.equal(body.stage,'3.3');
+    if (path==='/api/v1') assert.equal(body.stage,'3.4');
     console.log('PASS: '+path);
   }
   console.log('OK: API accesible y dependencias disponibles con rol PostgreSQL restringido.');

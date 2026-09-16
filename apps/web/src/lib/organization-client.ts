@@ -1,6 +1,7 @@
 export type OrganizationCatalog = {
   network: { networkId: string; code: string; name: string; active: boolean };
   centers: Array<{ centerId: string; code: string; name: string; type: string; active: boolean;
+    location: { latitude: number; longitude: number; source: "CONFIGURED" | "NETWORK" | "GEOCODED" } | null;
     areas: Array<{ areaId: string; code: string; name: string; active: boolean }> }>;
   roles: Array<{ roleId: string; code: string; name: string; description: string;
     scope: "PROPIO" | "SEDE" | "RED" | "NACIONAL"; active: boolean }>;

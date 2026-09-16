@@ -28,6 +28,7 @@ export type DemoTicket = {
   description: string;
   category: Category;
   center: string;
+  centerId?: string;
   area: string;
   priority: (typeof PRIORITIES)[number];
   status: TicketStatus;

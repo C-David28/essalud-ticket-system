@@ -8,6 +8,7 @@ type ApiTicket = {
   categoria: "SOPORTE" | "REDES" | "INFRAESTRUCTURA" | "BIOMEDICO";
   prioridad: "BAJA" | "MEDIA" | "ALTA" | "CRITICA";
   estado: "ABIERTO" | "EN_PROCESO" | "PENDIENTE" | "RESUELTO" | "CERRADO";
+  centroAsistencialId: string;
   createdAt: string;
   solicitanteId: string;
   assignedTo:string|null;
@@ -47,6 +48,7 @@ function mapTicket(ticket: ApiTicket): DemoTicket {
     title: ticket.titulo,
     description: ticket.descripcion,
     category: categoryFromApi[ticket.categoria],
+    centerId: ticket.centroAsistencialId,
     center: "Centro ficticio de pruebas",
     area: "Área ficticia de pruebas",
     priority: priorityFromApi[ticket.prioridad],

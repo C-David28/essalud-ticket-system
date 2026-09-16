@@ -23,7 +23,7 @@ async function fixture(t,production=false){
 test('HTTP: informacion, liveness y readiness con cabeceras de seguridad',async t=>{
   const {http}=await fixture(t);
   const root=await http.get('/api/v1').expect(200);
-  assert.deepEqual(root.body,{service:'essalud-ticket-api',version:'0.8.0',stage:'3.3'});
+  assert.deepEqual(root.body,{service:'essalud-ticket-api',version:'0.9.0',stage:'3.4'});
   const live=await http.get('/api/v1/health/live').set('X-Request-Id','untrusted').expect(200);
   assert.deepEqual(live.body,{status:'ok'});
   assert.match(live.headers['x-request-id'],/^[a-f0-9-]{36}$/);

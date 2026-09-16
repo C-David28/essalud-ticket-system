@@ -21,7 +21,8 @@ const env = { NODE_ENV:"test", DATABASE_URL:"postgresql://runtime:example@localh
 test("catálogo organizacional exige clave y deriva el tenant del servidor", async t => {
   const calls=[];
   const catalog={network:{networkId:env.TICKETS_LOCAL_RED_ID,code:"PASCO_DEMO",name:"Red demo",active:true},
-    centers:[{centerId:randomUUID(),code:"SEDE_DEMO",name:"Sede demo",type:"CAP",active:true,areas:[]}],
+    centers:[{centerId:randomUUID(),code:"SEDE_DEMO",name:"Sede demo",type:"CAP",active:true,
+      location:{latitude:-10.6868,longitude:-76.2565,source:"CONFIGURED"},areas:[]}],
     roles:[{roleId:randomUUID(),code:"TECNICO_N1",name:"Técnico N1",description:"Rol ficticio de prueba",scope:"SEDE",active:true}]};
   const service={execute:async context=>{calls.push(context);return catalog;}};
   const config=readConfig(env);

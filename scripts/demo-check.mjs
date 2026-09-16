@@ -26,13 +26,13 @@ async function nextTicketEvent(type) {
 }
 let ticketId;
 try {
-  for(const path of ['/tecnico','/organizacion']) {const response=await fetch(new URL(path,base),{redirect:'manual',signal:AbortSignal.timeout(10000)});
+  for(const path of ['/tecnico','/organizacion','/mapa']) {const response=await fetch(new URL(path,base),{redirect:'manual',signal:AbortSignal.timeout(10000)});
     assert.ok([307,308].includes(response.status));assert.equal(response.headers.get('location'),'/acceso');}
   const login=await fetch(new URL('/api/auth/login',base),{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({username:'admin.gctic',password:process.env.TICKETS_DEMO_PASSWORD??'Demo-RAP-2026!'}),signal:AbortSignal.timeout(10000)});
   assert.equal(login.status,200);cookie=(login.headers.get('set-cookie')??'').split(';',1)[0];assert.match(cookie,/^essalud_staff_session=/);
-  for(const path of ['/portal','/acceso','/tecnico','/organizacion']) {const response=await fetch(new URL(path,base),{headers:cookie?{Cookie:cookie}:{},signal:AbortSignal.timeout(10000)});
-    assert.equal(response.status,200);assert.ok((await response.text()).includes(path==='/portal'?'¿Qué necesitas reportar?':path==='/acceso'?'Espacio del personal autorizado':path==='/organizacion'?'Cargando estructura organizacional':'Tablero de atención'));}
+  for(const path of ['/portal','/acceso','/tecnico','/organizacion','/mapa']) {const response=await fetch(new URL(path,base),{headers:cookie?{Cookie:cookie}:{},signal:AbortSignal.timeout(10000)});
+    assert.equal(response.status,200);assert.ok((await response.text()).includes(path==='/portal'?'¿Qué necesitas reportar?':path==='/acceso'?'Espacio del personal autorizado':path==='/organizacion'?'Cargando estructura organizacional':path==='/mapa'?'Cargando cobertura geográfica':'Tablero de atención'));}
   const stream=await fetch(new URL('/api/tickets/events',base),{headers:{Accept:'text/event-stream',Cookie:cookie},signal:controller.signal});
   assert.equal(stream.status,200);assert.match(stream.headers.get('content-type')??'',/^text\/event-stream/);reader=stream.body.getReader();
   const createdResponse=await request('',{method:'POST',body:JSON.stringify({titulo:'Demostracion SSE local',
@@ -42,6 +42,7 @@ try {
   let list=await request('?page=1&pageSize=100');assert.ok((await list.json()).items.some(item=>item.ticketId===ticketId));
   const organization=await fetch(new URL('/api/organization',base),{headers:{Cookie:cookie},signal:AbortSignal.timeout(10000)});assert.equal(organization.status,200);
   const catalog=await organization.json();assert.ok(catalog.centers.length>=4);assert.ok(catalog.roles.length>=5);
+  assert.ok(catalog.centers.every(center=>center.location&&Number.isFinite(center.location.latitude)&&Number.isFinite(center.location.longitude)));
   const technicians=await request('/asignacion/tecnicos');assert.equal(technicians.status,200);
   const available=await technicians.json();assert.ok(available.length>=2);assert.ok(available.every(item=>item.availableCapacity>=0));
   const automatic=await request('/'+ticketId+'/asignacion/automatica',{method:'POST'});assert.equal(automatic.status,200);

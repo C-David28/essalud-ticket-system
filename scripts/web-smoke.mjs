@@ -33,7 +33,8 @@ const backend = createServer((req, res) => {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
       network: { networkId:"demo", code:"PASCO_DEMO", name:"Red demo", active:true },
-      centers: [{ centerId:"center", code:"SEDE_DEMO", name:"Sede demo", type:"CAP", active:true, areas:[] }],
+      centers: [{ centerId:"center", code:"SEDE_DEMO", name:"Sede demo", type:"CAP", active:true,
+        location:{latitude:-10.6868,longitude:-76.2565,source:"CONFIGURED"},areas:[] }],
       roles: [{ roleId:"role", code:"TECNICO_N1", name:"Técnico N1", description:"Rol demo", scope:"SEDE", active:true }],
     }));
     return;
@@ -118,7 +119,7 @@ try {
   }
   assert.ok(started, "Next.js no estuvo listo en 60 segundos");
   const get = (path,cookie) => fetch(base + path, {headers:cookie?{Cookie:cookie}:{},signal:AbortSignal.timeout(10000) });
-  for(const path of ["/tecnico","/organizacion"]){const response=await fetch(base+path,{redirect:"manual"});
+  for(const path of ["/tecnico","/organizacion","/mapa"]){const response=await fetch(base+path,{redirect:"manual"});
     assert.ok([307,308].includes(response.status));assert.equal(response.headers.get("location"),"/acceso");}
   const login=await fetch(base+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({username:"supervisor.red",password:"Demo-RAP-2026!"})});
@@ -128,9 +129,10 @@ try {
     ["/portal", "¿Qué necesitas reportar?"],
     ["/acceso", "Espacio del personal autorizado"],
     ["/organizacion", "Cargando estructura organizacional"],
+    ["/mapa", "Cargando cobertura geográfica"],
     ["/tecnico", "Tablero de atención"],
   ]) {
-    const response = await get(path,path==="/tecnico"||path==="/organizacion"?cookie:undefined);
+    const response = await get(path,["/tecnico","/organizacion","/mapa"].includes(path)?cookie:undefined);
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.ok(html.includes(text));

@@ -14,6 +14,8 @@ describe("configuración organizacional", () => {
     expect(config.centers).toHaveLength(4);
     expect(config.centers[0].id).toBe(env.TICKETS_LOCAL_CENTRO_ID);
     expect(config.centers[0].areas[0].id).toBe(env.TICKETS_LOCAL_AREA_ID);
+    expect(config.centers.every(center => center.location !== null)).toBe(true);
+    expect(config.centers[0].location).toEqual({latitude:-10.6868,longitude:-76.2565,source:"CONFIGURED"});
     expect(config.roles).toHaveLength(5);
     expect(config.roles.every(role => ["PROPIO","SEDE","RED","NACIONAL"].includes(role.scope))).toBe(true);
   });
@@ -22,5 +24,6 @@ describe("configuración organizacional", () => {
     expect(generated).toContain("ON CONFLICT(red_asistencial_id,role_id) DO UPDATE");
     expect(generated).toContain("app.centros_asistenciales");
     expect(generated).toContain("app.roles_institucionales");
+    expect(generated).toContain("location_source");
   });
 });
