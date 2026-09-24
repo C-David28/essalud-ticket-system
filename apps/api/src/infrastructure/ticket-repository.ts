@@ -6,6 +6,11 @@ import { AuthorizedContext } from '../domain/access';
 import { Prisma } from '../generated/prisma/client';
 export class PrismaTicketRepository implements TicketRepository {
   constructor(private readonly uow: PrismaTenantUnitOfWork) {}
+  private readonly relations={area:{include:{centro:true}}} as const;
+  private ticket(row:any):Ticket {
+    const {area,...ticket}=row;
+    return {...ticket,centroNombre:area?.centro?.nombre??"",areaNombre:area?.nombre??""} as Ticket;
+  }
   private async run<T>(context: AuthorizedContext, fn: (tx: Prisma.TransactionClient)=>Promise<T>): Promise<T> {
     try { return await this.uow.run(context,fn); }
     catch (error) {
@@ -24,7 +29,7 @@ export class PrismaTicketRepository implements TicketRepository {
     return base;
   }
   private async ensureVisible(tx:Prisma.TransactionClient,context:AuthorizedContext,id:string) {
-    const ticket=await tx.ticket.findFirst({where:{...this.visible(context),ticketId:id}});
+    const ticket=await tx.ticket.findFirst({where:{...this.visible(context),ticketId:id},include:this.relations});
     if(!ticket)throw new TicketFailure('NOT_FOUND');return ticket;
   }
   create(context: AuthorizedContext,input: TicketInput): Promise<Ticket> {
@@ -33,21 +38,21 @@ export class PrismaTicketRepository implements TicketRepository {
       const area = await tx.area.findFirst({where:{redAsistencialId:context.redAsistencialId,
         centroAsistencialId:input.centroAsistencialId,areaId:input.areaId,activo:true,centro:{activo:true,red:{activo:true}}}});
       if(!area) throw new TicketFailure('INVALID');
-      return tx.ticket.create({data:{...input,redAsistencialId:context.redAsistencialId}}) as unknown as Ticket;
+      return this.ticket(await tx.ticket.create({data:{...input,redAsistencialId:context.redAsistencialId,isDemo:true},include:this.relations}));
     });
   }
   list(context: AuthorizedContext,page: number,pageSize: number): Promise<TicketPage> {
     return this.run(context,async tx=>{
-      const rows=await tx.ticket.findMany({where:this.visible(context),
+      const rows=await tx.ticket.findMany({where:this.visible(context),include:this.relations,
         orderBy:[{createdAt:'desc'},{ticketId:'desc'}],skip:(page-1)*pageSize,take:pageSize+1});
-      return {items:rows.slice(0,pageSize) as unknown as Ticket[],page,pageSize,hasMore:rows.length>pageSize};
+      return {items:rows.slice(0,pageSize).map(row=>this.ticket(row)),page,pageSize,hasMore:rows.length>pageSize};
     });
   }
   get(context: AuthorizedContext,id: string): Promise<Ticket> {
-    return this.run(context,async tx=>this.ensureVisible(tx,context,id) as unknown as Ticket);
+    return this.run(context,async tx=>this.ticket(await this.ensureVisible(tx,context,id)));
   }
   update(context: AuthorizedContext,id: string,input: TicketChanges): Promise<Ticket> {
-    return this.run(context,async tx=>{await this.ensureVisible(tx,context,id);return tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},data:input}) as unknown as Ticket;});
+    return this.run(context,async tx=>{await this.ensureVisible(tx,context,id);return this.ticket(await tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},data:input,include:this.relations}));});
   }
   transition(context:AuthorizedContext,id:string,state:TicketState,reason:string): Promise<Ticket> {
     return this.run(context,async tx=>{
@@ -60,8 +65,8 @@ export class PrismaTicketRepository implements TicketRepository {
       if(!current) throw new TicketFailure('NOT_FOUND');
       if(!TICKET_TRANSITIONS[current].includes(state)) throw new TicketFailure('CONFLICT');
       await tx.$queryRaw`SELECT set_config('app.ticket_transition_reason',${reason},true)`;
-      return tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},
-        data:{estado:state}}) as unknown as Ticket;
+      return this.ticket(await tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},
+        data:{estado:state},include:this.relations}));
     });
   }
   history(context:AuthorizedContext,id:string): Promise<TicketTransition[]> {
@@ -110,8 +115,8 @@ export class PrismaTicketRepository implements TicketRepository {
       const candidate=candidates[0];
       if(!candidate||candidate.activeLoad>=candidate.maxCapacity)throw new TicketFailure('CONFLICT');
       await tx.$queryRaw`SELECT set_config('app.ticket_assignment_reason',${reason},true)`;
-      return tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},
-        data:{assignedTo:technicianId,assignmentMode:'MANUAL'}}) as unknown as Ticket;
+      return this.ticket(await tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},
+        data:{assignedTo:technicianId,assignmentMode:'MANUAL'},include:this.relations}));
     });
   }
   autoAssign(context:AuthorizedContext,id:string):Promise<Ticket> {
@@ -129,8 +134,8 @@ export class PrismaTicketRepository implements TicketRepository {
       const candidate=candidates[0];if(!candidate)throw new TicketFailure('CONFLICT');
       const reason='Asignación automática por menor carga activa';
       await tx.$queryRaw`SELECT set_config('app.ticket_assignment_reason',${reason},true)`;
-      return tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},
-        data:{assignedTo:candidate.technicianId,assignmentMode:'AUTOMATICA'}}) as unknown as Ticket;
+      return this.ticket(await tx.ticket.update({where:{redAsistencialId_ticketId:{redAsistencialId:context.redAsistencialId,ticketId:id}},
+        data:{assignedTo:candidate.technicianId,assignmentMode:'AUTOMATICA'},include:this.relations}));
     });
   }
   assignmentHistory(context:AuthorizedContext,id:string):Promise<TicketAssignment[]> {

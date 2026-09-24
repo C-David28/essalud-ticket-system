@@ -2,7 +2,7 @@
 
 Proyecto académico y base para el piloto de soporte técnico e infraestructura de la Red Asistencial Pasco. No es un servicio oficial desplegado de EsSalud.
 
-**Entrega actual: subetapa 3.4 — mapa opcional de sedes e incidencias.** Las subetapas anteriores fueron validadas por el usuario y la nube continúa pausada. [Guía local](docs/SUBETAPA-3.4.md); [evidencia y límites](docs/VALIDATION-3.4.md).
+**Entrega actual: cierre de Etapa 3 — portal, RBAC, 20 tickets DEMO y mapa operativo.** [Guía de validación y redespliegue](docs/CIERRE-ETAPA-3.md).
 
 ## Comenzar
 
@@ -40,7 +40,7 @@ npm run api:start
 
 En otra terminal: `npm run api:check`. Swagger local: http://127.0.0.1:3001/docs. Las URLs de conexión están en apps/api/.env, ignorado por Git. Alternativa Docker y checklist: [SUBETAPA-1.4.md](docs/SUBETAPA-1.4.md).
 
-Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal, el Kanban, `/organizacion` y `/mapa` usan PostgreSQL. Google Maps es opcional: sin clave, `/mapa` conserva la lista geográfica funcional.
+Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `npm run demo:data:check`, `npm run demo:up` y `npm run demo:check`; abrir http://127.0.0.1:3000. El portal, el Kanban, `/organizacion` y `/mapa` usan PostgreSQL. Google Maps es opcional: sin clave, `/mapa` conserva la lista geográfica funcional.
 
 ## Qué contiene esta entrega
 
@@ -61,6 +61,7 @@ Para mostrar el sistema completo en local, ejecutar `npm run tickets:setup`, `np
 - Identidades demo con hash scrypt, sesiones JWT breves en cookie HttpOnly y permisos por rol.
 - Filtrado de tickets, eventos y catálogo por solicitante, sede o red, además del RLS por tenant.
 - Coordenadas configurables por sede, auditadas y protegidas por RLS; mapa interactivo opcional y lista geográfica de respaldo.
+- Veinte tickets sintéticos persistentes e idempotentes, identificados como DEMO y distribuidos entre cuatro sedes y todos los estados.
 - Workflow CI con regresión SQL, build, integración Prisma/Redis y demostración completa en contenedores.
 
 La demostración ofrece tres cuentas ficticias para técnico, supervisor y administrador. El modo institucional rechaza este adaptador local y queda preparado para sustituirlo por el proveedor de identidad aprobado. Las mutaciones requieren `app.user_id`, `app.request_id` y tenant dentro de la misma transacción. [AUDIT.md](docs/AUDIT.md) documenta el contrato y los límites frente a administradores del esquema.
@@ -112,6 +113,8 @@ erDiagram
     numeric latitude
     numeric longitude
     varchar location_source
+    varchar location_accuracy
+    varchar address
   }
   AREAS {
     uuid red_asistencial_id PK,FK
@@ -125,6 +128,7 @@ erDiagram
     varchar codigo UK
     varchar estado
     uuid assigned_to FK
+    boolean is_demo
   }
   TECNICOS_SOPORTE {
     uuid tecnico_id PK
@@ -167,7 +171,7 @@ apps/api/src/{domain,application,infrastructure,presentation}/
 apps/web/src/
 packages/contracts/
 infra/postgres/init/001-bootstrap.sql
-infra/postgres/migrations/0001_multi_tenant.sql ... 0008_geographic_locations.sql
+infra/postgres/migrations/0001_multi_tenant.sql ... 0009_demo_delivery.sql
 infra/postgres/verify.sql
 infra/postgres/verify-multi-tenant.sql
 infra/postgres/verify-audit.sql
@@ -204,6 +208,7 @@ Si hay conflicto de puertos, cambiarlos en `.env`. Modificar la contraseña de `
 - [Guía de estructura organizacional 3.2](docs/SUBETAPA-3.2.md).
 - [Guía de autenticación, RBAC y alcance 3.3](docs/SUBETAPA-3.3.md).
 - [Guía de mapa opcional 3.4](docs/SUBETAPA-3.4.md).
+- [Cierre de Etapa 3: datos DEMO, validación y redespliegue](docs/CIERRE-ETAPA-3.md).
 - [Evidencia y límites de las pruebas](docs/VALIDATION.md).
 
 Fuentes: [RLS en PostgreSQL 17](https://www.postgresql.org/docs/17/ddl-rowsecurity.html), [imagen oficial PostgreSQL](https://hub.docker.com/_/postgres) y [healthchecks Docker](https://docs.docker.com/compose/how-tos/startup-order/).

@@ -3,9 +3,11 @@ import { AuthorizedContext } from "./access";
 export type OrganizationArea = { areaId: string; code: string; name: string; active: boolean };
 export type OrganizationLocation = {
   latitude: number; longitude: number; source: "CONFIGURED" | "NETWORK" | "GEOCODED";
+  accuracy: "VERIFIED" | "REFERENCE" | "DEMO";
 };
 export type OrganizationCenter = {
   centerId: string; code: string; name: string; type: string; active: boolean;
+  address: string | null;
   location: OrganizationLocation | null;
   areas: OrganizationArea[];
 };
@@ -18,6 +20,7 @@ export type OrganizationCatalog = {
   centers: OrganizationCenter[];
   roles: InstitutionalRole[];
 };
+export type PublicOrganizationCatalog = Pick<OrganizationCatalog,"network"|"centers">;
 export interface OrganizationRepository {
   catalog(context: AuthorizedContext): Promise<OrganizationCatalog>;
 }

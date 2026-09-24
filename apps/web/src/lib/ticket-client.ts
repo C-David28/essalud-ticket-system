@@ -9,6 +9,10 @@ type ApiTicket = {
   prioridad: "BAJA" | "MEDIA" | "ALTA" | "CRITICA";
   estado: "ABIERTO" | "EN_PROCESO" | "PENDIENTE" | "RESUELTO" | "CERRADO";
   centroAsistencialId: string;
+  areaId:string;
+  centroNombre:string;
+  areaNombre:string;
+  isDemo:boolean;
   createdAt: string;
   solicitanteId: string;
   assignedTo:string|null;
@@ -49,8 +53,9 @@ function mapTicket(ticket: ApiTicket): DemoTicket {
     description: ticket.descripcion,
     category: categoryFromApi[ticket.categoria],
     centerId: ticket.centroAsistencialId,
-    center: "Centro ficticio de pruebas",
-    area: "Área ficticia de pruebas",
+    center: ticket.centroNombre,
+    area: ticket.areaNombre,
+    areaId:ticket.areaId,
     priority: priorityFromApi[ticket.prioridad],
     status: statusFromApi[ticket.estado],
     createdAt: ticket.createdAt,
@@ -59,6 +64,7 @@ function mapTicket(ticket: ApiTicket): DemoTicket {
     assignee: null,
     assignedAt:ticket.assignedAt,
     assignmentMode:ticket.assignmentMode,
+    isDemo:ticket.isDemo,
   };
 }
 
@@ -81,10 +87,12 @@ export async function listTickets(): Promise<DemoTicket[]> {
 }
 export function listTechnicians():Promise<Technician[]> {return api<Technician[]>("/asignacion/tecnicos");}
 export async function createTicket(draft: TicketDraft): Promise<DemoTicket> {
+  if(!draft.centerId||!draft.areaId) throw new Error("Selecciona una sede y un área válidas.");
   const result = await api<ApiTicket>("", {
     method: "POST",
     body: JSON.stringify({titulo:draft.title,descripcion:draft.description,
-      categoria:categoryToApi[draft.category],prioridad:priorityToApi[draft.priority]}),
+      categoria:categoryToApi[draft.category],prioridad:priorityToApi[draft.priority],
+      centroAsistencialId:draft.centerId,areaId:draft.areaId}),
   });
   return mapTicket(result);
 }

@@ -42,7 +42,7 @@ UNION ALL
 SELECT red_b,centro_b,area_b,'AREA','Area ficticia B' FROM test_context;
 
 SELECT pg_temp.assert_true((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='app.tickets'::regclass),'tickets RLS forzado');
-SELECT pg_temp.assert_true((SELECT count(*)=4 AND bool_and(tgenabled='A') FROM pg_trigger WHERE tgrelid='app.tickets'::regclass AND NOT tgisinternal),'triggers de ticket activos');
+SELECT pg_temp.assert_true((SELECT count(*)=5 AND bool_and(tgenabled='A') FROM pg_trigger WHERE tgrelid='app.tickets'::regclass AND NOT tgisinternal),'triggers de ticket activos');
 SET LOCAL ROLE essalud_app;
 SELECT set_config('app.user_id',gen_random_uuid()::text,true);
 SELECT set_config('app.request_id',gen_random_uuid()::text,true);

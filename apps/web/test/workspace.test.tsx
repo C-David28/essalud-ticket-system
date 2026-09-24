@@ -8,8 +8,10 @@ import { initialTickets, makeDemoTicket, type DemoTicket } from "../src/lib/demo
 const api=vi.hoisted(()=>({
   listTickets:vi.fn(),listTechnicians:vi.fn(),createTicket:vi.fn(),transitionTicket:vi.fn(),
   assignTicket:vi.fn(),autoAssignTicket:vi.fn(),
+  getPublicOrganizationCatalog:vi.fn(),
 }));
 vi.mock("../src/lib/ticket-client",()=>api);
+vi.mock("../src/lib/organization-client",()=>({getPublicOrganizationCatalog:api.getPublicOrganizationCatalog}));
 class FakeEventSource {
   onopen:null|(()=>void)=null;onerror:null|(()=>void)=null;
   constructor(public url:string){queueMicrotask(()=>this.onopen?.());}
@@ -17,6 +19,10 @@ class FakeEventSource {
 }
 let server:DemoTicket[]=[];
 beforeEach(()=>{
+  api.getPublicOrganizationCatalog.mockReset().mockResolvedValue({network:{networkId:"red",code:"DEMO",name:"Red demo",active:true},
+    centers:[{centerId:"33333333-3333-4333-8333-333333333333",code:"SEDE_DEMO",name:"Centro ficticio de pruebas",
+      type:"CAP",active:true,address:"Dirección demo",location:null,
+      areas:[{areaId:"44444444-4444-4444-8444-444444444444",code:"AREA_DEMO",name:"Área ficticia de pruebas",active:true}]}]});
   server=initialTickets();
   api.listTickets.mockReset().mockImplementation(async()=>server.map(ticket=>({...ticket})));
   api.listTechnicians.mockReset().mockResolvedValue([

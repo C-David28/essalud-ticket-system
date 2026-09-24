@@ -22,7 +22,7 @@ test("catálogo organizacional exige clave y deriva el tenant del servidor", asy
   const calls=[];
   const catalog={network:{networkId:env.TICKETS_LOCAL_RED_ID,code:"PASCO_DEMO",name:"Red demo",active:true},
     centers:[{centerId:randomUUID(),code:"SEDE_DEMO",name:"Sede demo",type:"CAP",active:true,
-      location:{latitude:-10.6868,longitude:-76.2565,source:"CONFIGURED"},areas:[]}],
+      address:"Dirección DEMO",location:{latitude:-10.6868,longitude:-76.2565,source:"CONFIGURED",accuracy:"REFERENCE"},areas:[]}],
     roles:[{roleId:randomUUID(),code:"TECNICO_N1",name:"Técnico N1",description:"Rol ficticio de prueba",scope:"SEDE",active:true}]};
   const service={execute:async context=>{calls.push(context);return catalog;}};
   const config=readConfig(env);
@@ -38,12 +38,14 @@ test("catálogo organizacional exige clave y deriva el tenant del servidor", asy
   const http=request(app.getHttpServer());
   await http.get("/api/v1/organization").expect(401);
   await http.get("/api/v1/organization").set("X-Local-Api-Key",env.TICKETS_LOCAL_KEY).expect(401);
+  const publicCatalog=await http.get("/api/v1/organization/public").set("X-Local-Api-Key",env.TICKETS_LOCAL_KEY).expect(200);
+  assert.deepEqual(publicCatalog.body,{network:catalog.network,centers:catalog.centers});
   const response=await http.get("/api/v1/organization").set("X-Local-Api-Key",env.TICKETS_LOCAL_KEY).set("Authorization","Bearer aaa.bbb.ccc")
     .set("X-Tenant-Id",randomUUID()).expect(200);
   assert.deepEqual(response.body,catalog);
-  assert.equal(calls[0].redAsistencialId,env.TICKETS_LOCAL_RED_ID);
-  assert.equal(calls[0].requestId,response.headers["x-request-id"]);
-  assert.equal(calls[0].userId,principal.userId);assert.deepEqual(calls[0].principal,principal);
+  assert.equal(calls[1].redAsistencialId,env.TICKETS_LOCAL_RED_ID);
+  assert.equal(calls[1].requestId,response.headers["x-request-id"]);
+  assert.equal(calls[1].userId,principal.userId);assert.deepEqual(calls[1].principal,principal);
 });
 
 test("catálogo de sede consulta solo centros y roles autorizados",async()=>{

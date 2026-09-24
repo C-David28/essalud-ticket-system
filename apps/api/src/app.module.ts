@@ -1,6 +1,7 @@
 import { GetOrganizationCatalog } from './application/get-organization-catalog';
 import { PrismaOrganizationRepository } from './infrastructure/organization-repository';
 import { OrganizationController } from './presentation/organization.controller';
+import { PublicOrganizationController } from './presentation/public-organization.controller';
 import { Tickets } from './application/tickets';
 import { PrismaTicketRepository } from './infrastructure/ticket-repository';
 import { TicketsController } from './presentation/tickets.controller';
@@ -22,7 +23,7 @@ export class AppModule {
   static register(config: ApiConfig): DynamicModule {
     return {
       module:AppModule,
-      controllers:[HealthController,SystemController,...(config.localTickets ? [AuthController,TicketsController,OrganizationController] : [])],
+      controllers:[HealthController,SystemController,...(config.localTickets ? [AuthController,TicketsController,OrganizationController,PublicOrganizationController] : [])],
       providers:[
         ...(config.localTickets ? [{provide:LOCAL_TICKETS,useValue:config.localTickets},LocalTicketsGuard,
           {provide:ACCESS_TOKEN,useFactory:()=>new HmacAccessToken(config.localTickets!.tokenSecret,config.localTickets!.tokenTtlSeconds)},

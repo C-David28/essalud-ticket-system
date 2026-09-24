@@ -1,6 +1,6 @@
 # Subetapa 1.6 — Vercel y Railway
 
-Configuración preparada; publicación pendiente de crear las cuentas. No hay URL ni certificado verificados en esta entrega. Aplicar primero [SUBETAPA-1.6.md](SUBETAPA-1.6.md).
+Arquitectura original conservada: Vercel para Next.js y Railway para API, PostgreSQL, Redis y operaciones. Para el cierre actual aplicar [CIERRE-ETAPA-3.md](CIERRE-ETAPA-3.md).
 
 ## Arquitectura
 
@@ -14,7 +14,7 @@ flowchart LR
   O --> B[Volumen de respaldos]
 ```
 
-Se conserva la demostración de 1.5: la conexión real sigue siendo el indicador de salud. No se añaden CRUD, autenticación, WebSockets ni Node-RED. Las dos migraciones, Prisma y las 56 verificaciones SQL permanecen iguales. No hay migración 0003. Cambios mínimos de API: Redis resuelve IPv4/IPv6 y el HEALTHCHECK respeta PORT. Cloud inicia main.js; container.js sigue siendo exclusivo de Compose local.
+El piloto actual incluye CRUD, SSE, autenticación/RBAC, organización, mapa y datos DEMO. Node-RED y los módulos de Etapa 4 continúan fuera de alcance.
 
 ## 1. Crear las cuentas
 
@@ -73,8 +73,8 @@ Las referencias suponen exactamente los nombres Postgres y Redis. El hostname de
 Desplegar y comprobar estas tres líneas finales:
 
 ```text
-OK: migraciones y rol repetibles; 22 verificaciones tenant y 34 de auditoria.
-OK: respaldo restaurado en base temporal, 56 pruebas repetidas y base temporal eliminada.
+OK: migraciones, rol repetible y ocho suites SQL de seguridad y negocio.
+OK: respaldo restaurado en base temporal, ocho suites repetidas y base temporal eliminada.
 OK: evidencia y dos respaldos conservados en CLOUD_BACKUP_DIR. Operaciones finalizadas.
 ```
 

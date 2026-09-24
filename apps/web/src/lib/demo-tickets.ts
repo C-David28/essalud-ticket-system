@@ -29,6 +29,7 @@ export type DemoTicket = {
   category: Category;
   center: string;
   centerId?: string;
+  areaId?: string;
   area: string;
   priority: (typeof PRIORITIES)[number];
   status: TicketStatus;
@@ -38,11 +39,12 @@ export type DemoTicket = {
   assignee: string | null;
   assignedAt?:string|null;
   assignmentMode?:"MANUAL"|"AUTOMATICA"|null;
+  isDemo?:boolean;
 };
 export type TicketDraft = Pick<
   DemoTicket,
   "title" | "description" | "category" | "center" | "area" | "priority"
->;
+> & {centerId?:string;areaId?:string};
 export const DEMO_USER = "solicitante-demo";
 export const DEMO_TECH = "Técnico de prueba 01";
 export const seedTickets: DemoTicket[] = [
@@ -193,8 +195,8 @@ export function validateDraft(d: TicketDraft): Record<string, string> {
     errors.description = "Describe el problema en 20 a 2000 caracteres.";
   if (!CATEGORIES.includes(d.category))
     errors.category = "Selecciona una categoría.";
-  if (!CENTERS.includes(d.center as (typeof CENTERS)[number]))
-    errors.center = "Selecciona un centro de ejemplo.";
+  if (d.center.trim().length < 2 || (!d.centerId&&!CENTERS.includes(d.center as (typeof CENTERS)[number])))
+    errors.center = "Selecciona una sede.";
   if (d.area.trim().length < 2 || d.area.trim().length > 80)
     errors.area = "Indica el área en 2 a 80 caracteres.";
   if (!PRIORITIES.includes(d.priority))

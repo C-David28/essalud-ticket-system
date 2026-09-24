@@ -4,8 +4,9 @@ import { runtimeRoleSql } from './api-role.mjs';
 
 const sqlFile = name => readFileSync(new URL('../../infra/postgres/' + name, import.meta.url), 'utf8');
 export async function verifyCloudSchema(sql) {
-  await sql(sqlFile('verify-multi-tenant.sql'));
-  await sql(sqlFile('verify-audit.sql'));
+  for(const file of ['verify-multi-tenant.sql','verify-audit.sql','verify-tickets.sql','verify-ticket-states.sql',
+    'verify-ticket-assignment.sql','verify-organization.sql','verify-access.sql','verify-geography.sql'])
+    await sql(sqlFile(file));
 }
 export async function prepareCloudSchema(sql, password) {
   // Validar antes de cualquier escritura; reutilizar SQL y checksums canonicos.

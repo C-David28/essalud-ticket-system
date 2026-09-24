@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent, type ComponentType } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -13,6 +15,7 @@ import {
   HardDrive,
   Info,
   Monitor,
+  MapPin,
   Network,
   Plus,
   Search,
@@ -32,7 +35,6 @@ import {
 import { useTickets } from "@/components/providers";
 import {
   CATEGORIES,
-  CENTERS,
   DEMO_USER,
   STATUSES,
   PRIORITIES,
@@ -44,6 +46,7 @@ import {
   type TicketDraft,
   type TicketStatus,
 } from "@/lib/demo-tickets";
+import { getPublicOrganizationCatalog } from "@/lib/organization-client";
 import type { StaffSession } from "@/lib/staff-session";
 
 const categoryIcons: Record<Category, ComponentType<{ size?: number }>> = {
@@ -106,15 +109,17 @@ const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
   title: "",
   description: "",
   category,
-  center: CENTERS[0],
-  area: "Área ficticia de pruebas",
+  center: "",
+  area: "",
   priority: "Media",
 });
 
-export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";access?:StaffSession }) {
+export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: { mode: "portal" | "tecnico";access?:StaffSession;initialTicket?:string;initialCenterId?:string }) {
   const tech = mode === "tecnico";
   const canAssign=!!access?.permissions.includes("tickets:assign"),canTransition=!tech||!!access?.permissions.includes("tickets:transition");
   const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets({technical:tech,canAssign});
+  const organization=useQuery({queryKey:["public-organization"],queryFn:getPublicOrganizationCatalog,staleTime:60000});
+  const centers=organization.data?.centers??[];
   const [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
     [center, setCenter] = useState(""),
@@ -138,6 +143,11 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
     requester: tech ? undefined : DEMO_USER,
   });
   const detail = tickets.find((t) => t.id === selected);
+  useEffect(()=>{
+    if(initialTicket&&tickets.some(ticket=>ticket.id===initialTicket||ticket.ticketId===initialTicket))setSelected(
+      tickets.find(ticket=>ticket.id===initialTicket||ticket.ticketId===initialTicket)!.id);
+    if(initialCenterId){const site=centers.find(item=>item.centerId===initialCenterId);if(site)setCenter(site.name);}
+  },[initialTicket,initialCenterId,tickets,centers]);
   useEffect(() => {
     setNextStatus(detail ? (nextStatuses[detail.status][0] ?? "") : "");
     setReason("");
@@ -151,7 +161,8 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
     setPriority("");
   }
   function openCreate(category?: Category) {
-    setDraft(emptyDraft(category));
+    const first=centers[0],area=first?.areas[0];
+    setDraft({...emptyDraft(category),center:first?.name??"",centerId:first?.centerId,area:area?.name??"",areaId:area?.areaId});
     setErrors({});
     setCreateOpen(true);
   }
@@ -163,6 +174,8 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const next = validateDraft(draft);
+    if(!draft.centerId)next.center="Selecciona una sede.";
+    if(!draft.areaId)next.area="Selecciona un área.";
     setErrors(next);
     if (Object.keys(next).length) {
       document.getElementById("draft-" + Object.keys(next)[0])?.focus();
@@ -230,7 +243,8 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
           onOpenChange={(open) => {
             setCreateOpen(open);
             if (open) {
-              setDraft(emptyDraft());
+              const first=centers[0],area=first?.areas[0];
+              setDraft({...emptyDraft(),center:first?.name??"",centerId:first?.centerId,area:area?.name??"",areaId:area?.areaId});
               setErrors({});
             }
           }}
@@ -298,30 +312,33 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
                   Centro local
                   <select
                     id="draft-center"
-                    value={draft.center}
-                    onChange={(e) => field("center", e.target.value)}
+                    value={draft.centerId??""}
+                    onChange={(e) => {const site=centers.find(item=>item.centerId===e.target.value),area=site?.areas[0];
+                      setDraft(old=>({...old,centerId:site?.centerId,center:site?.name??"",areaId:area?.areaId,area:area?.name??""}));}}
                     className="field"
-                    disabled
+                    disabled={organization.isPending||!centers.length}
                   >
-                    {CENTERS.map((c) => (
-                      <option key={c}>{c}</option>
+                    {centers.map((c) => (
+                      <option key={c.centerId} value={c.centerId}>{c.name}</option>
                     ))}
                   </select>
                   {error("center")}
                 </label>
                 <label htmlFor="draft-area">
                   Área
-                  <Input
+                  <select
                     id="draft-area"
-                    value={draft.area}
-                    onChange={(e) => field("area", e.target.value)}
-                    maxLength={80}
-                    placeholder="Ej. Admisión"
+                    value={draft.areaId??""}
+                    onChange={(e) => {const area=centers.find(item=>item.centerId===draft.centerId)?.areas.find(item=>item.areaId===e.target.value);
+                      setDraft(old=>({...old,areaId:area?.areaId,area:area?.name??""}));}}
+                    className="field"
                     aria-invalid={!!errors.area}
                     aria-describedby={errors.area ? "error-area" : undefined}
                     required
-                    disabled
-                  />
+                    disabled={!draft.centerId}
+                  >
+                    {(centers.find(item=>item.centerId===draft.centerId)?.areas??[]).map(area=><option key={area.areaId} value={area.areaId}>{area.name}</option>)}
+                  </select>
                   {error("area")}
                 </label>
               </div>
@@ -500,7 +517,7 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
                   onChange={(e) => setCenter(e.target.value)}
                 >
                   <option value="">Todos los centros</option>
-                  {CENTERS.map((c) => (
+                  {[...new Set(tickets.map(ticket=>ticket.center))].map((c) => (
                     <option key={c}>{c}</option>
                   ))}
                 </select>
@@ -721,6 +738,7 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
                 <DialogDescription>
                   {detail.center} · {detail.area}
                 </DialogDescription>
+                {detail.isDemo&&<span className="demo-data-badge">DATO DEMO</span>}
               </div>
               <div className="detail-badges">
                 <Status status={detail.status} />
@@ -748,6 +766,9 @@ export function TicketWorkspace({ mode,access }: { mode: "portal" | "tecnico";ac
                 <h3>Descripción</h3>
                 <p>{detail.description}</p>
               </section>
+              {tech&&detail.centerId&&<Link className="map-detail-link" href={"/mapa?sede="+encodeURIComponent(detail.centerId)+"&ticket="+encodeURIComponent(detail.ticketId)}>
+                <MapPin size={16}/> Ver sede en el mapa
+              </Link>}
               {tech && canAssign && (
                 <div className="demo-change assignment-control">
                   <strong>Asignación técnica</strong>

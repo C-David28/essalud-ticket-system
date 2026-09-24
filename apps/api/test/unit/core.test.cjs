@@ -9,6 +9,15 @@ test('configuracion valida y Swagger desactivado por defecto en produccion',()=>
   const production=readConfig({...env,NODE_ENV:'production'});assert.equal(production.swaggerEnabled,false);assert.equal(production.applicationEnvironment,'institutional');
   const development=readConfig(env);assert.equal(development.host,'127.0.0.1');assert.equal(development.applicationEnvironment,'development');
 });
+test('piloto publico exige habilitacion explicita y mantiene secretos separados',()=>{
+  const config=readConfig({...env,NODE_ENV:'production',HOST:'::',APP_ENVIRONMENT:'demo',PUBLIC_DEMO_ENABLED:'true',
+    TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:'a'.repeat(64),ACCESS_TOKEN_SECRET:'b'.repeat(64),
+    TICKETS_LOCAL_RED_ID:randomUUID(),TICKETS_LOCAL_USER_ID:randomUUID()});
+  assert.ok(config.localTickets);assert.equal(config.applicationEnvironment,'demo');
+  assert.throws(()=>readConfig({...env,NODE_ENV:'production',HOST:'::',APP_ENVIRONMENT:'demo',
+    TICKETS_LOCAL_ENABLED:'true',TICKETS_LOCAL_KEY:'a'.repeat(64),ACCESS_TOKEN_SECRET:'b'.repeat(64),
+    TICKETS_LOCAL_RED_ID:randomUUID(),TICKETS_LOCAL_USER_ID:randomUUID()}),/solo demo local/);
+});
 test('configuracion rechaza puertos, origenes y URLs invalidos sin revelar claves',()=>{
   for(const override of [{PORT:'-1'},{PORT:'70000'},{PORT:'0'},{CORS_ORIGINS:'*'},
     {CORS_ORIGINS:'https://example.com/path'},{SWAGGER_ENABLED:'yes'},{APP_ENVIRONMENT:'unknown'},{SITE_RESOLUTION_MODE:'guess'},

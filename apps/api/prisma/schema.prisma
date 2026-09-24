@@ -29,6 +29,8 @@ model CentroAsistencial {
   latitude Decimal? @db.Decimal(9, 6)
   longitude Decimal? @db.Decimal(9, 6)
   locationSource String? @map("location_source") @db.VarChar(20)
+  address String? @db.VarChar(300)
+  locationAccuracy String? @map("location_accuracy") @db.VarChar(12)
   activo Boolean @default(true)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
@@ -145,6 +147,7 @@ model Ticket {
   assignedTo String? @map("assigned_to") @db.Uuid
   assignedAt DateTime? @map("assigned_at") @db.Timestamptz(6)
   assignmentMode String? @map("assignment_mode") @db.VarChar(10)
+  isDemo Boolean @default(false) @map("is_demo")
   area Area @relation(fields:[redAsistencialId,centroAsistencialId,areaId], references:[redAsistencialId,centroAsistencialId,areaId],onDelete:Restrict,onUpdate:Restrict)
   assignedTechnician SupportTechnician? @relation(fields:[redAsistencialId,assignedTo],references:[redAsistencialId,technicianId],onDelete:Restrict,onUpdate:Restrict)
   @@id([redAsistencialId,ticketId])

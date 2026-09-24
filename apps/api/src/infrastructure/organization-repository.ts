@@ -21,10 +21,11 @@ export class PrismaOrganizationRepository implements OrganizationRepository {
         network: { networkId: network.redAsistencialId, code: network.codigo, name: network.nombre, active: network.activo },
         centers: network.centros.map(center => ({
           centerId: center.centroAsistencialId, code: center.codigo, name: center.nombre,
-          type: center.tipo, active: center.activo,
+          type: center.tipo, active: center.activo, address:center.address,
           location: center.latitude !== null && center.longitude !== null && center.locationSource !== null
             ? { latitude:Number(center.latitude), longitude:Number(center.longitude),
-                source:center.locationSource as OrganizationLocation["source"] }
+                source:center.locationSource as OrganizationLocation["source"],
+                accuracy:center.locationAccuracy as OrganizationLocation["accuracy"] }
             : null,
           areas: center.areas.map(area => ({ areaId: area.areaId, code: area.codigo, name: area.nombre, active: area.activo })),
         })),

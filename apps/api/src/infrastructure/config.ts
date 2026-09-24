@@ -39,11 +39,16 @@ export function readConfig(env: NodeJS.ProcessEnv): ApiConfig {
   const siteResolutionMode=env.SITE_RESOLUTION_MODE??'configured';
   if(!['configured','network'].includes(siteResolutionMode))fail('SITE_RESOLUTION_MODE');
   let localTickets: LocalTicketsConfig | undefined;
+  const publicDemo=env.PUBLIC_DEMO_ENABLED==='true';
+  if(env.PUBLIC_DEMO_ENABLED&&!['true','false'].includes(env.PUBLIC_DEMO_ENABLED))fail('PUBLIC_DEMO_ENABLED');
   if (env.TICKETS_LOCAL_ENABLED && !['true','false'].includes(env.TICKETS_LOCAL_ENABLED)) fail('TICKETS_LOCAL_ENABLED');
   if (env.TICKETS_LOCAL_ENABLED === 'true') {
-    if (applicationEnvironment!=='demo'||nodeEnv === 'production' || env.RAILWAY_PROJECT_ID || env.VERCEL) fail('TICKETS_LOCAL_ENABLED: solo demo local');
+    if (applicationEnvironment!=='demo') fail('TICKETS_LOCAL_ENABLED: requiere entorno demo');
+    if(publicDemo){
+      if(nodeEnv!=='production'||!['0.0.0.0','::'].includes(host))fail('PUBLIC_DEMO_ENABLED: requiere producción y escucha de contenedor');
+    } else if(nodeEnv === 'production' || env.RAILWAY_PROJECT_ID || env.VERCEL) fail('TICKETS_LOCAL_ENABLED: solo demo local');
     if(siteResolutionMode!=='configured')fail('SITE_RESOLUTION_MODE: adaptador network no configurado');
-    if (!['127.0.0.1','::1'].includes(host) && !(env.API_CONTAINER_NETWORK==='true' && host==='0.0.0.0')) fail('HOST: solo loopback o Compose local');
+    if(!publicDemo&&!['127.0.0.1','::1'].includes(host) && !(env.API_CONTAINER_NETWORK==='true' && host==='0.0.0.0')) fail('HOST: solo loopback o Compose local');
     if (!/^[a-f0-9]{64}$/.test(env.TICKETS_LOCAL_KEY ?? '')) fail('TICKETS_LOCAL_KEY');
     if (!/^[a-f0-9]{64}$/.test(env.ACCESS_TOKEN_SECRET ?? '')||env.ACCESS_TOKEN_SECRET===env.TICKETS_LOCAL_KEY) fail('ACCESS_TOKEN_SECRET');
     const tokenTtlSeconds=Number(env.ACCESS_TOKEN_TTL_SECONDS??'900');

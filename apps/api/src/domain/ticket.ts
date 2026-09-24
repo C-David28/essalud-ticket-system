@@ -35,6 +35,7 @@ export interface Ticket extends TicketInput {
   redAsistencialId: string; ticketId: string; codigo: string; estado: TicketState; solicitanteId: string;
   createdAt: Date; updatedAt: Date; resolvedAt: Date|null; closedAt: Date|null;
   assignedTo:string|null;assignedAt:Date|null;assignmentMode:'MANUAL'|'AUTOMATICA'|null;
+  isDemo:boolean; centroNombre:string; areaNombre:string;
 }
 export interface SupportTechnician {technicianId:string;name:string;level:'N1'|'N2';maxCapacity:number;activeLoad:number;availableCapacity:number}
 export interface TicketAssignment {assignmentId:string;ticketId:string;codigo:string;previousTechnicianId:string|null;

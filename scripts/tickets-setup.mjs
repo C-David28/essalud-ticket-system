@@ -4,6 +4,7 @@ import { parseEnv } from 'node:util';
 import { postgres, run } from './lib/postgres.mjs';
 import { organizationSeedSql } from './lib/organization-config.mjs';
 import { accessSeedSql } from './lib/access-config.mjs';
+import { demoTicketSeedSql } from './lib/ticket-demo-config.mjs';
 const file=new URL('../apps/api/.env.tickets',import.meta.url);
 run(()=>{
   let env;
@@ -49,6 +50,7 @@ run(()=>{
         SET nivel=EXCLUDED.nivel,capacidad_maxima=EXCLUDED.capacidad_maxima,activo=true;
     ${organizationSeedSql(env)}
     ${accessSeedSql(env)}
+    ${demoTicketSeedSql(env)}
     COMMIT;`);
-  console.log('OK: catálogo, accesos demo, técnicos y configuración local disponibles; claves conservadas.');
+  console.log('OK: catálogo, accesos, técnicos y 20 tickets DEMO idempotentes disponibles; claves conservadas.');
 });

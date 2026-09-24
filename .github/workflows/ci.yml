@@ -77,6 +77,8 @@ jobs:
       - name: Verify local ticket API in Docker
         run: |
           npm run tickets:setup
+          npm run tickets:setup
+          npm run demo:data:check
           npm run tickets:up
           npm run tickets:check
       - name: Verify local real-time demonstration

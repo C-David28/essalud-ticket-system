@@ -3,6 +3,7 @@ RUN apk add --no-cache postgresql17-client su-exec
 WORKDIR /app
 COPY --chown=node:node scripts ./scripts
 COPY --chown=node:node infra/postgres ./infra/postgres
+COPY --chown=node:node config ./config
 COPY infra/cloud/ops-entrypoint.sh /usr/local/bin/ops-entrypoint.sh
 ENV CLOUD_BACKUP_DIR=/backups
 ENTRYPOINT ["sh", "/usr/local/bin/ops-entrypoint.sh"]

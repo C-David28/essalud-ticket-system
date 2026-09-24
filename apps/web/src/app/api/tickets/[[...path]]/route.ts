@@ -30,7 +30,6 @@ async function proxy(request:Request,context:Context) {
       let value:Record<string,unknown>;
       try {value=await request.json() as Record<string,unknown>;}
       catch {return Response.json({message:"Solicitud inválida"},{status:400,headers:{"Cache-Control":"no-store"}});}
-      if(request.method==="POST"&&!path.length) Object.assign(value,{centroAsistencialId:config.centroAsistencialId,areaId:config.areaId});
       body=JSON.stringify(value);
     }
     const response=await fetch(url,{method:request.method,headers:{...apiHeaders(config),...(token?{Authorization:"Bearer "+token}:{}),...(body?{"Content-Type":"application/json"}:{})},
