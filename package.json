@@ -40,7 +40,7 @@
     "cloud:test": "node --test scripts/test/cloud.test.mjs",
     "cloud:test:integration": "node scripts/cloud-integration.mjs",
     "tickets:setup": "node scripts/tickets-setup.mjs",
-    "tickets:up": "docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml up -d --build --wait --wait-timeout 120 api",
+    "tickets:up": "docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml up -d --build --force-recreate --wait --wait-timeout 120 api",
     "tickets:down": "docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml down",
     "tickets:check": "node scripts/tickets-check.mjs",
     "db:tickets:check": "node scripts/db-tickets-check.mjs",
