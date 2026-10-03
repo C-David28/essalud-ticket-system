@@ -16,14 +16,29 @@
 | 3.2 | Estructura organizacional configurable | Validada por el usuario |
 | 3.3 | Control de acceso, roles, sedes y entornos | Validada por el usuario |
 | 3.4 | Google Maps opcional para sedes e incidencias | Implementada; pendiente checklist Docker y Maps del usuario |
-| 4.1 | Motor configurable de SLA y prioridades | Pendiente |
-| 4.2 | Panel operativo de técnicos y supervisores | Pendiente |
-| 4.3 | Node-RED, alertas y escalamiento | Pendiente |
-| 4.4 | Primer entregable funcional consolidado | Pendiente |
-| 5.1 | Omnicanalidad con correo y WhatsApp | Pendiente |
-| 5.2 | Asistencia con IA | Pendiente |
-| 5.3 | CMDB tecnológico y biomédico | Pendiente |
-| 5.4 | Preparación del piloto institucional y analítica | Pendiente |
+| 4.1 | Diseño formal ML y guía de etiquetado | Documentación implementada; ver validación 4.1 |
+| 4.2 | Dataset sintético V1 separado de tickets | Pendiente |
+| 4.3 | GitHub, Google Colab y entorno reproducible | Pendiente |
+| 4.4 | Entrenamiento, comparación y evaluación | Pendiente |
+| 4.5 | Modelo V1, versionamiento y Model Card | Pendiente |
+| 4.6 | Servicio independiente de inferencia | Pendiente |
+| 4.7 | Clasificación asistida en NestJS y Next.js | Pendiente |
+| 4.8 | Fallback, historial paginado y regresión | Pendiente |
+| 4.9 | Alternativa de despliegue completo, previa aprobación | Pendiente |
+| 5.1 | Motor configurable de SLA y prioridades | Pendiente |
+| 5.2 | Panel operativo de técnicos y supervisores | Pendiente |
+| 5.3 | Node-RED, alertas y escalamiento | Pendiente |
+| 5.4 | Primer entregable funcional consolidado | Pendiente |
+| 6.1 | Omnicanalidad con correo y WhatsApp | Pendiente |
+| 6.2 | Asistencia avanzada con IA | Pendiente |
+| 6.3 | CMDB tecnológico y biomédico | Pendiente |
+| 6.4 | Preparación del piloto institucional y analítica | Pendiente |
+
+## Etapa 4 — Machine Learning
+
+Roadmap actualizado el 2026-10-02 por solicitud del usuario. La antigua Etapa 4 pasa a Etapa 5 y la antigua Etapa 5 pasa a Etapa 6. Los estados y criterios anteriores se conservan como registro histórico; no prueban la salud cloud actual.
+
+La entrega 4.1 comprende solamente [diseño formal, guía, esquema y plantillas](../ml/README.md). No se genera dataset ni se entrena. [Validación y evidencias](../ml/docs/VALIDATION-4.1.md). Cada subetapa requiere autorización antes de iniciar la siguiente; 4.9 requiere además aprobar una alternativa antes de migrar.
 
 ## Criterios de cierre de 1.1
 
