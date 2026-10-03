@@ -1,0 +1,54 @@
+name: ML Preparation CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ml/**'
+      - 'apps/api/src/domain/ticket.ts'
+      - 'package.json'
+      - '.github/workflows/ml.yml'
+  pull_request:
+    paths:
+      - 'ml/**'
+      - 'apps/api/src/domain/ticket.ts'
+      - 'package.json'
+      - '.github/workflows/ml.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preparation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: ml/colab/requirements.txt
+      - name: Verify immutable Dataset V1 and validator
+        run: |
+          npm run ml:data:check
+          npm run ml:data:test
+      - name: Verify clean notebook and safe loaders
+        run: |
+          npm run ml:colab:check
+          python -B -m unittest discover -s ml/test -p test_colab.py -v
+      - name: Execute notebook with isolated dependencies and local snapshot
+        run: python -B ml/colab/smoke_notebook.py --workspace "$RUNNER_TEMP/ml-stage-4.3"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stage-4.3-readiness-ci
+          path: ${{ runner.temp }}/ml-stage-4.3/outputs/stage-4.3-readiness.json
+          if-no-files-found: error
+          retention-days: 7

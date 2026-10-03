@@ -1,0 +1,7 @@
+# Only ML-local temporary artifacts; preserve the user's root .gitignore.
+__pycache__/
+*.py[cod]
+.venv/
+outputs/
+*.zip
+.ipynb_checkpoints/

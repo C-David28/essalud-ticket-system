@@ -1,0 +1,22 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+const root = fileURLToPath(new URL('../../',import.meta.url));
+const notebook = JSON.parse(readFileSync(resolve(root,'ml/notebooks/stage-4.3-dataset-v1.ipynb'),'utf8'));
+assert.equal(notebook.nbformat,4); assert.equal(notebook.nbformat_minor,5);
+assert.equal(notebook.metadata.project.stage,'4.3');
+assert.equal(notebook.metadata.project.training_started,false);
+assert.equal(new Set(notebook.cells.map(cell=>cell.id)).size,notebook.cells.length);
+const code=notebook.cells.filter(cell=>cell.cell_type==='code');
+assert.equal(code.length,7);
+for(const cell of code) { assert.equal(cell.execution_count,null); assert.deepEqual(cell.outputs,[]); }
+const helpers=code.find(cell=>cell.id==='helpers').source.join('');
+assert.equal(helpers,readFileSync(resolve(root,'ml/colab/preparation.py'),'utf8').replace(/\r\n/g,'\n').trimEnd()+'\n');
+assert.equal(notebook.metadata.project.preparation_sha256,createHash('sha256').update(helpers,'utf8').digest('hex'));
+const requirements=readFileSync(resolve(root,'ml/colab/requirements.txt'),'utf8').replace(/\r\n/g,'\n');
+assert(code.find(cell=>cell.id==='configuration').source.join('').includes(JSON.stringify(requirements)));
+for(const cell of code) assert(!/\.(?:fit|fit_transform|predict|predict_proba)\s*\(/.test(cell.source.join('')),'4.3 cannot train or predict');
+assert(!JSON.stringify(notebook).includes('ghp_'));
+console.log('OK: notebook v4, 7 celdas Python, fuentes y dependencias sincronizadas; sin outputs, entrenamiento ni tokens.');

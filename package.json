@@ -57,7 +57,11 @@
     "db:geography:check": "node scripts/db-geography-check.mjs",
     "demo:data:check": "node scripts/demo-data-check.mjs",
     "ml:data:check": "node ml/scripts/validate-dataset.mjs",
-    "ml:data:test": "node --test ml/test/dataset.test.mjs"
+    "ml:data:test": "node --test ml/test/dataset.test.mjs",
+    "ml:colab:build": "node ml/scripts/build-colab-notebook.mjs",
+    "ml:colab:export": "node ml/scripts/export-colab.mjs",
+    "ml:colab:check": "node ml/scripts/check-colab.mjs",
+    "ml:colab:test": "python -B -m unittest discover -s ml/test -p test_colab.py -v"
   },
   "workspaces": [
     "apps/api",
