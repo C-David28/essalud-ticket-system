@@ -16,7 +16,7 @@
 | 3.2 | Estructura organizacional configurable | Validada por el usuario |
 | 3.3 | Control de acceso, roles, sedes y entornos | Validada por el usuario |
 | 3.4 | Google Maps opcional para sedes e incidencias | Implementada; pendiente checklist Docker y Maps del usuario |
-| 4.1 | Diseño formal ML y guía de etiquetado | Documentación implementada; ver validación 4.1 |
+| 4.1 | Diseño formal ML y guía de etiquetado | Diseño documentado y verificado; commit base a600cdd; ver validación 4.1 |
 | 4.2 | Dataset sintético V1 separado de tickets | Pendiente |
 | 4.3 | GitHub, Google Colab y entorno reproducible | Pendiente |
 | 4.4 | Entrenamiento, comparación y evaluación | Pendiente |

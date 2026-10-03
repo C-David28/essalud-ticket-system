@@ -15,19 +15,11 @@ Resultados ejecutados el 2026-10-02:
 - Comprobación de solo lectura con Node: cuatro categorías idénticas al dominio en guía, esquema y diseño; ocho documentos Markdown ML; diez enlaces locales válidos; subetapas 4.1..4.9, 5.1..5.4 y 6.1..6.4 presentes.
 - Comprobación de alcance: no existen dataset ni modelo generados dentro de `ml`; los cambios propios son documentación. La modificación previa de `.gitignore` se conserva y debe excluirse del commit de 4.1.
 
-Commit pendiente: `git add` fue rechazado al crear `.git/index.lock` por permisos del entorno, incluso después de conceder acceso adicional. No se creó commit ni se publicó en GitHub. Ejecutar desde CMD del usuario, en la rama actual `main`:
+La primera sesión no pudo crear el commit por permisos sobre `.git/index.lock`. Al retomar 4.1 se verificó que la entrega ya está registrada en `main` como `a600cdd` (`docs(ml): define stage 4.1 classification experiment`). La publicación remota y CI no se verificaron; esta entrega no requiere desplegar.
 
-```bat
-cd /d "C:\Users\Stev\Pictures\SISTEMA DE TICKET\essalud-ticket-system"
-git add -- README.md docs/ROADMAP.md docs/ADR-001.md ml
-git diff --cached --check
-git diff --cached --stat
-git commit -m "docs(ml): define stage 4.1 classification experiment"
-```
+Revisión de cierre: se precisa que la separación de familias es obligatoria en todas las particiones; si no hay suficientes grupos independientes, se reduce el número de particiones o se detiene el experimento. No se dividen familias para conseguir balance. Esta precisión no genera datos ni inicia entrenamiento.
 
-Los comandos seleccionan solamente la documentación de esta entrega. Antes de confirmar, revisar que no haya otros cambios previamente staged. La publicación remota queda para cuando corresponda; esta entrega no requiere desplegar.
-
-Estado técnico: diseño documental listo para revisión de significado de etiquetas y criterios con el ingeniero. La siguiente entrega recomendada es 4.2, únicamente con autorización del usuario. No se ha iniciado.
+Estado técnico: subetapa 4.1 completa en su alcance documental. La revisión de significado de etiquetas y criterios con el ingeniero sigue siendo una recomendación antes de construir/congelar el dataset, no una aprobación institucional ya obtenida. La siguiente entrega recomendada es 4.2, únicamente con autorización del usuario. No se ha iniciado.
 
 ## Revisión manual importante
 
