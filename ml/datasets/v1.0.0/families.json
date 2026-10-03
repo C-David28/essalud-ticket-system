@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "families": [
+    {
+      "scenario_family_id": "sup-account",
+      "leakage_group_id": "group-sup-account",
+      "categoria": "SOPORTE",
+      "name": "Acceso a aplicación de usuario",
+      "label_rule": "El acceso falla en una aplicación de usuario mientras otros servicios funcionan; no hay evidencia de avería de red."
+    },
+    {
+      "scenario_family_id": "sup-office",
+      "leakage_group_id": "group-sup-office",
+      "categoria": "SOPORTE",
+      "name": "Edición de documentos de oficina",
+      "label_rule": "Falla una aplicación de oficina; no se describe conectividad ni equipamiento médico."
+    },
+    {
+      "scenario_family_id": "sup-os-boot",
+      "leakage_group_id": "group-sup-os-boot",
+      "categoria": "SOPORTE",
+      "name": "Inicio del sistema operativo",
+      "label_rule": "El problema se presenta en el arranque del sistema operativo de una estación, no en el suministro eléctrico."
+    },
+    {
+      "scenario_family_id": "sup-disk",
+      "leakage_group_id": "group-sup-disk",
+      "categoria": "SOPORTE",
+      "name": "Almacenamiento local de estación",
+      "label_rule": "Falla el almacenamiento de una computadora de usuario; no es infraestructura ambiental ni un volumen compartido."
+    },
+    {
+      "scenario_family_id": "sup-keyboard",
+      "leakage_group_id": "group-sup-keyboard",
+      "categoria": "SOPORTE",
+      "name": "Entrada de teclado de puesto",
+      "label_rule": "Se trata de un periférico general de una estación de trabajo."
+    },
+    {
+      "scenario_family_id": "sup-usb-printer",
+      "leakage_group_id": "group-shared-print-path",
+      "categoria": "SOPORTE",
+      "name": "Impresión local por USB",
+      "label_rule": "La falla está en un periférico de impresión local; no se describe pérdida de conectividad IP."
+    },
+    {
+      "scenario_family_id": "sup-scan",
+      "leakage_group_id": "group-sup-scan",
+      "categoria": "SOPORTE",
+      "name": "Digitalización de documentos de prueba",
+      "label_rule": "Falla un escáner general o su aplicación local, no un dispositivo médico."
+    },
+    {
+      "scenario_family_id": "sup-install",
+      "leakage_group_id": "group-sup-install",
+      "categoria": "SOPORTE",
+      "name": "Instalación de aplicación de escritorio",
+      "label_rule": "La instalación de un programa local falla; los paquetes ya están disponibles, sin fallo de transporte de red."
+    },
+    {
+      "scenario_family_id": "sup-browser",
+      "leakage_group_id": "group-sup-browser",
+      "categoria": "SOPORTE",
+      "name": "Configuración local del navegador",
+      "label_rule": "El error está acotado al perfil o configuración de un navegador, con acceso comprobado desde otro navegador."
+    },
+    {
+      "scenario_family_id": "sup-display",
+      "leakage_group_id": "group-sup-display",
+      "categoria": "SOPORTE",
+      "name": "Pantalla de estación de usuario",
+      "label_rule": "La avería afecta la visualización de una estación general, no un monitor clínico ni energía del ambiente."
+    },
+    {
+      "scenario_family_id": "net-wifi",
+      "leakage_group_id": "group-net-wifi",
+      "categoria": "REDES",
+      "name": "Conexión inalámbrica",
+      "label_rule": "La evidencia identifica pérdida o ausencia de la red inalámbrica en varios dispositivos."
+    },
+    {
+      "scenario_family_id": "net-switch-port",
+      "leakage_group_id": "group-net-switch-port",
+      "categoria": "REDES",
+      "name": "Puerto de switch sin enlace",
+      "label_rule": "El equipo de comunicaciones mantiene alimentación pero un puerto no establece enlace, con cable y estación comprobados."
+    },
+    {
+      "scenario_family_id": "net-data-cable",
+      "leakage_group_id": "group-net-data-cable",
+      "categoria": "REDES",
+      "name": "Cableado de datos defectuoso",
+      "label_rule": "La falla es continuidad del cable de comunicaciones; no es suministro eléctrico ni hardware local."
+    },
+    {
+      "scenario_family_id": "net-dns",
+      "leakage_group_id": "group-net-dns",
+      "categoria": "REDES",
+      "name": "Resolución de nombres",
+      "label_rule": "Hay alcance por dirección pero falla la resolución de nombres, lo que identifica un servicio de red."
+    },
+    {
+      "scenario_family_id": "net-dhcp",
+      "leakage_group_id": "group-net-dhcp",
+      "categoria": "REDES",
+      "name": "Obtención de dirección automática",
+      "label_rule": "Los puestos no reciben configuración de direccionamiento del servicio DHCP."
+    },
+    {
+      "scenario_family_id": "net-vlan",
+      "leakage_group_id": "group-net-vlan",
+      "categoria": "REDES",
+      "name": "Acceso entre segmentos",
+      "label_rule": "El acceso está limitado por segmentación o configuración de red, con otros destinos alcanzables."
+    },
+    {
+      "scenario_family_id": "net-site-link",
+      "leakage_group_id": "group-net-site-link",
+      "categoria": "REDES",
+      "name": "Enlace entre sedes ficticias",
+      "label_rule": "La caída afecta comunicaciones entre dos sitios DEMO, no la función de una aplicación particular."
+    },
+    {
+      "scenario_family_id": "net-internet",
+      "leakage_group_id": "group-net-internet",
+      "categoria": "REDES",
+      "name": "Salida a Internet",
+      "label_rule": "Los recursos locales responden, pero falla la conectividad hacia múltiples destinos externos."
+    },
+    {
+      "scenario_family_id": "net-ip-conflict",
+      "leakage_group_id": "group-net-ip-conflict",
+      "categoria": "REDES",
+      "name": "Conflicto de direccionamiento",
+      "label_rule": "Los avisos identifican direcciones duplicadas en un segmento de comunicaciones."
+    },
+    {
+      "scenario_family_id": "net-shared-printer",
+      "leakage_group_id": "group-shared-print-path",
+      "categoria": "REDES",
+      "name": "Conectividad de impresora compartida",
+      "label_rule": "La impresora realiza pruebas locales pero no es alcanzable por red desde los puestos."
+    },
+    {
+      "scenario_family_id": "inf-ups",
+      "leakage_group_id": "group-power-autonomy",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Autonomía del respaldo UPS",
+      "label_rule": "El problema es continuidad del suministro eléctrico del respaldo, aunque afecte equipos de comunicaciones."
+    },
+    {
+      "scenario_family_id": "inf-generator",
+      "leakage_group_id": "group-inf-generator",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Transferencia a respaldo energético",
+      "label_rule": "Falla la disponibilidad del suministro de respaldo del ambiente técnico, no un equipo de usuario."
+    },
+    {
+      "scenario_family_id": "inf-breaker",
+      "leakage_group_id": "group-inf-breaker",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Protección de circuito eléctrico",
+      "label_rule": "La incidencia corresponde al circuito de alimentación y su protección, sin diagnóstico de aplicación o red."
+    },
+    {
+      "scenario_family_id": "inf-outlet",
+      "leakage_group_id": "group-inf-outlet",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Tomacorriente del puesto",
+      "label_rule": "Se reporta daño o falta de suministro en un punto eléctrico del ambiente, no avería interna de la estación."
+    },
+    {
+      "scenario_family_id": "inf-ground",
+      "leakage_group_id": "group-inf-ground",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Puesta a tierra de gabinete",
+      "label_rule": "Se observa deterioro de la conexión de protección física del gabinete, no un cable de comunicaciones."
+    },
+    {
+      "scenario_family_id": "inf-cooling",
+      "leakage_group_id": "group-inf-cooling",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Refrigeración de sala técnica",
+      "label_rule": "La incidencia es climatización del ambiente de TI, no funcionamiento de un equipo biomédico."
+    },
+    {
+      "scenario_family_id": "inf-water",
+      "leakage_group_id": "group-inf-water",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Filtración en ambiente técnico",
+      "label_rule": "La incidencia es una condición ambiental del recinto de TI que requiere revisión, no diagnóstico de equipamiento."
+    },
+    {
+      "scenario_family_id": "inf-rack",
+      "leakage_group_id": "group-inf-rack",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Soporte mecánico del rack",
+      "label_rule": "La falla está en el alojamiento físico del equipamiento, no en el servicio que ejecutan los equipos."
+    },
+    {
+      "scenario_family_id": "inf-pdu",
+      "leakage_group_id": "group-inf-pdu",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Distribución eléctrica dentro del rack",
+      "label_rule": "El problema está en la distribución de energía del gabinete, no en puertos de datos de un switch."
+    },
+    {
+      "scenario_family_id": "inf-vent",
+      "leakage_group_id": "group-inf-vent",
+      "categoria": "INFRAESTRUCTURA",
+      "name": "Ventilación del gabinete técnico",
+      "label_rule": "La circulación de aire del alojamiento técnico está obstruida; no es el ventilador interno de una estación."
+    },
+    {
+      "scenario_family_id": "bio-monitor",
+      "leakage_group_id": "group-medical-acquisition",
+      "categoria": "BIOMEDICO",
+      "name": "Conexión de sensor de monitor biomédico",
+      "label_rule": "Falla un sensor específico de un monitor de signos; no se describe pantalla de una PC ni pérdida de LAN."
+    },
+    {
+      "scenario_family_id": "bio-infusion",
+      "leakage_group_id": "group-bio-infusion",
+      "categoria": "BIOMEDICO",
+      "name": "Mecanismo de bomba de infusión",
+      "label_rule": "La incidencia afecta el mecanismo o detección propios de una bomba biomédica, sin información clínica."
+    },
+    {
+      "scenario_family_id": "bio-ecg",
+      "leakage_group_id": "group-medical-acquisition",
+      "categoria": "BIOMEDICO",
+      "name": "Adquisición de electrocardiógrafo",
+      "label_rule": "Falla la detección de canales de adquisición del electrocardiógrafo durante prueba técnica."
+    },
+    {
+      "scenario_family_id": "bio-defib",
+      "leakage_group_id": "group-bio-defib",
+      "categoria": "BIOMEDICO",
+      "name": "Autocomprobación de desfibrilador",
+      "label_rule": "El equipo biomédico informa fallo propio en su autocomprobación; no se dan indicaciones clínicas."
+    },
+    {
+      "scenario_family_id": "bio-oximeter",
+      "leakage_group_id": "group-power-autonomy",
+      "categoria": "BIOMEDICO",
+      "name": "Alimentación interna de pulsioxímetro",
+      "label_rule": "La falla está en el circuito/acumulador interno de un dispositivo médico, no en la UPS o toma del ambiente."
+    },
+    {
+      "scenario_family_id": "bio-suction",
+      "leakage_group_id": "group-bio-suction",
+      "categoria": "BIOMEDICO",
+      "name": "Funcionamiento de equipo de aspiración",
+      "label_rule": "El problema corresponde a la función mecánica de un equipo biomédico durante prueba de banco."
+    },
+    {
+      "scenario_family_id": "bio-sterilizer",
+      "leakage_group_id": "group-bio-sterilizer",
+      "categoria": "BIOMEDICO",
+      "name": "Ciclo de autoprueba de esterilizador",
+      "label_rule": "El control y detección propios del esterilizador fallan durante un ciclo técnico vacío, no la red del ambiente."
+    },
+    {
+      "scenario_family_id": "bio-lab",
+      "leakage_group_id": "group-bio-lab",
+      "categoria": "BIOMEDICO",
+      "name": "Autoprueba de analizador de laboratorio",
+      "label_rule": "La incidencia afecta el mecanismo de un analizador biomédico durante comprobación sin muestras reales."
+    },
+    {
+      "scenario_family_id": "bio-calibration",
+      "leakage_group_id": "group-bio-calibration",
+      "categoria": "BIOMEDICO",
+      "name": "Verificación de sensor de presión biomédico",
+      "label_rule": "El desajuste se observa en un sensor específico del dispositivo médico durante verificación técnica."
+    },
+    {
+      "scenario_family_id": "bio-device-software",
+      "leakage_group_id": "group-bio-device-software",
+      "categoria": "BIOMEDICO",
+      "name": "Software dedicado de equipo médico",
+      "label_rule": "El fallo está en el software de control del dispositivo biomédico, no en una aplicación administrativa general."
+    }
+  ]
+}

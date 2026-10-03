@@ -1,0 +1,57 @@
+{
+  "dataset_version": "tickets-category-dataset-v1.0.0",
+  "status": "PASS",
+  "records": 200,
+  "distribution": {
+    "BIOMEDICO": 50,
+    "INFRAESTRUCTURA": 50,
+    "REDES": 50,
+    "SOPORTE": 50
+  },
+  "families": 40,
+  "leakage_groups": 37,
+  "length_bands": {
+    "breve": 40,
+    "detallado": 40,
+    "normal": 120
+  },
+  "writing_styles": {
+    "abreviado": 40,
+    "breve": 40,
+    "cotidiano": 40,
+    "detallado": 40,
+    "tecnico": 40
+  },
+  "boundary_cases": 70,
+  "description_length": {
+    "min": 49,
+    "max": 391
+  },
+  "duplicates": 0,
+  "sensitive_pattern_matches": 0,
+  "similarity": {
+    "method": "normalized token-set Jaccard and character 4-gram Dice",
+    "pairs_checked": 19900,
+    "review_thresholds": {
+      "token_jaccard": 0.5,
+      "character_dice": 0.8
+    },
+    "rejection_thresholds": {
+      "token_jaccard": 0.8,
+      "character_dice": 0.92
+    },
+    "candidates": [],
+    "maximum_cross_group": {
+      "token_jaccard": 0.2222222222222222,
+      "character_dice": 0.4726735598227474
+    },
+    "semantic_independence_guaranteed": false
+  },
+  "files_sha256": {
+    "incidents.jsonl": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+    "families.json": "0f27342915a770acd019a31b7685c8a2eea8c2de7616a38ca2ac8c1f079078b7",
+    "../../docs/LABELING-GUIDE.md": "7cb0ee07c57a6fb4a857bbde3ba8fc6f6b1e41d911d81682c62b98f316899cc9"
+  },
+  "training_started": false,
+  "operational_database_access": false
+}

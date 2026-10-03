@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "hash_algorithm": "SHA-256-UTF8-LF",
+  "dataset_version": "tickets-category-dataset-v1.0.0",
+  "source": "SYNTHETIC / DEMO / ACADEMIC DATASET",
+  "created_on": "2026-10-02",
+  "labeling_guide_version": "v1",
+  "base_design_commit": "fff0e99",
+  "categories": [
+    "SOPORTE",
+    "REDES",
+    "INFRAESTRUCTURA",
+    "BIOMEDICO"
+  ],
+  "record_count": 200,
+  "family_count": 40,
+  "leakage_group_count": 37,
+  "records_per_family": 5,
+  "distribution": {
+    "SOPORTE": 50,
+    "REDES": 50,
+    "INFRAESTRUCTURA": 50,
+    "BIOMEDICO": 50
+  },
+  "writing_styles": {
+    "cotidiano": 40,
+    "tecnico": 40,
+    "breve": 40,
+    "detallado": 40,
+    "abreviado": 40
+  },
+  "length_bands": {
+    "normal": 120,
+    "breve": 40,
+    "detallado": 40
+  },
+  "boundary_case_count": 70,
+  "labeling_review": {
+    "method": "AI-authored and consistency-reviewed against labeling guide",
+    "independent_human_review": false,
+    "approval_scope": "academic-label-consistency-only"
+  },
+  "splits_status": "NOT_CREATED_STAGE_4_3",
+  "training_status": "NOT_STARTED",
+  "files": {
+    "incidents.jsonl": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+    "families.json": "0f27342915a770acd019a31b7685c8a2eea8c2de7616a38ca2ac8c1f079078b7",
+    "../../docs/LABELING-GUIDE.md": "7cb0ee07c57a6fb4a857bbde3ba8fc6f6b1e41d911d81682c62b98f316899cc9"
+  }
+}

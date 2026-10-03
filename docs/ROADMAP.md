@@ -17,7 +17,7 @@
 | 3.3 | Control de acceso, roles, sedes y entornos | Validada por el usuario |
 | 3.4 | Google Maps opcional para sedes e incidencias | Implementada; pendiente checklist Docker y Maps del usuario |
 | 4.1 | Diseño formal ML y guía de etiquetado | Diseño documentado y verificado; commit base a600cdd; ver validación 4.1 |
-| 4.2 | Dataset sintético V1 separado de tickets | Pendiente |
+| 4.2 | Dataset sintético V1 separado de tickets | 200 registros, 40 familias, 37 grupos; controles offline y 28 pruebas aprobados; ver validación 4.2 |
 | 4.3 | GitHub, Google Colab y entorno reproducible | Pendiente |
 | 4.4 | Entrenamiento, comparación y evaluación | Pendiente |
 | 4.5 | Modelo V1, versionamiento y Model Card | Pendiente |
@@ -39,6 +39,8 @@
 Roadmap actualizado el 2026-10-02 por solicitud del usuario. La antigua Etapa 4 pasa a Etapa 5 y la antigua Etapa 5 pasa a Etapa 6. Los estados y criterios anteriores se conservan como registro histórico; no prueban la salud cloud actual.
 
 La entrega 4.1 comprende solamente [diseño formal, guía, esquema y plantillas](../ml/README.md). No se genera dataset ni se entrena. [Validación y evidencias](../ml/docs/VALIDATION-4.1.md). Cada subetapa requiere autorización antes de iniciar la siguiente; 4.9 requiere además aprobar una alternativa antes de migrar.
+
+La entrega 4.2 publica [Dataset V1 y Dataset Card](../ml/datasets/v1.0.0/DATASET-CARD.md), separados de PostgreSQL operativo. [Validación y evidencias 4.2](../ml/docs/VALIDATION-4.2.md). No incluye particiones, Colab, entrenamiento ni modelos.
 
 ## Criterios de cierre de 1.1
 

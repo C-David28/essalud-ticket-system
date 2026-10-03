@@ -55,7 +55,9 @@
     "db:organization:check": "node scripts/db-organization-check.mjs",
     "db:access:check": "node scripts/db-access-check.mjs",
     "db:geography:check": "node scripts/db-geography-check.mjs",
-    "demo:data:check": "node scripts/demo-data-check.mjs"
+    "demo:data:check": "node scripts/demo-data-check.mjs",
+    "ml:data:check": "node ml/scripts/validate-dataset.mjs",
+    "ml:data:test": "node --test ml/test/dataset.test.mjs"
   },
   "workspaces": [
     "apps/api",
