@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "experiment_version": "ticket-category-experiment-v1.0.0",
+  "dataset_commit": "9d3103991911b1b06b9faca6dce779013dae3036",
+  "dataset_sha256": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+  "seed": 42,
+  "input_columns": ["titulo", "descripcion"],
+  "text_join": "trim(title) + LF + trim(description)",
+  "holdout": {"method": "sha256-seeded-group-subset-dp-v1", "records": 40, "records_per_category": 10},
+  "validation": {"method": "StratifiedGroupKFold", "folds": 4, "shuffle": true, "group_column": "leakage_group_id"},
+  "vectorizer": {
+    "views": ["word", "char_wb"],
+    "word_ngram_range": [1, 2],
+    "char_ngram_range": [3, 5],
+    "lowercase": true,
+    "strip_accents": "unicode",
+    "sublinear_tf": true,
+    "min_df": 1,
+    "stop_words": null,
+    "view_weights": [1.0, 1.0]
+  },
+  "candidates": [
+    {"id": "dummy-majority", "algorithm": "DummyClassifier", "strategy": "most_frequent"},
+    {"id": "logreg-c1", "algorithm": "LogisticRegression", "C": 1.0, "solver": "lbfgs", "max_iter": 2000},
+    {"id": "logreg-c4", "algorithm": "LogisticRegression", "C": 4.0, "solver": "lbfgs", "max_iter": 2000},
+    {"id": "linear-svc-c1", "algorithm": "LinearSVC", "C": 1.0, "dual": "auto", "max_iter": 10000},
+    {"id": "linear-svc-c4", "algorithm": "LinearSVC", "C": 4.0, "dual": "auto", "max_iter": 10000}
+  ],
+  "selection": {
+    "primary": "mean_fold_macro_f1",
+    "recall_gate": "pooled_out_of_fold_per_category",
+    "minimum_macro_f1": 0.70,
+    "minimum_recall_per_category": 0.60,
+    "minimum_macro_f1_gain_over_baseline": 0.10,
+    "tie_tolerance": "maximum_population_std_of_best_and_candidate_fold_macro_f1",
+    "tie_preference": ["LogisticRegression", "LinearSVC"],
+    "within_algorithm_preference": "lowest_C",
+    "no_qualified_candidate": "evaluate_leading_candidate_once_but_do_not_promote"
+  },
+  "confidence_analysis": {
+    "source": "development_out_of_fold_only",
+    "probabilities": "uncalibrated_LogisticRegression_only",
+    "thresholds": [0.25, 0.4, 0.55, 0.7, 0.85],
+    "operational_threshold": null
+  },
+  "final_test": {"selected_candidate_only": true, "baseline_comparison": true, "same_acceptance_gates": true, "no_retuning": true},
+  "institutional_validation": false,
+  "persist_model": false
+}
