@@ -1,0 +1,2896 @@
+{
+  "experiment_version": "ticket-category-experiment-v1.0.0",
+  "phase": "development_only",
+  "training_executed": true,
+  "splits_created": true,
+  "provenance": {
+    "dataset": {
+      "dataset_version": "tickets-category-dataset-v1.0.0",
+      "dataset_commit": "9d3103991911b1b06b9faca6dce779013dae3036",
+      "dataset_sha256": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+      "records": 200,
+      "distribution": {
+        "SOPORTE": 50,
+        "REDES": 50,
+        "INFRAESTRUCTURA": 50,
+        "BIOMEDICO": 50
+      },
+      "families": 40,
+      "leakage_groups": 37,
+      "is_synthetic": true,
+      "status": "DATASET_V1_VERIFIED"
+    },
+    "protocol_sha256_canonical_json": "c5eacbc7011971ad0f0ccbaf17b974866304386df5d7216869994a546fdb3959",
+    "splits_sha256_canonical_json": "e38ced2920e4fde8b13947155c58338bb9367213f0a2204fe2252936846c04ec",
+    "experiment_source_sha256_utf8_lf": "236d6c62a45b014eb74f5cf6b56ba305d948554a5aa4af87c75a0ae3eb9e37d0",
+    "preparation_source_sha256_utf8_lf": "e2ac1f6e1f2eb0da013e253869899ab4800c0e007c3a959d4c459a9dcaf06c98",
+    "requirements_sha256_utf8_lf": "38e73e22486a6b4346b321c94b95223ad53a53954e293e06af91c8fd69c4c86b",
+    "environment": {
+      "python": "3.12.14",
+      "pip_tool_version": "25.1.1",
+      "packages": {
+        "numpy": "2.2.6",
+        "scipy": "1.15.3",
+        "pandas": "2.2.3",
+        "scikit-learn": "1.6.1",
+        "matplotlib": "3.10.3",
+        "joblib": "1.5.1",
+        "threadpoolctl": "3.6.0",
+        "contourpy": "1.3.2",
+        "cycler": "0.12.1",
+        "fonttools": "4.58.0",
+        "kiwisolver": "1.4.8",
+        "packaging": "25.0",
+        "pillow": "11.2.1",
+        "pyparsing": "3.2.3",
+        "python-dateutil": "2.9.0.post0",
+        "pytz": "2025.2",
+        "six": "1.17.0",
+        "tzdata": "2025.2"
+      }
+    },
+    "source_mode": "local_snapshot",
+    "partition_summary": {
+      "development": {
+        "records": 160,
+        "groups": 29,
+        "distribution": {
+          "SOPORTE": 40,
+          "REDES": 40,
+          "BIOMEDICO": 40,
+          "INFRAESTRUCTURA": 40
+        }
+      },
+      "final_test": {
+        "records": 40,
+        "groups": 8,
+        "distribution": {
+          "BIOMEDICO": 10,
+          "REDES": 10,
+          "SOPORTE": 10,
+          "INFRAESTRUCTURA": 10
+        }
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "training": 120,
+          "validation": 40,
+          "validation_distribution": {
+            "SOPORTE": 10,
+            "REDES": 10,
+            "INFRAESTRUCTURA": 10,
+            "BIOMEDICO": 10
+          }
+        },
+        {
+          "fold": 2,
+          "training": 125,
+          "validation": 35,
+          "validation_distribution": {
+            "SOPORTE": 10,
+            "REDES": 10,
+            "INFRAESTRUCTURA": 10,
+            "BIOMEDICO": 5
+          }
+        },
+        {
+          "fold": 3,
+          "training": 120,
+          "validation": 40,
+          "validation_distribution": {
+            "SOPORTE": 10,
+            "REDES": 10,
+            "INFRAESTRUCTURA": 15,
+            "BIOMEDICO": 5
+          }
+        },
+        {
+          "fold": 4,
+          "training": 115,
+          "validation": 45,
+          "validation_distribution": {
+            "SOPORTE": 10,
+            "REDES": 10,
+            "INFRAESTRUCTURA": 5,
+            "BIOMEDICO": 20
+          }
+        }
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "id": "dummy-majority",
+      "algorithm": "DummyClassifier",
+      "spec": {
+        "id": "dummy-majority",
+        "algorithm": "DummyClassifier",
+        "strategy": "most_frequent"
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.25,
+          "macro_f1": 0.1,
+          "weighted_f1": 0.1,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.25,
+              "recall": 1.0,
+              "f1-score": 0.4,
+              "support": 10.0
+            },
+            "accuracy": 0.25,
+            "macro avg": {
+              "precision": 0.0625,
+              "recall": 0.25,
+              "f1-score": 0.1,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.0625,
+              "recall": 0.25,
+              "f1-score": 0.1,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              10
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.14285714285714285,
+          "macro_f1": 0.0625,
+          "weighted_f1": 0.03571428571428571,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.14285714285714285,
+              "recall": 1.0,
+              "f1-score": 0.25,
+              "support": 5.0
+            },
+            "accuracy": 0.14285714285714285,
+            "macro avg": {
+              "precision": 0.03571428571428571,
+              "recall": 0.25,
+              "f1-score": 0.0625,
+              "support": 35.0
+            },
+            "weighted avg": {
+              "precision": 0.02040816326530612,
+              "recall": 0.14285714285714285,
+              "f1-score": 0.03571428571428571,
+              "support": 35.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              5
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.125,
+          "macro_f1": 0.05555555555555555,
+          "weighted_f1": 0.02777777777777778,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 15.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.125,
+              "recall": 1.0,
+              "f1-score": 0.2222222222222222,
+              "support": 5.0
+            },
+            "accuracy": 0.125,
+            "macro avg": {
+              "precision": 0.03125,
+              "recall": 0.25,
+              "f1-score": 0.05555555555555555,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.015625,
+              "recall": 0.125,
+              "f1-score": 0.02777777777777778,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              0,
+              15
+            ],
+            [
+              0,
+              0,
+              0,
+              5
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.1111111111111111,
+          "macro_f1": 0.05,
+          "weighted_f1": 0.022222222222222223,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.1111111111111111,
+              "recall": 1.0,
+              "f1-score": 0.2,
+              "support": 5.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 20.0
+            },
+            "accuracy": 0.1111111111111111,
+            "macro avg": {
+              "precision": 0.027777777777777776,
+              "recall": 0.25,
+              "f1-score": 0.05,
+              "support": 45.0
+            },
+            "weighted avg": {
+              "precision": 0.01234567901234568,
+              "recall": 0.1111111111111111,
+              "f1-score": 0.022222222222222223,
+              "support": 45.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              0,
+              10,
+              0
+            ],
+            [
+              0,
+              0,
+              10,
+              0
+            ],
+            [
+              0,
+              0,
+              5,
+              0
+            ],
+            [
+              0,
+              0,
+              20,
+              0
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "mean_macro_f1": 0.06701388888888889,
+      "std_macro_f1": 0.01955265031291818,
+      "oof_metrics": {
+        "accuracy": 0.15625,
+        "macro_f1": 0.09392789373814042,
+        "weighted_f1": 0.09392789373814041,
+        "classification_report": {
+          "SOPORTE": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 40.0
+          },
+          "REDES": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 40.0
+          },
+          "INFRAESTRUCTURA": {
+            "precision": 0.1111111111111111,
+            "recall": 0.125,
+            "f1-score": 0.11764705882352941,
+            "support": 40.0
+          },
+          "BIOMEDICO": {
+            "precision": 0.17391304347826086,
+            "recall": 0.5,
+            "f1-score": 0.25806451612903225,
+            "support": 40.0
+          },
+          "accuracy": 0.15625,
+          "macro avg": {
+            "precision": 0.07125603864734299,
+            "recall": 0.15625,
+            "f1-score": 0.09392789373814042,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.071256038647343,
+            "recall": 0.15625,
+            "f1-score": 0.09392789373814041,
+            "support": 160.0
+          }
+        },
+        "labels": [
+          "SOPORTE",
+          "REDES",
+          "INFRAESTRUCTURA",
+          "BIOMEDICO"
+        ],
+        "confusion_matrix": [
+          [
+            0,
+            0,
+            10,
+            30
+          ],
+          [
+            0,
+            0,
+            10,
+            30
+          ],
+          [
+            0,
+            0,
+            5,
+            35
+          ],
+          [
+            0,
+            0,
+            20,
+            20
+          ]
+        ],
+        "confusion_matrix_normalized": [
+          [
+            0.0,
+            0.0,
+            0.25,
+            0.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.25,
+            0.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.125,
+            0.875
+          ],
+          [
+            0.0,
+            0.0,
+            0.5,
+            0.5
+          ]
+        ]
+      },
+      "mean_fit_seconds": 0.0011257749993092148,
+      "mean_inference_seconds_per_record": 1.023420633308498e-05,
+      "score_kind": "baseline_no_confidence"
+    },
+    {
+      "id": "logreg-c1",
+      "algorithm": "LogisticRegression",
+      "spec": {
+        "id": "logreg-c1",
+        "algorithm": "LogisticRegression",
+        "C": 1.0,
+        "solver": "lbfgs",
+        "max_iter": 2000
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.95,
+          "macro_f1": 0.9484126984126984,
+          "weighted_f1": 0.9484126984126984,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.9090909090909091,
+              "recall": 1.0,
+              "f1-score": 0.9523809523809523,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.9090909090909091,
+              "recall": 1.0,
+              "f1-score": 0.9523809523809523,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1-score": 0.8888888888888888,
+              "support": 10.0
+            },
+            "accuracy": 0.95,
+            "macro avg": {
+              "precision": 0.9545454545454546,
+              "recall": 0.95,
+              "f1-score": 0.9484126984126984,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9545454545454545,
+              "recall": 0.95,
+              "f1-score": 0.9484126984126984,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              10,
+              0
+            ],
+            [
+              1,
+              0,
+              1,
+              8
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.1,
+              0.0,
+              0.1,
+              0.8
+            ]
+          ]
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.8571428571428571,
+          "macro_f1": 0.8500667429443173,
+          "weighted_f1": 0.8524572300316008,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 0.6,
+              "f1-score": 0.75,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.7692307692307693,
+              "recall": 1.0,
+              "f1-score": 0.8695652173913043,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 1.0,
+              "recall": 0.9,
+              "f1-score": 0.9473684210526315,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.7142857142857143,
+              "recall": 1.0,
+              "f1-score": 0.8333333333333334,
+              "support": 5.0
+            },
+            "accuracy": 0.8571428571428571,
+            "macro avg": {
+              "precision": 0.8708791208791209,
+              "recall": 0.875,
+              "f1-score": 0.8500667429443173,
+              "support": 35.0
+            },
+            "weighted avg": {
+              "precision": 0.8932496075353219,
+              "recall": 0.8571428571428571,
+              "f1-score": 0.8524572300316008,
+              "support": 35.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              6,
+              3,
+              0,
+              1
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              9,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              5
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.6,
+              0.3,
+              0.0,
+              0.1
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.9,
+              0.1
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.9,
+          "macro_f1": 0.8666666666666667,
+          "weighted_f1": 0.9,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 15.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.6,
+              "recall": 0.6,
+              "f1-score": 0.6,
+              "support": 5.0
+            },
+            "accuracy": 0.9,
+            "macro avg": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9,
+              "recall": 0.9,
+              "f1-score": 0.9,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              13,
+              2
+            ],
+            [
+              0,
+              0,
+              2,
+              3
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.8666666666666667,
+              0.13333333333333333
+            ],
+            [
+              0.0,
+              0.0,
+              0.4,
+              0.6
+            ]
+          ]
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.5555555555555556,
+          "macro_f1": 0.5646026831785346,
+          "weighted_f1": 0.510583648664144,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.45,
+              "recall": 0.9,
+              "f1-score": 0.6,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.7777777777777778,
+              "recall": 0.7,
+              "f1-score": 0.7368421052631579,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.4166666666666667,
+              "recall": 1.0,
+              "f1-score": 0.5882352941176471,
+              "support": 5.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.2,
+              "f1-score": 0.3333333333333333,
+              "support": 20.0
+            },
+            "accuracy": 0.5555555555555556,
+            "macro avg": {
+              "precision": 0.6611111111111112,
+              "recall": 0.7000000000000001,
+              "f1-score": 0.5646026831785346,
+              "support": 45.0
+            },
+            "weighted avg": {
+              "precision": 0.7635802469135803,
+              "recall": 0.5555555555555556,
+              "f1-score": 0.510583648664144,
+              "support": 45.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              9,
+              1,
+              0,
+              0
+            ],
+            [
+              2,
+              7,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              5,
+              0
+            ],
+            [
+              9,
+              1,
+              6,
+              4
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.9,
+              0.1,
+              0.0,
+              0.0
+            ],
+            [
+              0.2,
+              0.7,
+              0.1,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.45,
+              0.05,
+              0.3,
+              0.2
+            ]
+          ]
+        }
+      ],
+      "mean_macro_f1": 0.8074371978005542,
+      "std_macro_f1": 0.14505869619388773,
+      "oof_metrics": {
+        "accuracy": 0.80625,
+        "macro_f1": 0.7956528595458369,
+        "weighted_f1": 0.7956528595458369,
+        "classification_report": {
+          "SOPORTE": {
+            "precision": 0.7446808510638298,
+            "recall": 0.875,
+            "f1-score": 0.8045977011494253,
+            "support": 40.0
+          },
+          "REDES": {
+            "precision": 0.8809523809523809,
+            "recall": 0.925,
+            "f1-score": 0.9024390243902439,
+            "support": 40.0
+          },
+          "INFRAESTRUCTURA": {
+            "precision": 0.7872340425531915,
+            "recall": 0.925,
+            "f1-score": 0.8505747126436781,
+            "support": 40.0
+          },
+          "BIOMEDICO": {
+            "precision": 0.8333333333333334,
+            "recall": 0.5,
+            "f1-score": 0.625,
+            "support": 40.0
+          },
+          "accuracy": 0.80625,
+          "macro avg": {
+            "precision": 0.8115501519756839,
+            "recall": 0.80625,
+            "f1-score": 0.7956528595458369,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.811550151975684,
+            "recall": 0.80625,
+            "f1-score": 0.7956528595458369,
+            "support": 160.0
+          }
+        },
+        "labels": [
+          "SOPORTE",
+          "REDES",
+          "INFRAESTRUCTURA",
+          "BIOMEDICO"
+        ],
+        "confusion_matrix": [
+          [
+            35,
+            4,
+            0,
+            1
+          ],
+          [
+            2,
+            37,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            37,
+            3
+          ],
+          [
+            10,
+            1,
+            9,
+            20
+          ]
+        ],
+        "confusion_matrix_normalized": [
+          [
+            0.875,
+            0.1,
+            0.0,
+            0.025
+          ],
+          [
+            0.05,
+            0.925,
+            0.025,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.925,
+            0.075
+          ],
+          [
+            0.25,
+            0.025,
+            0.225,
+            0.5
+          ]
+        ]
+      },
+      "mean_fit_seconds": 0.12020790000133275,
+      "mean_inference_seconds_per_record": 0.0003115160714233276,
+      "score_kind": "uncalibrated_probability",
+      "uncalibrated_probability_coverage_analysis": [
+        {
+          "threshold": 0.25,
+          "accepted": 160,
+          "coverage": 1.0,
+          "accepted_accuracy": 0.80625,
+          "abstentions_per_category": {}
+        },
+        {
+          "threshold": 0.4,
+          "accepted": 89,
+          "coverage": 0.55625,
+          "accepted_accuracy": 0.9438202247191011,
+          "abstentions_per_category": {
+            "SOPORTE": 19,
+            "REDES": 11,
+            "INFRAESTRUCTURA": 14,
+            "BIOMEDICO": 27
+          }
+        },
+        {
+          "threshold": 0.55,
+          "accepted": 11,
+          "coverage": 0.06875,
+          "accepted_accuracy": 1.0,
+          "abstentions_per_category": {
+            "SOPORTE": 39,
+            "REDES": 34,
+            "INFRAESTRUCTURA": 37,
+            "BIOMEDICO": 39
+          }
+        },
+        {
+          "threshold": 0.7,
+          "accepted": 0,
+          "coverage": 0.0,
+          "accepted_accuracy": null,
+          "abstentions_per_category": {
+            "SOPORTE": 40,
+            "REDES": 40,
+            "INFRAESTRUCTURA": 40,
+            "BIOMEDICO": 40
+          }
+        },
+        {
+          "threshold": 0.85,
+          "accepted": 0,
+          "coverage": 0.0,
+          "accepted_accuracy": null,
+          "abstentions_per_category": {
+            "SOPORTE": 40,
+            "REDES": 40,
+            "INFRAESTRUCTURA": 40,
+            "BIOMEDICO": 40
+          }
+        }
+      ]
+    },
+    {
+      "id": "logreg-c4",
+      "algorithm": "LogisticRegression",
+      "spec": {
+        "id": "logreg-c4",
+        "algorithm": "LogisticRegression",
+        "C": 4.0,
+        "solver": "lbfgs",
+        "max_iter": 2000
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.95,
+          "macro_f1": 0.9484126984126984,
+          "weighted_f1": 0.9484126984126984,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.9090909090909091,
+              "recall": 1.0,
+              "f1-score": 0.9523809523809523,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.9090909090909091,
+              "recall": 1.0,
+              "f1-score": 0.9523809523809523,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1-score": 0.8888888888888888,
+              "support": 10.0
+            },
+            "accuracy": 0.95,
+            "macro avg": {
+              "precision": 0.9545454545454546,
+              "recall": 0.95,
+              "f1-score": 0.9484126984126984,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9545454545454545,
+              "recall": 0.95,
+              "f1-score": 0.9484126984126984,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              10,
+              0
+            ],
+            [
+              1,
+              0,
+              1,
+              8
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.1,
+              0.0,
+              0.1,
+              0.8
+            ]
+          ]
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.9142857142857143,
+          "macro_f1": 0.9136097820308346,
+          "weighted_f1": 0.9142553353079669,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1-score": 0.8888888888888888,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.8333333333333334,
+              "recall": 1.0,
+              "f1-score": 0.9090909090909091,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 1.0,
+              "recall": 0.9,
+              "f1-score": 0.9473684210526315,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.8333333333333334,
+              "recall": 1.0,
+              "f1-score": 0.9090909090909091,
+              "support": 5.0
+            },
+            "accuracy": 0.9142857142857143,
+            "macro avg": {
+              "precision": 0.9166666666666667,
+              "recall": 0.925,
+              "f1-score": 0.9136097820308346,
+              "support": 35.0
+            },
+            "weighted avg": {
+              "precision": 0.9285714285714286,
+              "recall": 0.9142857142857143,
+              "f1-score": 0.9142553353079669,
+              "support": 35.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              8,
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              9,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              5
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.8,
+              0.2,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.9,
+              0.1
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.9,
+          "macro_f1": 0.8666666666666667,
+          "weighted_f1": 0.9,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 15.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.6,
+              "recall": 0.6,
+              "f1-score": 0.6,
+              "support": 5.0
+            },
+            "accuracy": 0.9,
+            "macro avg": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9,
+              "recall": 0.9,
+              "f1-score": 0.9,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              13,
+              2
+            ],
+            [
+              0,
+              0,
+              2,
+              3
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.8666666666666667,
+              0.13333333333333333
+            ],
+            [
+              0.0,
+              0.0,
+              0.4,
+              0.6
+            ]
+          ]
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.6222222222222222,
+          "macro_f1": 0.6424115845168477,
+          "weighted_f1": 0.6068937776540116,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.45,
+              "recall": 0.9,
+              "f1-score": 0.6,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.7777777777777778,
+              "recall": 0.7,
+              "f1-score": 0.7368421052631579,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.5555555555555556,
+              "recall": 1.0,
+              "f1-score": 0.7142857142857143,
+              "support": 5.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.35,
+              "f1-score": 0.5185185185185185,
+              "support": 20.0
+            },
+            "accuracy": 0.6222222222222222,
+            "macro avg": {
+              "precision": 0.6958333333333333,
+              "recall": 0.7375,
+              "f1-score": 0.6424115845168477,
+              "support": 45.0
+            },
+            "weighted avg": {
+              "precision": 0.7790123456790123,
+              "recall": 0.6222222222222222,
+              "f1-score": 0.6068937776540116,
+              "support": 45.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              9,
+              1,
+              0,
+              0
+            ],
+            [
+              2,
+              7,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              5,
+              0
+            ],
+            [
+              9,
+              1,
+              3,
+              7
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.9,
+              0.1,
+              0.0,
+              0.0
+            ],
+            [
+              0.2,
+              0.7,
+              0.1,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.45,
+              0.05,
+              0.15,
+              0.35
+            ]
+          ]
+        }
+      ],
+      "mean_macro_f1": 0.8427751829067618,
+      "std_macro_f1": 0.11926147709061348,
+      "oof_metrics": {
+        "accuracy": 0.8375,
+        "macro_f1": 0.8307407497482404,
+        "weighted_f1": 0.8307407497482403,
+        "classification_report": {
+          "SOPORTE": {
+            "precision": 0.7551020408163265,
+            "recall": 0.925,
+            "f1-score": 0.8314606741573034,
+            "support": 40.0
+          },
+          "REDES": {
+            "precision": 0.9024390243902439,
+            "recall": 0.925,
+            "f1-score": 0.9135802469135802,
+            "support": 40.0
+          },
+          "INFRAESTRUCTURA": {
+            "precision": 0.8409090909090909,
+            "recall": 0.925,
+            "f1-score": 0.8809523809523809,
+            "support": 40.0
+          },
+          "BIOMEDICO": {
+            "precision": 0.8846153846153846,
+            "recall": 0.575,
+            "f1-score": 0.696969696969697,
+            "support": 40.0
+          },
+          "accuracy": 0.8375,
+          "macro avg": {
+            "precision": 0.8457663851827615,
+            "recall": 0.8375000000000001,
+            "f1-score": 0.8307407497482404,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.8457663851827615,
+            "recall": 0.8375,
+            "f1-score": 0.8307407497482403,
+            "support": 160.0
+          }
+        },
+        "labels": [
+          "SOPORTE",
+          "REDES",
+          "INFRAESTRUCTURA",
+          "BIOMEDICO"
+        ],
+        "confusion_matrix": [
+          [
+            37,
+            3,
+            0,
+            0
+          ],
+          [
+            2,
+            37,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            37,
+            3
+          ],
+          [
+            10,
+            1,
+            6,
+            23
+          ]
+        ],
+        "confusion_matrix_normalized": [
+          [
+            0.925,
+            0.075,
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.925,
+            0.025,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.925,
+            0.075
+          ],
+          [
+            0.25,
+            0.025,
+            0.15,
+            0.575
+          ]
+        ]
+      },
+      "mean_fit_seconds": 0.14358970000103,
+      "mean_inference_seconds_per_record": 0.0003195837500387579,
+      "score_kind": "uncalibrated_probability",
+      "uncalibrated_probability_coverage_analysis": [
+        {
+          "threshold": 0.25,
+          "accepted": 160,
+          "coverage": 1.0,
+          "accepted_accuracy": 0.8375,
+          "abstentions_per_category": {}
+        },
+        {
+          "threshold": 0.4,
+          "accepted": 123,
+          "coverage": 0.76875,
+          "accepted_accuracy": 0.9105691056910569,
+          "abstentions_per_category": {
+            "SOPORTE": 6,
+            "REDES": 2,
+            "INFRAESTRUCTURA": 8,
+            "BIOMEDICO": 21
+          }
+        },
+        {
+          "threshold": 0.55,
+          "accepted": 65,
+          "coverage": 0.40625,
+          "accepted_accuracy": 0.9538461538461539,
+          "abstentions_per_category": {
+            "SOPORTE": 25,
+            "REDES": 18,
+            "INFRAESTRUCTURA": 20,
+            "BIOMEDICO": 32
+          }
+        },
+        {
+          "threshold": 0.7,
+          "accepted": 15,
+          "coverage": 0.09375,
+          "accepted_accuracy": 1.0,
+          "abstentions_per_category": {
+            "SOPORTE": 38,
+            "REDES": 32,
+            "INFRAESTRUCTURA": 36,
+            "BIOMEDICO": 39
+          }
+        },
+        {
+          "threshold": 0.85,
+          "accepted": 0,
+          "coverage": 0.0,
+          "accepted_accuracy": null,
+          "abstentions_per_category": {
+            "SOPORTE": 40,
+            "REDES": 40,
+            "INFRAESTRUCTURA": 40,
+            "BIOMEDICO": 40
+          }
+        }
+      ]
+    },
+    {
+      "id": "linear-svc-c1",
+      "algorithm": "LinearSVC",
+      "spec": {
+        "id": "linear-svc-c1",
+        "algorithm": "LinearSVC",
+        "C": 1.0,
+        "dual": "auto",
+        "max_iter": 10000
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.975,
+          "macro_f1": 0.974937343358396,
+          "weighted_f1": 0.974937343358396,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.9090909090909091,
+              "recall": 1.0,
+              "f1-score": 0.9523809523809523,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.9,
+              "f1-score": 0.9473684210526315,
+              "support": 10.0
+            },
+            "accuracy": 0.975,
+            "macro avg": {
+              "precision": 0.9772727272727273,
+              "recall": 0.975,
+              "f1-score": 0.974937343358396,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9772727272727273,
+              "recall": 0.975,
+              "f1-score": 0.974937343358396,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              10,
+              0
+            ],
+            [
+              1,
+              0,
+              0,
+              9
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.1,
+              0.0,
+              0.0,
+              0.9
+            ]
+          ]
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.9142857142857143,
+          "macro_f1": 0.9136097820308346,
+          "weighted_f1": 0.9142553353079669,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1-score": 0.8888888888888888,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.8333333333333334,
+              "recall": 1.0,
+              "f1-score": 0.9090909090909091,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 1.0,
+              "recall": 0.9,
+              "f1-score": 0.9473684210526315,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.8333333333333334,
+              "recall": 1.0,
+              "f1-score": 0.9090909090909091,
+              "support": 5.0
+            },
+            "accuracy": 0.9142857142857143,
+            "macro avg": {
+              "precision": 0.9166666666666667,
+              "recall": 0.925,
+              "f1-score": 0.9136097820308346,
+              "support": 35.0
+            },
+            "weighted avg": {
+              "precision": 0.9285714285714286,
+              "recall": 0.9142857142857143,
+              "f1-score": 0.9142553353079669,
+              "support": 35.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              8,
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              9,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              5
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.8,
+              0.2,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.9,
+              0.1
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.9,
+          "macro_f1": 0.8666666666666667,
+          "weighted_f1": 0.9,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 15.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.6,
+              "recall": 0.6,
+              "f1-score": 0.6,
+              "support": 5.0
+            },
+            "accuracy": 0.9,
+            "macro avg": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9,
+              "recall": 0.9,
+              "f1-score": 0.9,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              13,
+              2
+            ],
+            [
+              0,
+              0,
+              2,
+              3
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.8666666666666667,
+              0.13333333333333333
+            ],
+            [
+              0.0,
+              0.0,
+              0.4,
+              0.6
+            ]
+          ]
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.7111111111111111,
+          "macro_f1": 0.7206042401288582,
+          "weighted_f1": 0.7127731100566416,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.5294117647058824,
+              "recall": 0.9,
+              "f1-score": 0.6666666666666666,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.7777777777777778,
+              "recall": 0.7,
+              "f1-score": 0.7368421052631579,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.625,
+              "recall": 1.0,
+              "f1-score": 0.7692307692307693,
+              "support": 5.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.55,
+              "f1-score": 0.7096774193548387,
+              "support": 20.0
+            },
+            "accuracy": 0.7111111111111111,
+            "macro avg": {
+              "precision": 0.733047385620915,
+              "recall": 0.7875000000000001,
+              "f1-score": 0.7206042401288582,
+              "support": 45.0
+            },
+            "weighted avg": {
+              "precision": 0.8043754538852578,
+              "recall": 0.7111111111111111,
+              "f1-score": 0.7127731100566416,
+              "support": 45.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              9,
+              1,
+              0,
+              0
+            ],
+            [
+              2,
+              7,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              5,
+              0
+            ],
+            [
+              6,
+              1,
+              2,
+              11
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.9,
+              0.1,
+              0.0,
+              0.0
+            ],
+            [
+              0.2,
+              0.7,
+              0.1,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.3,
+              0.05,
+              0.1,
+              0.55
+            ]
+          ]
+        }
+      ],
+      "mean_macro_f1": 0.8689545080461889,
+      "std_macro_f1": 0.09386092249277633,
+      "oof_metrics": {
+        "accuracy": 0.86875,
+        "macro_f1": 0.8663041954872727,
+        "weighted_f1": 0.8663041954872727,
+        "classification_report": {
+          "SOPORTE": {
+            "precision": 0.8043478260869565,
+            "recall": 0.925,
+            "f1-score": 0.8604651162790697,
+            "support": 40.0
+          },
+          "REDES": {
+            "precision": 0.9024390243902439,
+            "recall": 0.925,
+            "f1-score": 0.9135802469135802,
+            "support": 40.0
+          },
+          "INFRAESTRUCTURA": {
+            "precision": 0.8809523809523809,
+            "recall": 0.925,
+            "f1-score": 0.9024390243902439,
+            "support": 40.0
+          },
+          "BIOMEDICO": {
+            "precision": 0.9032258064516129,
+            "recall": 0.7,
+            "f1-score": 0.7887323943661971,
+            "support": 40.0
+          },
+          "accuracy": 0.86875,
+          "macro avg": {
+            "precision": 0.8727412594702986,
+            "recall": 0.8687500000000001,
+            "f1-score": 0.8663041954872727,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.8727412594702987,
+            "recall": 0.86875,
+            "f1-score": 0.8663041954872727,
+            "support": 160.0
+          }
+        },
+        "labels": [
+          "SOPORTE",
+          "REDES",
+          "INFRAESTRUCTURA",
+          "BIOMEDICO"
+        ],
+        "confusion_matrix": [
+          [
+            37,
+            3,
+            0,
+            0
+          ],
+          [
+            2,
+            37,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            37,
+            3
+          ],
+          [
+            7,
+            1,
+            4,
+            28
+          ]
+        ],
+        "confusion_matrix_normalized": [
+          [
+            0.925,
+            0.075,
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.925,
+            0.025,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.925,
+            0.075
+          ],
+          [
+            0.175,
+            0.025,
+            0.1,
+            0.7
+          ]
+        ]
+      },
+      "mean_fit_seconds": 0.0579552250001143,
+      "mean_inference_seconds_per_record": 0.00032259148810919125,
+      "score_kind": "raw_decision_margin_not_probability"
+    },
+    {
+      "id": "linear-svc-c4",
+      "algorithm": "LinearSVC",
+      "spec": {
+        "id": "linear-svc-c4",
+        "algorithm": "LinearSVC",
+        "C": 4.0,
+        "dual": "auto",
+        "max_iter": 10000
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.975,
+          "macro_f1": 0.974937343358396,
+          "weighted_f1": 0.974937343358396,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.9090909090909091,
+              "recall": 1.0,
+              "f1-score": 0.9523809523809523,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.9,
+              "f1-score": 0.9473684210526315,
+              "support": 10.0
+            },
+            "accuracy": 0.975,
+            "macro avg": {
+              "precision": 0.9772727272727273,
+              "recall": 0.975,
+              "f1-score": 0.974937343358396,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9772727272727273,
+              "recall": 0.975,
+              "f1-score": 0.974937343358396,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              10,
+              0
+            ],
+            [
+              1,
+              0,
+              0,
+              9
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.1,
+              0.0,
+              0.0,
+              0.9
+            ]
+          ]
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.9142857142857143,
+          "macro_f1": 0.9136097820308346,
+          "weighted_f1": 0.9142553353079669,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 0.8,
+              "f1-score": 0.8888888888888888,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.8333333333333334,
+              "recall": 1.0,
+              "f1-score": 0.9090909090909091,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 1.0,
+              "recall": 0.9,
+              "f1-score": 0.9473684210526315,
+              "support": 10.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.8333333333333334,
+              "recall": 1.0,
+              "f1-score": 0.9090909090909091,
+              "support": 5.0
+            },
+            "accuracy": 0.9142857142857143,
+            "macro avg": {
+              "precision": 0.9166666666666667,
+              "recall": 0.925,
+              "f1-score": 0.9136097820308346,
+              "support": 35.0
+            },
+            "weighted avg": {
+              "precision": 0.9285714285714286,
+              "recall": 0.9142857142857143,
+              "f1-score": 0.9142553353079669,
+              "support": 35.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              8,
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              9,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              5
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.8,
+              0.2,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.9,
+              0.1
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.9,
+          "macro_f1": 0.8666666666666667,
+          "weighted_f1": 0.9,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 15.0
+            },
+            "BIOMEDICO": {
+              "precision": 0.6,
+              "recall": 0.6,
+              "f1-score": 0.6,
+              "support": 5.0
+            },
+            "accuracy": 0.9,
+            "macro avg": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8666666666666667,
+              "f1-score": 0.8666666666666667,
+              "support": 40.0
+            },
+            "weighted avg": {
+              "precision": 0.9,
+              "recall": 0.9,
+              "f1-score": 0.9,
+              "support": 40.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              10,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              13,
+              2
+            ],
+            [
+              0,
+              0,
+              2,
+              3
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.8666666666666667,
+              0.13333333333333333
+            ],
+            [
+              0.0,
+              0.0,
+              0.4,
+              0.6
+            ]
+          ]
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.7111111111111111,
+          "macro_f1": 0.7132782328028509,
+          "weighted_f1": 0.7123661096496411,
+          "classification_report": {
+            "SOPORTE": {
+              "precision": 0.5625,
+              "recall": 0.9,
+              "f1-score": 0.6923076923076923,
+              "support": 10.0
+            },
+            "REDES": {
+              "precision": 0.7777777777777778,
+              "recall": 0.7,
+              "f1-score": 0.7368421052631579,
+              "support": 10.0
+            },
+            "INFRAESTRUCTURA": {
+              "precision": 0.5555555555555556,
+              "recall": 1.0,
+              "f1-score": 0.7142857142857143,
+              "support": 5.0
+            },
+            "BIOMEDICO": {
+              "precision": 1.0,
+              "recall": 0.55,
+              "f1-score": 0.7096774193548387,
+              "support": 20.0
+            },
+            "accuracy": 0.7111111111111111,
+            "macro avg": {
+              "precision": 0.7239583333333333,
+              "recall": 0.7875000000000001,
+              "f1-score": 0.7132782328028509,
+              "support": 45.0
+            },
+            "weighted avg": {
+              "precision": 0.8040123456790124,
+              "recall": 0.7111111111111111,
+              "f1-score": 0.7123661096496411,
+              "support": 45.0
+            }
+          },
+          "labels": [
+            "SOPORTE",
+            "REDES",
+            "INFRAESTRUCTURA",
+            "BIOMEDICO"
+          ],
+          "confusion_matrix": [
+            [
+              9,
+              1,
+              0,
+              0
+            ],
+            [
+              1,
+              7,
+              2,
+              0
+            ],
+            [
+              0,
+              0,
+              5,
+              0
+            ],
+            [
+              6,
+              1,
+              2,
+              11
+            ]
+          ],
+          "confusion_matrix_normalized": [
+            [
+              0.9,
+              0.1,
+              0.0,
+              0.0
+            ],
+            [
+              0.1,
+              0.7,
+              0.2,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.3,
+              0.05,
+              0.1,
+              0.55
+            ]
+          ]
+        }
+      ],
+      "mean_macro_f1": 0.8671230062146871,
+      "std_macro_f1": 0.09676437124716981,
+      "oof_metrics": {
+        "accuracy": 0.86875,
+        "macro_f1": 0.866116785408534,
+        "weighted_f1": 0.866116785408534,
+        "classification_report": {
+          "SOPORTE": {
+            "precision": 0.8222222222222222,
+            "recall": 0.925,
+            "f1-score": 0.8705882352941177,
+            "support": 40.0
+          },
+          "REDES": {
+            "precision": 0.9024390243902439,
+            "recall": 0.925,
+            "f1-score": 0.9135802469135802,
+            "support": 40.0
+          },
+          "INFRAESTRUCTURA": {
+            "precision": 0.8604651162790697,
+            "recall": 0.925,
+            "f1-score": 0.891566265060241,
+            "support": 40.0
+          },
+          "BIOMEDICO": {
+            "precision": 0.9032258064516129,
+            "recall": 0.7,
+            "f1-score": 0.7887323943661971,
+            "support": 40.0
+          },
+          "accuracy": 0.86875,
+          "macro avg": {
+            "precision": 0.8720880423357873,
+            "recall": 0.8687500000000001,
+            "f1-score": 0.866116785408534,
+            "support": 160.0
+          },
+          "weighted avg": {
+            "precision": 0.8720880423357871,
+            "recall": 0.86875,
+            "f1-score": 0.866116785408534,
+            "support": 160.0
+          }
+        },
+        "labels": [
+          "SOPORTE",
+          "REDES",
+          "INFRAESTRUCTURA",
+          "BIOMEDICO"
+        ],
+        "confusion_matrix": [
+          [
+            37,
+            3,
+            0,
+            0
+          ],
+          [
+            1,
+            37,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            37,
+            3
+          ],
+          [
+            7,
+            1,
+            4,
+            28
+          ]
+        ],
+        "confusion_matrix_normalized": [
+          [
+            0.925,
+            0.075,
+            0.0,
+            0.0
+          ],
+          [
+            0.025,
+            0.925,
+            0.05,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.925,
+            0.075
+          ],
+          [
+            0.175,
+            0.025,
+            0.1,
+            0.7
+          ]
+        ]
+      },
+      "mean_fit_seconds": 0.05517295000208833,
+      "mean_inference_seconds_per_record": 0.00032068156751270254,
+      "score_kind": "raw_decision_margin_not_probability"
+    }
+  ]
+}

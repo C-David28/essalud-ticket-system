@@ -1,0 +1,25 @@
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const read=p=>readFileSync(resolve(root,p),'utf8').replace(/\r\n/g,'\n');
+const nb=JSON.parse(read('ml/notebooks/stage-4.4-training-v1.ipynb'));
+const protocol=read('ml/experiments/experiment-v1.0.0/protocol.json');
+const splits=read('ml/experiments/experiment-v1.0.0/splits.json');
+const experiment=read('ml/experimentation/experiment.py');
+assert.equal(nb.nbformat,4);
+assert.equal(nb.metadata.project.stage,'4.4');
+assert.equal(nb.metadata.project.final_test_default,false);
+assert.equal(nb.metadata.project.experiment_sha256,createHash('sha256').update(experiment).digest('hex'));
+assert.equal(new Set(nb.cells.map(c=>c.id)).size,nb.cells.length);
+const code=nb.cells.filter(c=>c.cell_type==='code');
+assert.equal(code.length,9);
+for(const c of code) {assert.equal(c.execution_count,null);assert.deepEqual(c.outputs,[]);}
+const embedded=code.find(c=>c.id==='experiment-sources').source.join('');
+for(const source of [protocol,splits,experiment,read('ml/experimentation/analyze_errors.py')]) assert(embedded.includes(JSON.stringify(source)));
+assert(code.find(c=>c.id==='final-test').source.join('').startsWith('RUN_FINAL_TEST = False'));
+assert.equal(code.find(c=>c.id==='helpers').source.join(''),read('ml/colab/preparation.py').trimEnd()+'\n');
+assert(!JSON.stringify(nb).includes('ghp_'));
+console.log('OK: notebook 4.4, protocolo/particiones/fuentes sincronizados, limpio; test final desactivado.');

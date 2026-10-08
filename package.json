@@ -61,7 +61,10 @@
     "ml:colab:build": "node ml/scripts/build-colab-notebook.mjs",
     "ml:colab:export": "node ml/scripts/export-colab.mjs",
     "ml:colab:check": "node ml/scripts/check-colab.mjs",
-    "ml:colab:test": "python -B -m unittest discover -s ml/test -p test_colab.py -v"
+    "ml:colab:test": "python -B -m unittest discover -s ml/test -p test_colab.py -v",
+    "ml:experiment:build": "node ml/scripts/build-training-notebook.mjs",
+    "ml:experiment:check": "node ml/scripts/check-experiment.mjs",
+    "ml:experiment:test": "python -B -m unittest discover -s ml/test -p test_experiment.py -v"
   },
   "workspaces": [
     "apps/api",

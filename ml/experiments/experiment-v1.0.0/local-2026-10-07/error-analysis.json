@@ -1,0 +1,30 @@
+{
+  "candidate_id": "linear-svc-c1",
+  "development_records": 160,
+  "development_errors": 21,
+  "errors_per_category": {
+    "SOPORTE": 3,
+    "REDES": 3,
+    "INFRAESTRUCTURA": 3,
+    "BIOMEDICO": 12
+  },
+  "errors_per_family": {
+    "sup-keyboard": 2,
+    "sup-browser": 1,
+    "net-data-cable": 3,
+    "inf-ups": 1,
+    "inf-outlet": 1,
+    "inf-pdu": 1,
+    "bio-monitor": 3,
+    "bio-ecg": 2,
+    "bio-oximeter": 2,
+    "bio-sterilizer": 1,
+    "bio-calibration": 1,
+    "bio-device-software": 3
+  },
+  "oof_accuracy": 0.86875,
+  "final_records": 40,
+  "final_errors": 0,
+  "postprocessing_only": true,
+  "analysis_source_sha256_utf8_lf": "39e22e97096618700a3e1ce682a4c2772a549e274b0950dcdc094d345b61ed21"
+}

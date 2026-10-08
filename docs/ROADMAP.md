@@ -18,8 +18,8 @@
 | 3.4 | Google Maps opcional para sedes e incidencias | Implementada; pendiente checklist Docker y Maps del usuario |
 | 4.1 | Diseño formal ML y guía de etiquetado | Diseño documentado y verificado; commit base a600cdd; ver validación 4.1 |
 | 4.2 | Dataset sintético V1 separado de tickets | 200 registros, 40 familias, 37 grupos; controles offline y 28 pruebas aprobados; ver validación 4.2 |
-| 4.3 | GitHub, Google Colab y entorno reproducible | Notebook, entorno y guía preparados; pendiente publicación, Colab del usuario y CI remoto |
-| 4.4 | Entrenamiento, comparación y evaluación | Pendiente |
+| 4.3 | GitHub, Google Colab y entorno reproducible | Publicación/CI verificados; Colab confirmado por usuario; cierre documentado |
+| 4.4 | Entrenamiento, comparación y evaluación | Ejecutada localmente: LinearSVC C=1, métricas y análisis reales; pendiente reproducción Colab y CI actualizado |
 | 4.5 | Modelo V1, versionamiento y Model Card | Pendiente |
 | 4.6 | Servicio independiente de inferencia | Pendiente |
 | 4.7 | Clasificación asistida en NestJS y Next.js | Pendiente |

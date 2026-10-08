@@ -44,11 +44,25 @@ jobs:
         run: |
           npm run ml:colab:check
           python -B -m unittest discover -s ml/test -p test_colab.py -v
+          npm run ml:experiment:check
       - name: Execute notebook with isolated dependencies and local snapshot
         run: python -B ml/colab/smoke_notebook.py --workspace "$RUNNER_TEMP/ml-stage-4.3"
+      - name: Verify grouped experiment and development notebook (final test locked)
+        run: |
+          "$RUNNER_TEMP/ml-stage-4.3/.venv/bin/python" -B -m unittest discover -s ml/test -p test_experiment.py -v
+          python -B ml/experimentation/smoke_notebook.py --workspace "$RUNNER_TEMP/ml-stage-4.4"
       - uses: actions/upload-artifact@v4
         with:
           name: stage-4.3-readiness-ci
           path: ${{ runner.temp }}/ml-stage-4.3/outputs/stage-4.3-readiness.json
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stage-4.4-development-ci
+          path: |
+            ${{ runner.temp }}/ml-stage-4.4/results/comparison.json
+            ${{ runner.temp }}/ml-stage-4.4/results/selection.json
+            ${{ runner.temp }}/ml-stage-4.4/results/comparison.png
           if-no-files-found: error
           retention-days: 7

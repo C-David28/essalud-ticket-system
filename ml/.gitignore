@@ -5,3 +5,4 @@ __pycache__/
 outputs/
 *.zip
 .ipynb_checkpoints/
+.matplotlib-cache/

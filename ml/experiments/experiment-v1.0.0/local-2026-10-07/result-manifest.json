@@ -1,0 +1,93 @@
+{
+  "scope": "Real local stage 4.4 results; Colab validation pending",
+  "files": {
+    "comparison.csv": {
+      "sha256": "49d11985d7ad3b4d97ce9c558184fbf99773f4bbfc972b56ee756a90f659ccf8",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "comparison.json": {
+      "sha256": "a9877add46b308b57b2dcfbb8a6259b52f102db5a7387df04028dcfdcae1640f",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "comparison.pdf": {
+      "sha256": "99a0c1de8ab92b762f92b568e30a46dc174c6fd0a8c88365eb7dfd91a956cd50",
+      "hash_algorithm": "SHA-256"
+    },
+    "comparison.png": {
+      "sha256": "95f8b47990269c80a6d446aa1adc2aa636571c84484fcfa429b0b8301581650e",
+      "hash_algorithm": "SHA-256"
+    },
+    "confusion_matrix.csv": {
+      "sha256": "dfc870daea1cc6d26af6c13a2dc1ecbb28f61d7952f7bae8c4e6db5d081b8d47",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "confusion_matrix.pdf": {
+      "sha256": "589f7d5a5836efa9d63923cc803ce289bbcb7cea82a1673cef5863ebdded60f6",
+      "hash_algorithm": "SHA-256"
+    },
+    "confusion_matrix.png": {
+      "sha256": "cc255f76d5a5dc4bee316237a901218368d619262680f0a3a2320416428a2ae7",
+      "hash_algorithm": "SHA-256"
+    },
+    "confusion_matrix_normalized.csv": {
+      "sha256": "7195c799b7260120057a14d3b18dc98f03f7affe8f6ea2ad7b409b846bacf62a",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "confusion_matrix_normalized.pdf": {
+      "sha256": "7de17db3926a2e265fb5e6f51f1422a32922874a81c83a6ef7f18edab7a425f6",
+      "hash_algorithm": "SHA-256"
+    },
+    "confusion_matrix_normalized.png": {
+      "sha256": "07bcbd5e6611a883037462d47367986dd066af04f1b324b8d4356085d86eb9c8",
+      "hash_algorithm": "SHA-256"
+    },
+    "development-errors.csv": {
+      "sha256": "370efdb0073aea099744b968ec45ffd3a84692afbdcadc478dfb9a14a6dabd64",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "development-examples.csv": {
+      "sha256": "d8df49186e35c317477cd519d0f6edf81e737dd44298af8362ef0e863b0c84c1",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "development-oof.csv": {
+      "sha256": "da6d1c115a532c51e6cfa2681ebc03d92ba2c8704707945ab073e2f665e074e4",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "error-analysis.json": {
+      "sha256": "96540c55cfaaf83463805a8030bc1e1e670fad8c78400d09231e4ee17c0a3916",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "ERROR-ANALYSIS.md": {
+      "sha256": "cd7571c72fb70b9befee560f693530cf97215577d9f4e86826c0b8ae0c7a7de7",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "final-errors.csv": {
+      "sha256": "6f7266a05a2fedc223b7382bda8aebc64e9b9c3f124f388bfaac0ac27fa46c5b",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "final-evaluation.json": {
+      "sha256": "d051c1d48c736b4b7bec85dd859de48b530f6deb877f6cf0d2c042047ee27995",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "final-examples.csv": {
+      "sha256": "5f55da8d62086935f8ad6b662910ccb116e0bbff4efa1a11e2c166911819f2ee",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "final-metrics.json": {
+      "sha256": "1298513d33dce100cb5ae57b90f0d08387d726ecbce6013aead36f4a67642a63",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "final-test-started.json": {
+      "sha256": "d6607166618ca23f000e5bc930b0baae23a7bb79c1075a32dd8d8338b8019a88",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "REPORT.md": {
+      "sha256": "93d6eed0b45c2e6adf2a6587592eb7aa979aa2e4a92bb87c9fdeac23056ac95c",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    },
+    "selection.json": {
+      "sha256": "a0b4970ab4941103c87a3ffe052f698f0f14c062c031d63016c77bc99505bea2",
+      "hash_algorithm": "SHA-256-UTF8-LF"
+    }
+  }
+}

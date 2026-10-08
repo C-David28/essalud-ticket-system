@@ -56,3 +56,7 @@ El notebook incluye el helper y requisitos para funcionar al subir solo el `.ipy
 Seguir [COLAB-4.3.md](COLAB-4.3.md). Guardar commit/CI GitHub, notebook en Colab, versión/hash/distribución, paquetes reales, estado final, `stage-4.3-readiness.json` y repetición desde runtime nuevo. Enviar reporte/salida para verificar; no tokens.
 
 La ejecución externa aún no está observada. Siguiente subetapa, después de validar 4.3 y recibir autorización: **4.4 — Entrenamiento, comparación y evaluación**. No iniciada.
+
+## Cierre confirmado — 2026-10-07
+
+El usuario confirmó que Colab desde un entorno nuevo terminó en `READY_FOR_STAGE_4_4` y que Actions pasó. Se verificaron por API pública los commits `9d31039` y `b463d16`, los workflows `ML Preparation CI` e `Infrastructure CI` completados con `success` para `b463d16`, y la descarga real de los cinco archivos Dataset V1 con hashes y 200 registros correctos. El 404 y los pendientes anteriores describen la revisión de 2026-10-02, ya resueltos. La ejecución en su sesión de Colab se registra como confirmación del usuario, no como observación directa de su cuenta. Subetapa 4.3 cerrada; 4.4 autorizada por separado.

@@ -1,0 +1,899 @@
+{
+  "result": {
+    "experiment_version": "ticket-category-experiment-v1.0.0",
+    "phase": "final_test",
+    "provenance": {
+      "dataset": {
+        "dataset_version": "tickets-category-dataset-v1.0.0",
+        "dataset_commit": "9d3103991911b1b06b9faca6dce779013dae3036",
+        "dataset_sha256": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+        "records": 200,
+        "distribution": {
+          "SOPORTE": 50,
+          "REDES": 50,
+          "INFRAESTRUCTURA": 50,
+          "BIOMEDICO": 50
+        },
+        "families": 40,
+        "leakage_groups": 37,
+        "is_synthetic": true,
+        "status": "DATASET_V1_VERIFIED"
+      },
+      "protocol_sha256_canonical_json": "c5eacbc7011971ad0f0ccbaf17b974866304386df5d7216869994a546fdb3959",
+      "splits_sha256_canonical_json": "e38ced2920e4fde8b13947155c58338bb9367213f0a2204fe2252936846c04ec",
+      "experiment_source_sha256_utf8_lf": "236d6c62a45b014eb74f5cf6b56ba305d948554a5aa4af87c75a0ae3eb9e37d0",
+      "preparation_source_sha256_utf8_lf": "e2ac1f6e1f2eb0da013e253869899ab4800c0e007c3a959d4c459a9dcaf06c98",
+      "requirements_sha256_utf8_lf": "38e73e22486a6b4346b321c94b95223ad53a53954e293e06af91c8fd69c4c86b",
+      "environment": {
+        "python": "3.12.14",
+        "pip_tool_version": "25.1.1",
+        "packages": {
+          "numpy": "2.2.6",
+          "scipy": "1.15.3",
+          "pandas": "2.2.3",
+          "scikit-learn": "1.6.1",
+          "matplotlib": "3.10.3",
+          "joblib": "1.5.1",
+          "threadpoolctl": "3.6.0",
+          "contourpy": "1.3.2",
+          "cycler": "0.12.1",
+          "fonttools": "4.58.0",
+          "kiwisolver": "1.4.8",
+          "packaging": "25.0",
+          "pillow": "11.2.1",
+          "pyparsing": "3.2.3",
+          "python-dateutil": "2.9.0.post0",
+          "pytz": "2025.2",
+          "six": "1.17.0",
+          "tzdata": "2025.2"
+        }
+      },
+      "source_mode": "local_snapshot",
+      "partition_summary": {
+        "development": {
+          "records": 160,
+          "groups": 29,
+          "distribution": {
+            "BIOMEDICO": 40,
+            "INFRAESTRUCTURA": 40,
+            "REDES": 40,
+            "SOPORTE": 40
+          }
+        },
+        "final_test": {
+          "records": 40,
+          "groups": 8,
+          "distribution": {
+            "REDES": 10,
+            "SOPORTE": 10,
+            "BIOMEDICO": 10,
+            "INFRAESTRUCTURA": 10
+          }
+        },
+        "folds": [
+          {
+            "fold": 1,
+            "training": 120,
+            "validation": 40,
+            "validation_distribution": {
+              "SOPORTE": 10,
+              "REDES": 10,
+              "INFRAESTRUCTURA": 10,
+              "BIOMEDICO": 10
+            }
+          },
+          {
+            "fold": 2,
+            "training": 125,
+            "validation": 35,
+            "validation_distribution": {
+              "SOPORTE": 10,
+              "REDES": 10,
+              "INFRAESTRUCTURA": 10,
+              "BIOMEDICO": 5
+            }
+          },
+          {
+            "fold": 3,
+            "training": 120,
+            "validation": 40,
+            "validation_distribution": {
+              "SOPORTE": 10,
+              "REDES": 10,
+              "INFRAESTRUCTURA": 15,
+              "BIOMEDICO": 5
+            }
+          },
+          {
+            "fold": 4,
+            "training": 115,
+            "validation": 45,
+            "validation_distribution": {
+              "SOPORTE": 10,
+              "REDES": 10,
+              "INFRAESTRUCTURA": 5,
+              "BIOMEDICO": 20
+            }
+          }
+        ]
+      }
+    },
+    "training_executed": true,
+    "splits_created": true,
+    "selection_sha256_canonical_json": "64e14be457ebe135f05fdf94bf5c6acbec787f3a78d87a044ef20c8a91b440d0",
+    "candidate_id": "linear-svc-c1",
+    "score_kind": "raw_decision_margin_not_probability",
+    "metrics": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "weighted_f1": 1.0,
+      "classification_report": {
+        "SOPORTE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 10.0
+        },
+        "REDES": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 10.0
+        },
+        "INFRAESTRUCTURA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 10.0
+        },
+        "BIOMEDICO": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 10.0
+        },
+        "accuracy": 1.0,
+        "macro avg": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 40.0
+        },
+        "weighted avg": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 40.0
+        }
+      },
+      "labels": [
+        "SOPORTE",
+        "REDES",
+        "INFRAESTRUCTURA",
+        "BIOMEDICO"
+      ],
+      "confusion_matrix": [
+        [
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          10,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          10
+        ]
+      ],
+      "confusion_matrix_normalized": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "baseline_metrics": {
+      "accuracy": 0.25,
+      "macro_f1": 0.1,
+      "weighted_f1": 0.1,
+      "classification_report": {
+        "SOPORTE": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 10.0
+        },
+        "REDES": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 10.0
+        },
+        "INFRAESTRUCTURA": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 10.0
+        },
+        "BIOMEDICO": {
+          "precision": 0.25,
+          "recall": 1.0,
+          "f1-score": 0.4,
+          "support": 10.0
+        },
+        "accuracy": 0.25,
+        "macro avg": {
+          "precision": 0.0625,
+          "recall": 0.25,
+          "f1-score": 0.1,
+          "support": 40.0
+        },
+        "weighted avg": {
+          "precision": 0.0625,
+          "recall": 0.25,
+          "f1-score": 0.1,
+          "support": 40.0
+        }
+      },
+      "labels": [
+        "SOPORTE",
+        "REDES",
+        "INFRAESTRUCTURA",
+        "BIOMEDICO"
+      ],
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          10
+        ],
+        [
+          0,
+          0,
+          0,
+          10
+        ],
+        [
+          0,
+          0,
+          0,
+          10
+        ],
+        [
+          0,
+          0,
+          0,
+          10
+        ]
+      ],
+      "confusion_matrix_normalized": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "cv_acceptance_passed": true,
+    "final_acceptance_passed": true,
+    "experimental_promotion_allowed": true,
+    "institutionally_validated": false,
+    "model_exported": false,
+    "status": "EXPERIMENTAL_CANDIDATE_ACCEPTED"
+  },
+  "examples": [
+    {
+      "record_id": "ML-0001",
+      "titulo": "No puedo entrar a la aplicación de turnos",
+      "descripcion": "Desde esta mañana la aplicación de turnos rechaza mi cuenta. Puedo abrir el correo y las páginas de trabajo; el mensaje aparece después de escribir el usuario.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": -0.0005191025317111686,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-account",
+      "leakage_group_id": "group-sup-account",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0002",
+      "titulo": "Sesión de aplicación bloqueada",
+      "descripcion": "El cliente administrativo informa cuenta bloqueada antes de cargar el módulo. El navegador y otras aplicaciones responden. Solicito revisar el acceso, sin adjuntar claves.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": -0.2758941406056903,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-account",
+      "leakage_group_id": "group-sup-account",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0003",
+      "titulo": "Cuenta de aplicativo rechazada",
+      "descripcion": "El aplicativo dice usuario bloqueado. Internet y correo funcionan.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": -0.22218920619889376,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-account",
+      "leakage_group_id": "group-sup-account",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0004",
+      "titulo": "Acceso administrativo falla después de ingresar usuario",
+      "descripcion": "Al abrir la aplicación administrativa se muestra la pantalla de acceso normalmente. Tras escribir el usuario aparece un aviso de cuenta deshabilitada y no puedo avanzar. Otras personas pueden abrir la misma aplicación desde este puesto y mi correo funciona. Solicito revisar el permiso de acceso; no comparto contraseñas en el reporte.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.15883412424028742,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-account",
+      "leakage_group_id": "group-sup-account",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0005",
+      "titulo": "Login del aplicativo no acepta la cuenta",
+      "descripcion": "No entra mi usr al aplicativo, sale cuenta inactiva. En el mismo PC sí funcionan navegador y correo.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.11401618884832837,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-account",
+      "leakage_group_id": "group-sup-account",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0006",
+      "titulo": "El editor de texto se cierra al guardar",
+      "descripcion": "Estoy preparando un documento de prueba y el programa se cierra cuando pulso Guardar. La computadora sigue encendida y los demás programas trabajan normal.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.24078652425754526,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-office",
+      "leakage_group_id": "group-sup-office",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0007",
+      "titulo": "Fallo de aplicación al exportar documento",
+      "descripcion": "El editor genera un error interno al exportar un documento nuevo a PDF. Ocurre también con un archivo vacío guardado en disco local; no interviene una carpeta de red.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.41521185809096733,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-office",
+      "leakage_group_id": "group-sup-office",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0008",
+      "titulo": "Hoja de cálculo no abre",
+      "descripcion": "El programa de hojas de cálculo se cierra, incluso sin abrir archivos.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.1695452826745638,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-office",
+      "leakage_group_id": "group-sup-office",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0009",
+      "titulo": "Programa de oficina queda detenido en la pantalla inicial",
+      "descripcion": "El editor de presentaciones se queda mostrando su pantalla inicial durante varios minutos y nunca llega a abrir un documento. Probé iniciar sin seleccionar ningún archivo y pasa igual. Las demás aplicaciones del puesto responden y puedo navegar. Necesito recuperar el uso del programa para una presentación de prueba.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.1711358508105728,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-office",
+      "leakage_group_id": "group-sup-office",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0010",
+      "titulo": "No guarda doc local",
+      "descripcion": "Editor se sale al guardar doc nuevo en escritorio. No es carpeta compartida y el resto del equipo va bien.",
+      "real": "SOPORTE",
+      "predicted": "SOPORTE",
+      "correct": true,
+      "score": 0.771713349762809,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "sup-office",
+      "leakage_group_id": "group-sup-office",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0056",
+      "titulo": "El puerto de conexión no reconoce la computadora",
+      "descripcion": "El cable y la PC funcionan si los conecto a otro puerto. En el puerto asignado no enciende la luz de enlace, aunque el switch está prendido.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.19195484416316977,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-switch-port",
+      "leakage_group_id": "group-net-switch-port",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0057",
+      "titulo": "Puerto de switch sin negociación de enlace",
+      "descripcion": "Un puerto permanece sin enlace con estación y patch cord comprobados en otro puerto del mismo switch. El dispositivo de comunicaciones está encendido y los demás puertos operan.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.05633993351618738,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-switch-port",
+      "leakage_group_id": "group-net-switch-port",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0058",
+      "titulo": "Puerto LAN sin luz de enlace",
+      "descripcion": "El cable funciona en otro puerto; el switch conserva energía.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.22519379991490618,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-switch-port",
+      "leakage_group_id": "group-net-switch-port",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0059",
+      "titulo": "Conexión cableada falla solo en un puerto del switch",
+      "descripcion": "El puesto de prueba perdió la conexión de datos. Se comprobó que el mismo cable y la misma computadora establecen enlace al conectarse a un puerto disponible del switch. En el puerto original no aparece luz de enlace, mientras los otros continúan operativos. La energía del switch es estable; solicito revisar ese puerto de comunicaciones.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.35524040488001263,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-switch-port",
+      "leakage_group_id": "group-net-switch-port",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0060",
+      "titulo": "Puerto switch no levanta link",
+      "descripcion": "Mismo PC y patch cord levantan link en otro puerto. Puerto original sin LED, switch encendido.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": -0.14401988470300453,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-switch-port",
+      "leakage_group_id": "group-net-switch-port",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0086",
+      "titulo": "Ningún puesto puede salir a Internet",
+      "descripcion": "Podemos usar las carpetas y servicios locales, pero no abre ninguna página externa en varias computadoras. También fallan las pruebas de conexión fuera de la red.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.4135986698972367,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-internet",
+      "leakage_group_id": "group-net-internet",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0087",
+      "titulo": "Gateway sin tránsito externo",
+      "descripcion": "Los clientes alcanzan recursos internos y el gateway, pero las pruebas hacia distintos destinos externos no reciben respuesta. El fallo no depende de un navegador particular.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.18088347475578648,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-internet",
+      "leakage_group_id": "group-net-internet",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0088",
+      "titulo": "Sin salida externa",
+      "descripcion": "Hay acceso local, pero varios equipos no llegan a destinos de Internet.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.16914948644894834,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-internet",
+      "leakage_group_id": "group-net-internet",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0089",
+      "titulo": "Conectividad interna activa y salida externa interrumpida",
+      "descripcion": "En el ambiente de demostración funcionan los servicios locales y las estaciones pueden comunicarse entre sí. Sin embargo, distintos destinos de Internet dejan de responder tanto en el navegador como en pruebas de conexión. La situación es común a varios puestos. Se requiere revisar la salida de comunicaciones; no parece una avería aislada de aplicación.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.1954808125516847,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-internet",
+      "leakage_group_id": "group-net-internet",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0090",
+      "titulo": "Internet down, LAN ok",
+      "descripcion": "Recursos internos responden. Varios PCs sin tráfico a distintos destinos externos, falla fuera del browser también.",
+      "real": "REDES",
+      "predicted": "REDES",
+      "correct": true,
+      "score": 0.027919607677328817,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "net-internet",
+      "leakage_group_id": "group-net-internet",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0111",
+      "titulo": "Se corta la energía de una fila de puestos",
+      "descripcion": "Varios equipos de prueba se apagan juntos y el interruptor del circuito aparece disparado. Los puestos conectados a otro circuito permanecen encendidos.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": -0.11547234732845324,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-breaker",
+      "leakage_group_id": "group-inf-breaker",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0112",
+      "titulo": "Protección de circuito de puestos disparada",
+      "descripcion": "El circuito que alimenta la bancada de prueba queda desenergizado por actuación de la protección. No se ha rearmado ni intervenido el tablero desde el puesto.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": 0.06974390923627088,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-breaker",
+      "leakage_group_id": "group-inf-breaker",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0113",
+      "titulo": "Circuito de puestos sin energía",
+      "descripcion": "El interruptor está disparado y varios equipos quedan sin alimentación.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": 0.1580991338947621,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-breaker",
+      "leakage_group_id": "group-inf-breaker",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0114",
+      "titulo": "Interrupción eléctrica común a la bancada de demostración",
+      "descripcion": "Todos los equipos conectados al circuito de una bancada dejaron de recibir energía al mismo tiempo. El indicador de protección del circuito aparece disparado, mientras en otro circuito la alimentación continúa. No intentamos restablecer el tablero. Se solicita revisar la alimentación por personal autorizado antes de retomar el uso de ese ambiente técnico.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": 0.38583700538843885,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-breaker",
+      "leakage_group_id": "group-inf-breaker",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0115",
+      "titulo": "Salta proteccion del circuito",
+      "descripcion": "Varios PCs sin alimentación en misma bancada; otro circuito ok. No se tocó tablero.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": -0.020479217764850954,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-breaker",
+      "leakage_group_id": "group-inf-breaker",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0126",
+      "titulo": "El aire de la sala técnica dejó de enfriar",
+      "descripcion": "El equipo de aire acondicionado de la sala de prueba está encendido, pero sale aire caliente y la temperatura del ambiente sigue subiendo.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": 0.06325085774218614,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-cooling",
+      "leakage_group_id": "group-inf-cooling",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0127",
+      "titulo": "Climatización de sala técnica sin enfriamiento",
+      "descripcion": "La unidad de refrigeración mantiene ventilación pero no reduce la temperatura del recinto técnico. El problema afecta el ambiente donde están los equipos de TI.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": 0.10161494272499155,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-cooling",
+      "leakage_group_id": "group-inf-cooling",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0128",
+      "titulo": "Sala técnica sin refrigeración",
+      "descripcion": "El aire acondicionado funciona como ventilador, pero no enfría.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": -0.17193487720460693,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-cooling",
+      "leakage_group_id": "group-inf-cooling",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0129",
+      "titulo": "Climatización insuficiente en el recinto de equipos",
+      "descripcion": "En la sala técnica de demostración se percibe que el equipo de climatización mueve aire pero no enfría. El indicador ambiental muestra aumento sostenido de temperatura y el problema persiste aun sin cambios en la carga de trabajo de las estaciones. Solicitamos revisar la refrigeración del recinto; no es una avería de aplicación ni de un dispositivo médico.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": -0.22343999830245614,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-cooling",
+      "leakage_group_id": "group-inf-cooling",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0130",
+      "titulo": "AC sala tecnica no enfria",
+      "descripcion": "Ventila, pero ambiente se calienta. Revisar climatización de recinto TI, no software de equipos.",
+      "real": "INFRAESTRUCTURA",
+      "predicted": "INFRAESTRUCTURA",
+      "correct": true,
+      "score": 0.21919568547808704,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "inf-cooling",
+      "leakage_group_id": "group-inf-cooling",
+      "is_boundary_case": true,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0166",
+      "titulo": "El desfibrilador no termina su autocomprobación",
+      "descripcion": "El dispositivo de demostración enciende y muestra fallo interno al ejecutar la revisión técnica. Se mantiene fuera de servicio y se solicita revisión especializada.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": 0.26966577247250423,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-defib",
+      "leakage_group_id": "group-bio-defib",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0167",
+      "titulo": "Autotest de desfibrilador con resultado de fallo",
+      "descripcion": "La secuencia interna de comprobación del equipo se detiene con un código de error del módulo. El reporte no contiene instrucciones de uso ni datos de atención.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": 0.19010923954721382,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-defib",
+      "leakage_group_id": "group-bio-defib",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0168",
+      "titulo": "Desfibrilador falla autotest",
+      "descripcion": "La autocomprobación muestra fallo interno y no finaliza.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": -0.2961711062963822,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-defib",
+      "leakage_group_id": "group-bio-defib",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0169",
+      "titulo": "Autocomprobación técnica interrumpida en dispositivo biomédico",
+      "descripcion": "El desfibrilador de prueba permite encender su pantalla, pero la secuencia de comprobación interna informa fallo y no llega al resultado esperado. El dispositivo no está en uso y no se intentó omitir el aviso. La incidencia requiere evaluación del equipo por personal biomédico, sin configurar terapias ni proporcionar instrucciones clínicas mediante este reporte.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": 0.6427494724726758,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-defib",
+      "leakage_group_id": "group-bio-defib",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0170",
+      "titulo": "Desfibrilador error autotest",
+      "descripcion": "Enciende pero revisión interna termina en fallo. Fuera de uso, requiere evaluación del equipo.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": 0.39555323588609737,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-defib",
+      "leakage_group_id": "group-bio-defib",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0186",
+      "titulo": "El analizador no termina su arranque técnico",
+      "descripcion": "El equipo de laboratorio de demostración queda detenido en la comprobación del brazo y muestra error de posición. No hay muestras reales en el equipo.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": -0.035482684918274776,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-lab",
+      "leakage_group_id": "group-bio-lab",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0187",
+      "titulo": "Analizador con fallo de posicionamiento",
+      "descripcion": "La secuencia de autoprueba informa posición no detectada del mecanismo de muestreo y cancela el inicio. La evaluación se hace sin muestras ni datos clínicos.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": 0.29050352888752917,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-lab",
+      "leakage_group_id": "group-bio-lab",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0188",
+      "titulo": "Analizador falla comprobación",
+      "descripcion": "El brazo no pasa la autoprueba de posición; no hay muestras.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": -0.08396299946936991,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-lab",
+      "leakage_group_id": "group-bio-lab",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0189",
+      "titulo": "Mecanismo del analizador detiene la autoprueba de banco",
+      "descripcion": "Al encender el analizador de laboratorio de demostración, la secuencia inicial llega a la verificación del mecanismo de posicionamiento y se interrumpe con aviso de posición no reconocida. El equipo está vacío y no procesa muestras de personas. Solicitamos evaluación técnica del dispositivo biomédico, sin introducir resultados clínicos ni instrucciones para modificar el mecanismo.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": 0.8423998117270844,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-lab",
+      "leakage_group_id": "group-bio-lab",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    },
+    {
+      "record_id": "ML-0190",
+      "titulo": "Analizador error posicion",
+      "descripcion": "Autotest se corta en brazo de muestreo. Equipo vacío, sin muestras ni resultados reales.",
+      "real": "BIOMEDICO",
+      "predicted": "BIOMEDICO",
+      "correct": true,
+      "score": -0.16356798687219404,
+      "score_kind": "raw_decision_margin_not_probability",
+      "scenario_family_id": "bio-lab",
+      "leakage_group_id": "group-bio-lab",
+      "is_boundary_case": false,
+      "possible_reason_to_review": "Acierto; comprobar evidencia textual con guía"
+    }
+  ]
+}

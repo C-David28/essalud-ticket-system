@@ -1,6 +1,6 @@
 # Machine Learning — clasificación asistida de incidencias
 
-Estado: diseño 4.1, Dataset V1 de 4.2 y **notebook/entorno reproducible de 4.3** preparados. La ejecución en la cuenta Colab del usuario está pendiente de confirmar. No hay entrenamiento, modelo ni endpoint ML.
+Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con comparación, métricas reales y análisis de errores; pendiente reproducirlo en Colab y verificar CI actualizado. No se ha exportado artefacto de modelo ni creado endpoint ML.
 
 El modelo futuro recibirá únicamente título y descripción en español para sugerir una categoría existente. La persona decide la categoría final. Crear y gestionar tickets seguirá siendo posible sin ML.
 
@@ -18,12 +18,16 @@ El modelo futuro recibirá únicamente título y descripción en español para s
 - [Guía GitHub y Colab 4.3, paso a paso](docs/COLAB-4.3.md).
 - [Notebook de preparación Dataset V1](notebooks/stage-4.3-dataset-v1.ipynb).
 - [Validación y evidencias de 4.3](docs/VALIDATION-4.3.md).
+- [Guía de entrenamiento y evaluación 4.4](docs/COLAB-4.4.md).
+- [Notebook 4.4 con prueba final protegida](notebooks/stage-4.4-training-v1.ipynb).
+- [Protocolo congelado](experiments/experiment-v1.0.0/protocol.json) y [particiones](experiments/experiment-v1.0.0/splits.json).
+- [Resultados locales medidos](experiments/experiment-v1.0.0/local-2026-10-07/REPORT.md), [errores observados](experiments/experiment-v1.0.0/local-2026-10-07/ERROR-ANALYSIS.md) y [validación 4.4](docs/VALIDATION-4.4.md).
 
 ## Separación del sistema operativo
 
 Las etiquetas provienen de `apps/api/src/domain/ticket.ts`, no de una taxonomía nueva. Los 200 ejemplos V1 son archivos del módulo ML: no se insertan en PostgreSQL, no tienen códigos INC y no generan auditoría, estadísticas, SSE ni marcadores de Maps. Los 20 tickets DEMO operativos siguen siendo un conjunto distinto.
 
-Estructura actual y futura; experimentos, modelos y servicio todavía no existen:
+Estructura actual y futura; artefactos de modelo y servicio todavía no existen:
 
 ```text
 ml/
@@ -32,8 +36,9 @@ ml/
   colab/                 4.3: preparación Python y dependencias fijadas
   scripts/              validador de dataset de solo lectura
   test/                 pruebas del validador con copias temporales
-  notebooks/            4.3: notebook reproducible para Colab
-  experiments/          4.4: parámetros, métricas, errores y figuras
+  notebooks/            4.3/4.4: notebooks reproducibles para Colab
+  experimentation/      4.4: comparación, evaluación y análisis sin DB
+  experiments/          4.4: protocolo, particiones y resultados reales
   models/               4.5: manifiesto y referencias a artefactos
   service/              4.6: inferencia independiente
 ```
@@ -42,7 +47,11 @@ No se incluyen dependencias Python en npm ni se alteran las imágenes actuales. 
 
 Verificar V1 con `npm run ml:data:check` y `npm run ml:data:test`, sin Docker ni credenciales. La Dataset Card declara la revisión asistida por IA y la ausencia de validación humana independiente. Los hashes normalizan solo CRLF a LF para compatibilidad Windows/Linux.
 
-Preparación: `ml:colab:check` comprueba el notebook limpio; `ml:colab:test` ejecuta pruebas Python; `ml:colab:export` produce el ZIP privado sin token. `ML Preparation CI` verifica el flujo offline en Linux. La ejecución real Colab se confirma con el usuario. No se modifica Dataset V1 ni se crean particiones.
+Preparación 4.3: `ml:colab:check` comprueba el notebook limpio; `ml:colab:test` ejecuta pruebas Python; `ml:colab:export` produce el ZIP privado sin token. No modifica Dataset V1 ni crea particiones.
+
+Evaluación 4.4: `ml:experiment:build` genera el notebook limpio; `ml:experiment:check` comprueba fuentes/particiones; `ml:experiment:test` requiere Python del entorno científico 4.3 (no un Python global sin dependencias). CI lo ejecuta en el venv. Las particiones 4.4 están separadas del manifiesto inmutable V1. Selección solo con desarrollo; test explícito, decisión/hashes congelados y bloqueo de reapertura; no se exporta modelo.
+
+Resultado local: LinearSVC C=1, Macro F1 medio CV 0.8690; prueba sintética final 40/40 aciertos. Se conservan 21 errores OOF, sin validación institucional. Scores SVM son márgenes, no confianza probabilística ni umbral operativo validado.
 
 En 4.7 se integrará mediante un puerto de aplicación de NestJS y un adaptador HTTP. El navegador llamará a Next.js/NestJS, nunca directamente al modelo. El servicio ML no necesitará acceso a PostgreSQL ni Redis. Los controles actuales de acceso, tenant y rate limiting deberán conservarse.
 
