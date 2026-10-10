@@ -1,0 +1,16 @@
+{
+  "model_version": "ticket-category-model-v1.0.0",
+  "check": "serialization_roundtrip_on_development_only",
+  "records": 160,
+  "predictions_identical": true,
+  "max_absolute_margin_delta": 0.0,
+  "margin_tolerance": {
+    "rtol": 1e-12,
+    "atol": 1e-12
+  },
+  "unreviewed_types": [],
+  "final_test_reopened": false,
+  "new_metrics_calculated": false,
+  "operational_database_access": false,
+  "status": "MODEL_ROUNDTRIP_VERIFIED"
+}

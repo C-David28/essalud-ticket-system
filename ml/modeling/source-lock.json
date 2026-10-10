@@ -1,0 +1,16 @@
+{
+  "experiment_commit": "1d4e5508bbfb41d219fa073436d2a9a620118730",
+  "hash_algorithm": "SHA-256-UTF8-LF",
+  "files": {
+    "ml/colab/preparation.py": "e2ac1f6e1f2eb0da013e253869899ab4800c0e007c3a959d4c459a9dcaf06c98",
+    "ml/colab/requirements.txt": "38e73e22486a6b4346b321c94b95223ad53a53954e293e06af91c8fd69c4c86b",
+    "ml/experimentation/experiment.py": "236d6c62a45b014eb74f5cf6b56ba305d948554a5aa4af87c75a0ae3eb9e37d0",
+    "ml/experiments/experiment-v1.0.0/protocol.json": "57cba9fda793ffdd0ea796349209c911586c99ed5862f20756ed03b86f5de56f",
+    "ml/experiments/experiment-v1.0.0/splits.json": "041d520e633e213dd51566bad01c103d13cc7e7f2463d0553b2581bb0c8fca81",
+    "ml/experiments/experiment-v1.0.0/local-2026-10-07/comparison.json": "a9877add46b308b57b2dcfbb8a6259b52f102db5a7387df04028dcfdcae1640f",
+    "ml/experiments/experiment-v1.0.0/local-2026-10-07/selection.json": "a0b4970ab4941103c87a3ffe052f698f0f14c062c031d63016c77bc99505bea2",
+    "ml/experiments/experiment-v1.0.0/local-2026-10-07/final-metrics.json": "1298513d33dce100cb5ae57b90f0d08387d726ecbce6013aead36f4a67642a63",
+    "ml/experiments/experiment-v1.0.0/local-2026-10-07/final-test-started.json": "d6607166618ca23f000e5bc930b0baae23a7bb79c1075a32dd8d8338b8019a88",
+    "ml/experiments/experiment-v1.0.0/local-2026-10-07/result-manifest.json": "21005f2c20f4e96148a93b1dbccbb5b2d0ef85b2425f8c9122fa9bb3407ecdae"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "model_version": "ticket-category-model-v1.0.0",
+  "files": {
+    "metadata.json": "279e489274d3a7e4e08465a898722ffe30f0f041d375a946f0dfede3cf4c61f4",
+    "model.skops": "b21536dc47439b428a9a182d784e1798af8611493ea6e756e53ece9f15528213",
+    "verification.json": "77009a28ac3bf6d3f6aeb50ce0d5fcd77dca667831d260629715751661744240"
+  }
+}

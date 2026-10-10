@@ -19,8 +19,8 @@
 | 4.1 | Diseño formal ML y guía de etiquetado | Diseño documentado y verificado; commit base a600cdd; ver validación 4.1 |
 | 4.2 | Dataset sintético V1 separado de tickets | 200 registros, 40 familias, 37 grupos; controles offline y 28 pruebas aprobados; ver validación 4.2 |
 | 4.3 | GitHub, Google Colab y entorno reproducible | Publicación/CI verificados; Colab confirmado por usuario; cierre documentado |
-| 4.4 | Entrenamiento, comparación y evaluación | Ejecutada localmente: LinearSVC C=1, métricas y análisis reales; pendiente reproducción Colab y CI actualizado |
-| 4.5 | Modelo V1, versionamiento y Model Card | Pendiente |
+| 4.4 | Entrenamiento, comparación y evaluación | Ejecutada localmente: LinearSVC C=1, métricas y análisis reales; Colab/Actions confirmados por el usuario |
+| 4.5 | Modelo V1, versionamiento y Model Card | Artefacto generado, carga/persistencia verificadas, Model Card; ver validación 4.5 |
 | 4.6 | Servicio independiente de inferencia | Pendiente |
 | 4.7 | Clasificación asistida en NestJS y Next.js | Pendiente |
 | 4.8 | Fallback, historial paginado y regresión | Pendiente |

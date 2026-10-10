@@ -4,7 +4,7 @@ Fecha: 2026-10-07. Experimento: `ticket-category-experiment-v1.0.0`.
 
 ## Estado
 
-Entrenamiento, comparación y evaluación **ejecutados localmente**, con métricas reales. Pendiente publicar/verificar CI actualizado y reproducir 4.4 en Google Colab. La confirmación previa del usuario corresponde a 4.3, no a este experimento.
+Entrenamiento, comparación y evaluación **ejecutados localmente**, con métricas reales. El usuario confirmó el 2026-10-09 que también ejecutó el notebook 4.4 en Colab y verificó Actions correctamente. Esa evidencia externa fue reportada por el usuario; los archivos de resultados de esta carpeta conservan la procedencia local de 2026-10-07. No se inventan nuevas mediciones ni se atribuyen estos reportes a Colab.
 
 Frontend, API, PostgreSQL/RLS, auditoría, Redis, Maps, Dockerfiles, seeds y despliegues no se modificaron. Dataset V1 y notebook 4.3 intactos. No se exporta modelo ni se crea servicio/integración web.
 
@@ -61,4 +61,4 @@ Se corrigieron cache Matplotlib dentro del experimento, temporales de pruebas de
 
 Seguir [COLAB-4.4.md](COLAB-4.4.md). Guardar commit/Actions, Colab CPU, hashes/distribución, comparación y decisión antes de test, métricas/matrices, errores OOF y ZIP. Enviar comparación, selección, métricas y análisis para verificar la reproducción externa.
 
-Siguiente subetapa, solo con autorización después de confirmar esta: **4.5 — modelo final/versionamiento**. No iniciada.
+Cierre externo confirmado por el usuario; 4.5 autorizada el 2026-10-09. Ver [validación 4.5](VALIDATION-4.5.md). No se vuelve a abrir la evaluación final de 4.4.

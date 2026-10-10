@@ -64,7 +64,13 @@
     "ml:colab:test": "python -B -m unittest discover -s ml/test -p test_colab.py -v",
     "ml:experiment:build": "node ml/scripts/build-training-notebook.mjs",
     "ml:experiment:check": "node ml/scripts/check-experiment.mjs",
-    "ml:experiment:test": "python -B -m unittest discover -s ml/test -p test_experiment.py -v"
+    "ml:experiment:test": "python -B -m unittest discover -s ml/test -p test_experiment.py -v",
+    "ml:model:setup": "node ml/scripts/model-command.mjs setup",
+    "ml:model:check": "node ml/scripts/model-command.mjs check",
+    "ml:model:test": "node ml/scripts/model-command.mjs test",
+    "ml:model:rebuild": "node ml/scripts/model-command.mjs rebuild",
+    "ml:model:notebook:build": "node ml/scripts/build-model-notebook.mjs",
+    "ml:model:notebook:check": "node ml/scripts/check-model-notebook.mjs"
   },
   "workspaces": [
     "apps/api",
