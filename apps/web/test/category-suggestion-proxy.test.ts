@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({ config: vi.fn(), token: vi.fn() }));
 vi.mock("@/lib/local-api", () => ({
@@ -23,8 +24,15 @@ let fetcher: ReturnType<typeof vi.fn<typeof fetch>>;
 
 function request(body: unknown = input, headers: Record<string, string> = {}) {
   return new Request(browserOrigin + "/api/category-suggestion", {
-    method: "POST", headers: { Origin: browserOrigin, "Content-Type": "application/json", ...headers },
+    method: "POST", headers: { Host: "127.0.0.1:3000", Origin: browserOrigin, "Content-Type": "application/json", ...headers },
     body: typeof body === "string" ? body : JSON.stringify(body),
+  });
+}
+
+function nextRequest(headers: Record<string, string> = {}, url = "http://0.0.0.0:3000/api/category-suggestion") {
+  return new NextRequest(url, {
+    method: "POST", headers: { Host: "127.0.0.1:3000", Origin: browserOrigin, "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(input),
   });
 }
 
@@ -37,6 +45,87 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("proxy de sugerencia de categoría", () => {
+  it.each([
+    { url: "http://0.0.0.0:3000/api/category-suggestion", expectedUrl: "http://0.0.0.0:3000/api/category-suggestion" },
+    { url: "http://127.0.0.1:3000/api/category-suggestion", expectedUrl: "http://localhost:3000/api/category-suggestion" },
+  ])("permite la autoridad pública cuando Next construye o normaliza la URL $url", async ({ url, expectedUrl }) => {
+    const value = nextRequest({}, url);
+    expect(value.url).toBe(expectedUrl);
+    expect(value.headers.get("host")).toBe("127.0.0.1:3000");
+    expect(value.headers.get("origin")).toBe(browserOrigin);
+    const response = await POST(value);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(suggested);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    { origin: "http://localhost:3000", host: "localhost:3000", protocol: "http:" },
+    { origin: "http://[::1]:3000", host: "[::1]:3000", protocol: "http:" },
+    { origin: "http://tickets.example", host: "tickets.example:80", protocol: "http:" },
+    { origin: "https://tickets.example", host: "tickets.example:443", protocol: "https:" },
+    { origin: "https://tickets.example:8443", host: "tickets.example:8443", protocol: "https:" },
+  ])("permite Host $host para el origen canónico $origin", async ({ origin, host, protocol }) => {
+    const response = await POST(nextRequest({ Host: host, Origin: origin }, `${protocol}//0.0.0.0:3000/api/category-suggestion`));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(suggested);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it.each(["same-origin", "none"])("permite Sec-Fetch-Site %s con la autoridad pública válida", async site => {
+    expect((await POST(nextRequest({ "Sec-Fetch-Site": site }))).status).toBe(200);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it.each(["Host", "Origin"])("rechaza %s ausente aunque X-Forwarded-Host coincida", async missing => {
+    const value = nextRequest({ "X-Forwarded-Host": "127.0.0.1:3000" });
+    value.headers.delete(missing);
+    expect((await POST(value)).status).toBe(403);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("rechaza Host malicioso aunque X-Forwarded-Host coincida con el Origin público", async () => {
+    const response = await POST(nextRequest({ Host: "attacker.example:3000", "X-Forwarded-Host": "127.0.0.1:3000" }));
+    expect(response.status).toBe(403);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("ignora X-Forwarded-Host arbitrario cuando Host y Origin coinciden", async () => {
+    expect((await POST(nextRequest({ "X-Forwarded-Host": "attacker.example:3000" }))).status).toBe(200);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    "127.0.0.1:3000,attacker.example", "127.0.0.1:3000/path", "127.0.0.1:3000\\path",
+    "127.0.0.1:3000?query", "127.0.0.1:3000#fragment", "127.0.0.1:3000@attacker.example",
+    "attacker.example@127.0.0.1:3000", "%31%32%37.0.0.1:3000", "127.0.0.1 :3000",
+    "http://127.0.0.1:3000", "[::1",
+  ])("rechaza Host malformado %s sin contactar Nest", async host => {
+    expect((await POST(nextRequest({ Host: host }))).status).toBe(403);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "null", browserOrigin + "/", browserOrigin + "/path", browserOrigin + "?q=1", browserOrigin + "#fragment",
+    "http://user@127.0.0.1:3000", "http://127.0.0.1:3001",
+  ])("rechaza Origin no canónico o de otra autoridad %s en NextRequest", async origin => {
+    expect((await POST(nextRequest({ Origin: origin }))).status).toBe(403);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { url: "http://0.0.0.0:3000/api/category-suggestion", origin: "https://127.0.0.1:3000" },
+    { url: "https://0.0.0.0:3000/api/category-suggestion", origin: browserOrigin },
+  ])("rechaza un esquema de Origin diferente al de la petición $url", async ({ url, origin }) => {
+    expect((await POST(nextRequest({ Origin: origin }, url))).status).toBe(403);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it.each(["cross-site", "same-site", "invalid"])("rechaza Sec-Fetch-Site %s en NextRequest", async site => {
+    expect((await POST(nextRequest({ "Sec-Fetch-Site": site }))).status).toBe(403);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("rechaza Unicode sin pareja antes de contactar Nest", async () => {
     for (const field of ["titulo", "descripcion"] as const) {
       expect((await POST(request({ ...input, [field]: input[field] + "\ud800" }))).status).toBe(400);
@@ -155,7 +244,7 @@ describe("proxy de sugerencia de categoría", () => {
       start(controller) { controller.enqueue(new Uint8Array(16000)); controller.enqueue(new Uint8Array(17000)); }, cancel,
     });
     const streamedRequest = new Request(browserOrigin + "/api/category-suggestion", {
-      method: "POST", headers: { Origin: browserOrigin, "Content-Type": "application/json", "Content-Length": "1" },
+      method: "POST", headers: { Host: "127.0.0.1:3000", Origin: browserOrigin, "Content-Type": "application/json", "Content-Length": "1" },
       body: stream, duplex: "half",
     } as RequestInit & { duplex: "half" });
     const response = await POST(streamedRequest);

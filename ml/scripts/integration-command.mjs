@@ -40,7 +40,12 @@ export async function main(args = process.argv.slice(2), { root = projectRoot, e
     return 0;
   } catch (error) {
     if (error instanceof IntegrationCheckFailure) {
-      errorLog('Fallo ML integration check en fase "' + error.phase + '". Revisa el estado local; no se mostraron claves ni texto de tickets.');
+      const diagnostic = error.diagnostic;
+      const http = diagnostic.status === undefined ? (diagnostic.code === 'TRANSPORT_FAILURE' ? 'HTTP sin respuesta' : '') : 'HTTP ' + diagnostic.status;
+      const expected = diagnostic.expectedStatus === undefined ? '' : ' (esperado ' + diagnostic.expectedStatus + ')';
+      errorLog('Fallo ML integration check en fase "' + error.phase + '". Diagnóstico: ' +
+        http + expected +
+        (http || expected ? '; ' : '') + diagnostic.code + '. Revisa el estado local; no se mostraron claves ni texto de tickets.');
       if (error.cleanupPending) errorLog('La limpieza del ticket temporal no se confirmó. Revisar únicamente el ticket ' + error.temporaryTicketId + '.');
     } else errorLog(command === 'setup' ? 'No se completó ML integration setup. Verifica service.env; no se modificó su token.' :
       'No se completó ML integration check. Usa check, check --unavailable o check --disabled y revisa el estado local.');

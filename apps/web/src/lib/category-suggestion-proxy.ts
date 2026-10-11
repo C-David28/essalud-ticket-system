@@ -23,10 +23,19 @@ function record(value: unknown): value is Record<string, unknown> {
 }
 
 export function sameOriginRequest(request: Request): boolean {
-  const origin = request.headers.get("origin");
+  const rawOrigin = request.headers.get("origin");
+  const host = request.headers.get("host");
   const site = request.headers.get("sec-fetch-site");
-  return origin === new URL(request.url).origin &&
-    (!site || site === "same-origin" || site === "none");
+  if (!rawOrigin || !host || /[\s\\/@?#,%]/u.test(host) ||
+    (site && site !== "same-origin" && site !== "none")) return false;
+  try {
+    // Next builds request.url from its listening address and normalizes loopback.
+    // Host is the HTTP destination used by the client; forwarded hosts are ignored.
+    const origin = new URL(rawOrigin);
+    const protocol = new URL(request.url).protocol;
+    if (!["http:", "https:"].includes(protocol) || origin.origin !== rawOrigin) return false;
+    return origin.origin === new URL(`${protocol}//${host}`).origin;
+  } catch { return false; }
 }
 
 async function cancelBody(request: Request) {

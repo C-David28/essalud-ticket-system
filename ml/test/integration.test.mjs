@@ -209,3 +209,129 @@ test('comando check oculta excepciones upstream que contienen credenciales', asy
     assert.equal(stack.calls.filter(call => call.method === 'DELETE').length, 0);
   } finally { removeWorkspace(root); }
 });
+
+test('IntegrationCheckFailure limita el diagnóstico a estados HTTP y un código conocido', () => {
+  const secret = 'unit-private-diagnostic-token';
+  const failure = new IntegrationCheckFailure('sugerencia pública sin cookie', false, null, {
+    status: 403, expectedStatus: 200, code: 'ORIGIN_REJECTED', message: secret, error: secret,
+    url: 'https://private.invalid/?token=' + secret, token: secret, body: secret,
+  });
+  assert.deepEqual(failure.diagnostic, { status: 403, expectedStatus: 200, code: 'ORIGIN_REJECTED' });
+  assert.ok(Object.isFrozen(failure.diagnostic));
+  assert.ok(!JSON.stringify(failure).includes(secret));
+  for (const status of ['403', NaN, Infinity, 99, 600, 200.5]) {
+    const invalid = new IntegrationCheckFailure('configuración local', false, null,
+      { status, expectedStatus: '200', code: secret, message: secret });
+    assert.deepEqual(invalid.diagnostic, { code: 'UNEXPECTED_CONTRACT' });
+  }
+});
+
+test('comando distingue el origen, permisos, autenticación y estado ML sin mostrar el body', async () => {
+  const secret = 'unit-private-upstream-body-token';
+  const cases = [
+    { status: 403, message: 'Origen no permitido.', code: 'ORIGIN_REJECTED' },
+    { status: 403, message: 'Origen no permitido. ' + secret, code: 'PERMISSION_REJECTED' },
+    { status: 403, message: 'No tienes permiso para solicitar una sugerencia de categoría.', code: 'PERMISSION_REJECTED' },
+    { status: 401, message: secret, code: 'AUTH_REJECTED' },
+    { status: 400, message: secret, code: 'INVALID_INPUT' },
+    { status: 422, message: secret, code: 'INVALID_INPUT' },
+    { status: 503, result: 'unavailable', code: 'ML_UNAVAILABLE' },
+    { status: 200, result: 'disabled', code: 'ML_DISABLED' },
+    { status: 200, result: 'unavailable', code: 'ML_UNAVAILABLE' },
+    { status: 500, message: secret, code: 'UNEXPECTED_CONTRACT' },
+    { status: 200, result: secret, code: 'UNEXPECTED_CONTRACT' },
+  ];
+  for (const item of cases) {
+    const root = workspace(), output = [];
+    let failure;
+    try {
+      const status = await main(['check'], { root, env: { TICKETS_DEMO_PASSWORD: password },
+        check: async options => {
+          try {
+            return await runIntegrationCheck({ ...options, fetcher: async () => Response.json({
+              message: item.message, status: item.result, suggestion: null, error: secret, token: secret,
+              url: 'https://private.invalid/path?token=' + secret, titulo: 'private ticket text ' + secret,
+            }, { status: item.status, headers: { 'Cache-Control': 'no-store' } }) });
+          } catch (error) { failure = error; throw error; }
+        }, log: text => output.push(text), errorLog: text => output.push(text) });
+      assert.equal(status, 1);
+      assert.ok(failure instanceof IntegrationCheckFailure);
+      assert.equal(failure.phase, 'sugerencia pública sin cookie');
+      assert.deepEqual(failure.diagnostic, { status: item.status, expectedStatus: 200, code: item.code });
+      assert.ok(output[0].includes('HTTP ' + item.status + ' (esperado 200); ' + item.code));
+      const published = JSON.stringify(output) + JSON.stringify(failure) + String(failure);
+      for (const privateValue of [secret, password, 'https://private.invalid', 'private ticket text', item.message].filter(Boolean))
+        assert.ok(!published.includes(privateValue));
+    } finally { removeWorkspace(root); }
+  }
+});
+
+test('respuestas no JSON no revelan el cuerpo y conservan el estado HTTP', async () => {
+  for (const status of [200, 403]) {
+    await assert.rejects(runIntegrationCheck({ root: '/unused', env: { TICKETS_DEMO_PASSWORD: password },
+      fetcher: async () => new Response('<html>private upstream password=' + password + '</html>',
+        { status, headers: { 'Cache-Control': 'no-store' } }) }), error => {
+      assert.deepEqual(error.diagnostic, { status, expectedStatus: 200,
+        code: status === 403 ? 'PERMISSION_REJECTED' : 'UNEXPECTED_CONTRACT' });
+      assert.ok(!JSON.stringify(error).includes(password));
+      return true;
+    });
+  }
+});
+
+test('fallos de transporte ocultan la excepción y conservan el HTTP esperado de cada modo', async () => {
+  for (const flags of [[], ['--unavailable'], ['--disabled']]) {
+    const root = workspace(), output = [];
+    let failure;
+    try {
+      assert.equal(await main(['check', ...flags], { root, env: { TICKETS_DEMO_PASSWORD: password },
+        check: async options => {
+          try { return await runIntegrationCheck({ ...options, fetcher: async () => { throw new Error('private-token ' + password); } }); }
+          catch (error) { failure = error; throw error; }
+        }, log: text => output.push(text), errorLog: text => output.push(text) }), 1);
+      const expectedStatus = flags.includes('--unavailable') ? 503 : 200;
+      assert.deepEqual(failure.diagnostic, { expectedStatus, code: 'TRANSPORT_FAILURE' });
+      assert.ok(output[0].includes('HTTP sin respuesta (esperado ' + expectedStatus + '); TRANSPORT_FAILURE'));
+      assert.ok(!JSON.stringify(output).includes(password));
+      assert.ok(!JSON.stringify(output).includes('private-token'));
+    } finally { removeWorkspace(root); }
+  }
+});
+
+test('diagnóstico de HTTP también identifica acceso, catálogo, creación y limpieza', async () => {
+  const cases = [
+    { path: '/api/auth/login', status: 401, expectedStatus: 200, code: 'AUTH_REJECTED', phase: 'acceso admin.gctic' },
+    { path: '/api/organization', status: 403, expectedStatus: 200, code: 'PERMISSION_REJECTED', phase: 'catálogo organizacional' },
+    { path: '/api/tickets', status: 400, expectedStatus: 201, code: 'INVALID_INPUT', phase: 'creación con categoría manual' },
+    { path: '/api/tickets/' + ticketId, method: 'DELETE', status: 403, expectedStatus: 204,
+      code: 'PERMISSION_REJECTED', phase: 'limpieza del ticket temporal' },
+  ];
+  for (const item of cases) {
+    const stack = fakeStack();
+    await assert.rejects(runIntegrationCheck({ root: '/unused', env: { TICKETS_DEMO_PASSWORD: password },
+      ...stack, idFactory: () => runId, fetcher: async (url, init) => {
+        if (new URL(url).pathname === item.path && (!item.method || init.method === item.method))
+          return Response.json({ message: 'private rejected request ' + password }, { status: item.status });
+        return stack.fetcher(url, init);
+      } }), error => {
+        assert.equal(error.phase, item.phase);
+        assert.deepEqual(error.diagnostic, { status: item.status, expectedStatus: item.expectedStatus, code: item.code });
+        assert.equal(error.cleanupPending, item.method === 'DELETE');
+        assert.ok(!JSON.stringify(error).includes(password));
+        return true;
+      });
+  }
+});
+
+test('una limpieza fallida conserva el primer diagnóstico y el ticket temporal pendiente', async () => {
+  const stack = fakeStack({ cleanupFails: true });
+  await assert.rejects(runIntegrationCheck({ root: '/unused', env: { TICKETS_DEMO_PASSWORD: password },
+    ...stack, postgresProbe: () => { throw new Error('private postgres credential ' + password); }, idFactory: () => runId }), error => {
+    assert.equal(error.phase, 'persistencia PostgreSQL');
+    assert.equal(error.cleanupPending, true);
+    assert.equal(error.temporaryTicketId, ticketId);
+    assert.deepEqual(error.diagnostic, { code: 'UNEXPECTED_CONTRACT' });
+    assert.ok(!JSON.stringify(error).includes(password));
+    return true;
+  });
+});

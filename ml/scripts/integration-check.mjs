@@ -9,6 +9,8 @@ const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const modelVersion = 'ticket-category-model-v1.0.0';
 const policyVersion = 'category-assistance-policy-v1.0.0';
+const diagnosticCodes = new Set(['ORIGIN_REJECTED', 'AUTH_REJECTED', 'PERMISSION_REJECTED', 'INVALID_INPUT',
+  'ML_UNAVAILABLE', 'ML_DISABLED', 'UNEXPECTED_CONTRACT', 'TRANSPORT_FAILURE']);
 const examples = {
   biomedical: {
     titulo: 'Monitor de signos sin lectura',
@@ -21,11 +23,17 @@ const examples = {
 };
 
 export class IntegrationCheckFailure extends Error {
-  constructor(phase, cleanupPending = false, temporaryTicketId = null) {
+  constructor(phase, cleanupPending = false, temporaryTicketId = null, diagnostic = {}) {
     super('Verificación local incompleta.');
     this.phase = phase;
     this.cleanupPending = cleanupPending;
     this.temporaryTicketId = temporaryTicketId;
+    // Only bounded numeric HTTP statuses and a closed code enter the public diagnostic.
+    this.diagnostic = Object.freeze({
+      ...(Number.isInteger(diagnostic?.status) && diagnostic.status >= 100 && diagnostic.status <= 599 ? { status: diagnostic.status } : {}),
+      ...(Number.isInteger(diagnostic?.expectedStatus) && diagnostic.expectedStatus >= 100 && diagnostic.expectedStatus <= 599 ? { expectedStatus: diagnostic.expectedStatus } : {}),
+      code: diagnosticCodes.has(diagnostic?.code) ? diagnostic.code : 'UNEXPECTED_CONTRACT',
+    });
   }
 }
 
@@ -80,23 +88,45 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
   let phase = 'configuración local', cookie = '', ticketId = null, ticketInput = null;
   let cleanupDone = false, failure = null, receipt = null;
   const checks = [];
+  let diagnostic = { code: 'UNEXPECTED_CONTRACT' };
   let origin;
-  async function request(path, { body, method = body ? 'POST' : 'GET', authenticated = false } = {}) {
-    return fetcher(new URL(path, origin), { method, redirect: 'error', signal: AbortSignal.timeout(10000),
+  async function request(path, { body, method = body ? 'POST' : 'GET', authenticated = false, expectedStatus = 200 } = {}) {
+    diagnostic = { expectedStatus, code: 'TRANSPORT_FAILURE' };
+    const response = await fetcher(new URL(path, origin), { method, redirect: 'error', signal: AbortSignal.timeout(10000),
       headers: { Origin: origin, ...(body ? { 'Content-Type': 'application/json' } : {}), ...(authenticated ? { Cookie: cookie } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
+    diagnostic = { status: response.status, expectedStatus, code: 'UNEXPECTED_CONTRACT' };
+    return response;
+  }
+  async function expectStatus(response, expectedStatus, suggestion = false) {
+    if (response.status === expectedStatus) return;
+    let code = response.status === 401 ? 'AUTH_REJECTED' : response.status === 403 ? 'PERMISSION_REJECTED' :
+      [400, 422].includes(response.status) ? 'INVALID_INPUT' : suggestion && response.status === 503 ? 'ML_UNAVAILABLE' : 'UNEXPECTED_CONTRACT';
+    if (suggestion && response.status === 403) {
+      try {
+        // Compare the known Next guard response; never retain or print its body.
+        if ((await response.json())?.message === 'Origen no permitido.') code = 'ORIGIN_REJECTED';
+      } catch { /* A malformed rejection stays a permission failure. */ }
+    }
+    throw new IntegrationCheckFailure(phase, false, null, { status: response.status, expectedStatus, code });
   }
   async function ownedTicket() {
     const response = await request('/api/tickets/' + ticketId, { authenticated: true });
     if (response.status === 404) return false;
-    requireCheck(response.status === 200 && ownTicket(await response.json(), ticketInput, ticketId));
+    await expectStatus(response, 200);
+    requireCheck(ownTicket(await response.json(), ticketInput, ticketId));
     return true;
   }
   async function suggestion(example, expectedStatus, authenticated = false) {
-    const response = await request('/api/category-suggestion', { body: example, authenticated });
-    requireCheck(response.status === (unavailable ? 503 : 200) && response.headers.get('cache-control')?.includes('no-store'));
+    const expectedHttpStatus = unavailable ? 503 : 200;
+    const response = await request('/api/category-suggestion', { body: example, authenticated, expectedStatus: expectedHttpStatus });
+    await expectStatus(response, expectedHttpStatus, true);
+    requireCheck(response.headers.get('cache-control')?.includes('no-store'));
     const data = await response.json();
-    requireCheck(data.status === expectedStatus);
+    if (data.status !== expectedStatus) {
+      const code = data.status === 'disabled' ? 'ML_DISABLED' : data.status === 'unavailable' ? 'ML_UNAVAILABLE' : 'UNEXPECTED_CONTRACT';
+      throw new IntegrationCheckFailure(phase, false, null, { status: response.status, expectedStatus: expectedHttpStatus, code });
+    }
     if (expectedStatus !== 'suggested') requireCheck(data.suggestion === null);
     else {
       const suggested = data.suggestion;
@@ -122,7 +152,7 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
 
     phase = 'acceso admin.gctic';
     const login = await request('/api/auth/login', { body: { username: 'admin.gctic', password } });
-    requireCheck(login.status === 200);
+    await expectStatus(login, 200);
     cookie = staffCookie(login);
     checks.push('staff_login');
     phase = 'sugerencia autenticada';
@@ -130,21 +160,22 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     checks.push('staff_suggestion');
     phase = 'catálogo organizacional';
     const organization = await request('/api/organization', { authenticated: true });
-    requireCheck(organization.status === 200);
+    await expectStatus(organization, 200);
     const catalog = await organization.json();
     const center = catalog.centers?.find(item => item.active && item.areas?.some(area => area.active));
     const area = center?.areas.find(item => item.active);
     requireCheck(center && area && uuid.test(center.centerId) && uuid.test(area.areaId));
     checks.push('organization_catalog');
 
+    diagnostic = { code: 'UNEXPECTED_CONTRACT' };
     const runId = idFactory();
     requireCheck(uuid.test(runId));
     ticketInput = { titulo: examples.biomedical.titulo + ' [4.7 ' + runId + ']',
       descripcion: examples.biomedical.descripcion + ' Solicitud ficticia temporal de integración local.',
       categoria: 'SOPORTE', prioridad: 'MEDIA', centroAsistencialId: center.centerId, areaId: area.areaId };
     phase = 'creación con categoría manual';
-    const createdResponse = await request('/api/tickets', { body: ticketInput, authenticated: true });
-    requireCheck(createdResponse.status === 201);
+    const createdResponse = await request('/api/tickets', { body: ticketInput, authenticated: true, expectedStatus: 201 });
+    await expectStatus(createdResponse, 201);
     const created = await createdResponse.json();
     requireCheck(uuid.test(created.ticketId));
     ticketId = created.ticketId;
@@ -154,16 +185,18 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     requireCheck(await ownedTicket());
     checks.push('ticket_read_through_next');
     phase = 'persistencia PostgreSQL';
+    diagnostic = { code: 'UNEXPECTED_CONTRACT' };
     const persisted = await postgresProbe(root, ticketId);
     requireCheck(persisted.ticketCount === 1 && persisted.category === 'SOPORTE' && persisted.insertAudited === true && persisted.auditCount >= 1);
     checks.push('postgres_manual_category', 'insert_audited');
 
     phase = 'limpieza del ticket temporal';
     requireCheck(await ownedTicket());
-    const removed = await request('/api/tickets/' + ticketId, { method: 'DELETE', authenticated: true });
-    requireCheck(removed.status === 204);
+    const removed = await request('/api/tickets/' + ticketId, { method: 'DELETE', authenticated: true, expectedStatus: 204 });
+    await expectStatus(removed, 204);
     cleanupDone = true;
-    requireCheck((await request('/api/tickets/' + ticketId, { authenticated: true })).status === 404);
+    await expectStatus(await request('/api/tickets/' + ticketId, { authenticated: true, expectedStatus: 404 }), 404);
+    diagnostic = { code: 'UNEXPECTED_CONTRACT' };
     const deleted = await postgresProbe(root, ticketId);
     requireCheck(deleted.ticketCount === 0 && deleted.category === null && deleted.auditCount >= 2 &&
       deleted.insertAudited === true && deleted.deleteAudited === true);
@@ -172,19 +205,20 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
       origin, expected_model_version: modelVersion, policy_version: policyVersion, manual_category: 'SOPORTE',
       checks, postgres: { ticket_count_after_delete: deleted.ticketCount, audit_events: deleted.auditCount,
         insert_audited: deleted.insertAudited, delete_audited: deleted.deleteAudited }, temporary_ticket_removed: true };
-  } catch {
-    failure = new IntegrationCheckFailure(phase);
+  } catch (error) {
+    failure = error instanceof IntegrationCheckFailure ? error : new IntegrationCheckFailure(phase, false, null, diagnostic);
   } finally {
     if (ticketId && !cleanupDone) {
       try {
         if (await ownedTicket()) {
-          const removed = await request('/api/tickets/' + ticketId, { method: 'DELETE', authenticated: true });
-          requireCheck(removed.status === 204);
+          const removed = await request('/api/tickets/' + ticketId, { method: 'DELETE', authenticated: true, expectedStatus: 204 });
+          await expectStatus(removed, 204);
         }
-        requireCheck((await request('/api/tickets/' + ticketId, { authenticated: true })).status === 404);
+        await expectStatus(await request('/api/tickets/' + ticketId, { authenticated: true, expectedStatus: 404 }), 404);
         cleanupDone = true;
-      } catch {
-        failure = new IntegrationCheckFailure(failure?.phase ?? 'limpieza del ticket temporal', true, ticketId);
+      } catch (error) {
+        failure = new IntegrationCheckFailure(failure?.phase ?? 'limpieza del ticket temporal', true, ticketId,
+          failure?.diagnostic ?? (error instanceof IntegrationCheckFailure ? error.diagnostic : diagnostic));
       }
     }
   }

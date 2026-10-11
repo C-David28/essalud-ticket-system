@@ -81,6 +81,19 @@ npm.cmd run demo:check
 
 El chequeo de ML detenido debe devolver `ML_INTEGRATION_CHECK_OK` y confirmar creación manual/persistencia/auditoría. El último comando conserva las comprobaciones anteriores de interfaz, asignación y SSE. Si falla un paso, revisa `npm.cmd run ml:integration:logs` y comparte únicamente el error controlado, nunca los `.env`. No avances a 4.8 hasta verificarlo.
 
+### Corrección del rechazo de Origin en Docker
+
+El fallo `sugerencia pública sin cookie` podía devolver HTTP 403 antes de contactar Nest. Next construye `request.url` con la dirección de escucha `0.0.0.0:3000` y normaliza loopback; el navegador conserva `Origin` y `Host` públicos. La guarda compara ahora el origen canónico con el destino HTTP de `Host`, conservando protocolo, rechazo de autoridades malformadas y `Sec-Fetch-Site`. No utiliza `X-Forwarded-Host`, no permite orígenes ajenos y no modifica autenticación ni permisos.
+
+Si los contenedores ya están saludables, aplica únicamente el cambio web:
+
+```cmd
+docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml -f compose.demo.yaml -f compose.ml-integration.yaml up -d --build --no-deps --wait --wait-timeout 180 web
+npm.cmd run ml:integration:check
+```
+
+No requiere setup, seeds, migraciones ni recrear PostgreSQL/Redis/ML. El checker informa el estado HTTP observado y un código controlado, por ejemplo `HTTP 403 (esperado 200); ORIGIN_REJECTED`. No imprime cuerpos upstream, cookies, claves o textos. Distingue también autenticación, permisos, entrada inválida, asistencia desactivada, servicio no disponible y fallos de transporte. Si se usa un reverse proxy, debe conservar el `Host` público y el protocolo efectivo.
+
 `compose.ml-integration.yaml` extiende el servicio aislado de 4.6 dentro del proyecto Compose existente y la red `backend`. No mezcla el `name: essalud-ml-local` del archivo independiente; conserva los volúmenes PostgreSQL/Redis. El backend no tiene una dependencia obligatoria de salud ML. Se detiene primero el ML aislado porque usa el mismo puerto localhost:8001. Usa `ml:integration:up` después de cambiar la configuración: recrea API/web y carga las variables actuales.
 
 ## Configuración y límites
