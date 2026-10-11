@@ -1,6 +1,6 @@
 # Machine Learning — clasificación asistida de incidencias
 
-Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con Colab/Actions confirmados por el usuario. **4.5 publica Model V1**, pipeline completo, Model Card y carga verificada. Todavía no existe endpoint ML ni integración web.
+Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con Colab/Actions confirmados por el usuario. **4.5 publica Model V1**, pipeline completo, Model Card y carga verificada. **4.6 incorpora el servicio independiente de inferencia**; ver su validación para distinguir pruebas locales y comprobación Docker pendiente. La integración web corresponde a 4.7.
 
 El modelo futuro recibirá únicamente título y descripción en español para sugerir una categoría existente. La persona decide la categoría final. Crear y gestionar tickets seguirá siendo posible sin ML.
 
@@ -23,13 +23,14 @@ El modelo futuro recibirá únicamente título y descripción en español para s
 - [Protocolo congelado](experiments/experiment-v1.0.0/protocol.json) y [particiones](experiments/experiment-v1.0.0/splits.json).
 - [Model Card V1](models/category-v1.0.0/MODEL-CARD.md), [metadatos](models/category-v1.0.0/metadata.json) y [verificación de persistencia](models/category-v1.0.0/verification.json).
 - [Guía de publicación/reproducción 4.5](docs/COLAB-4.5.md), [notebook](notebooks/stage-4.5-model-v1.ipynb) y [validación 4.5](docs/VALIDATION-4.5.md).
+- [Servicio de inferencia 4.6, comandos CMD y demostración](docs/SUBETAPA-4.6.md) y [validación 4.6](docs/VALIDATION-4.6.md).
 - [Resultados locales medidos](experiments/experiment-v1.0.0/local-2026-10-07/REPORT.md), [errores observados](experiments/experiment-v1.0.0/local-2026-10-07/ERROR-ANALYSIS.md) y [validación 4.4](docs/VALIDATION-4.4.md).
 
 ## Separación del sistema operativo
 
 Las etiquetas provienen de `apps/api/src/domain/ticket.ts`, no de una taxonomía nueva. Los 200 ejemplos V1 son archivos del módulo ML: no se insertan en PostgreSQL, no tienen códigos INC y no generan auditoría, estadísticas, SSE ni marcadores de Maps. Los 20 tickets DEMO operativos siguen siendo un conjunto distinto.
 
-Estructura actual; el servicio se implementará únicamente después de autorizar 4.6:
+Estructura actual:
 
 ```text
 ml/
@@ -46,7 +47,7 @@ ml/
   service/              4.6: inferencia independiente
 ```
 
-No se incluyen dependencias Python en npm ni se alteran las imágenes actuales. Sus versiones están fijadas en `ml/colab/requirements.txt` y se instalan en un venv separado. La tecnología concreta del servicio se decide en 4.6; el destino de despliegue se analiza y aprueba en 4.9.
+No se incluyen dependencias Python en npm ni se alteran las imágenes actuales. El entorno Colab y el servicio tienen archivos de requisitos y venv separados. El servicio usa FastAPI/Uvicorn con Python 3.12; `compose.ml.yaml` construye únicamente su imagen. El destino de despliegue público se analiza y aprueba en 4.9.
 
 Verificar V1 con `npm run ml:data:check` y `npm run ml:data:test`, sin Docker ni credenciales. La Dataset Card declara la revisión asistida por IA y la ausencia de validación humana independiente. Los hashes normalizan solo CRLF a LF para compatibilidad Windows/Linux.
 
@@ -63,3 +64,5 @@ El [roadmap general](../docs/ROADMAP.md) desplaza SLA y Node-RED a Etapa 5 y la 
 Modelo 4.5: `npm run ml:model:setup` prepara Python 3.12 en `ml/outputs/model-environment/.venv`; `ml:model:check` verifica la publicación aprobada y ejecuta una predicción local; `ml:model:test` verifica carga, integridad, límites e independencia del holdout. `ml:model:rebuild` crea una reconstrucción separada en outputs, sin reemplazar ni aprobar automáticamente Model V1. `ml:model:notebook:check` mantiene limpio/sincronizado el notebook. No requiere Docker, PostgreSQL, Redis ni credenciales.
 
 El modelo V1 mantiene los 160 registros de desarrollo, 40 reservados fuera del ajuste. Conserva 18 pins científicos más tres de persistencia. SHA esperado procede de `modeling/approved-release.json` revisado en Git; un recibo adjunto a un archivo recibido no es una fuente de confianza. Reproducción numérica no garantiza bytes idénticos.
+
+Servicio 4.6: `npm run ml:service:setup` genera/conserva el token local ignorado por Git. `ml:service:config`, `ml:service:up` y `ml:service:check` validan y ejecutan el contenedor en localhost:8001. Python en Windows es opcional: `ml:service:python:setup`, `ml:service:test`, `ml:service:smoke` y `ml:service:start` preparan/prueban un entorno independiente. La API protege `/v1/predict` y `/v1/model` mediante `X-ML-Token`; salud pública local, cuerpo acotado, errores sin textos, logs sin secretos y timeout real del proceso. No accede a PostgreSQL/Redis. El margen SVM conserva su significado; no se agrega una probabilidad ni un umbral inventados.

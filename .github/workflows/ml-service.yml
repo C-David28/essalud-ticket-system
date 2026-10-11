@@ -1,0 +1,75 @@
+name: ML Inference CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ml/service/**'
+      - 'ml/scripts/service-command.mjs'
+      - 'ml/modeling/runtime.py'
+      - 'ml/modeling/approved-release.json'
+      - 'ml/models/**'
+      - 'compose.ml.yaml'
+      - 'package.json'
+      - '.github/workflows/ml-service.yml'
+  pull_request:
+    paths:
+      - 'ml/service/**'
+      - 'ml/scripts/service-command.mjs'
+      - 'ml/modeling/runtime.py'
+      - 'ml/modeling/approved-release.json'
+      - 'ml/models/**'
+      - 'compose.ml.yaml'
+      - 'package.json'
+      - '.github/workflows/ml-service.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            ml/service/requirements.txt
+            ml/service/requirements-test.txt
+      - name: Prepare isolated environment and local service credential
+        run: |
+          npm run ml:service:setup
+          npm run ml:service:python:setup
+          git check-ignore ml/outputs/service.env
+      - name: Test HTTP policy, actual process timeout and model loading
+        run: npm run ml:service:test
+      - name: Test a real HTTP listener independently of the ticket system
+        run: npm run ml:service:smoke
+      - name: Build and check the isolated Linux container
+        run: |
+          npm run ml:service:config
+          npm run ml:service:up
+          npm run ml:service:check
+          npm run ml:service:status
+      - name: Show controlled service logs
+        if: failure()
+        run: npm run ml:service:logs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: stage-4.6-service-check
+          path: ml/outputs/service-check.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Stop the isolated ML container
+        if: always()
+        run: npm run ml:service:stop

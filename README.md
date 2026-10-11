@@ -86,7 +86,7 @@ flowchart LR
 
 NestJS y Prisma están implementados desde 1.4 y Next.js en 1.5; Node-RED se incorpora en la nueva subetapa 5.3. El diagrama incluye componentes futuros. [API.md](docs/API.md) documenta las capas implementadas.
 
-La nueva [Etapa 4 de Machine Learning](ml/README.md) comienza con el diseño documental de clasificación asistida (4.1). Todavía no incluye dataset, modelo ni servicio ML. SLA y automatización pasan a Etapa 5; la evolución Enterprise pasa a Etapa 6. El sistema operativo existente permanece independiente de ML.
+La [Etapa 4 de Machine Learning](ml/README.md) incorpora diseño experimental, Dataset V1 sintético separado, entrenamiento/evaluación y Model V1 versionado. [4.6 añade una API de inferencia independiente](ml/docs/SUBETAPA-4.6.md), sin integración web todavía; sus comprobaciones constan en la validación de la subetapa. SLA y automatización pasan a Etapa 5; la evolución Enterprise pasa a Etapa 6. El sistema operativo existente permanece independiente de ML.
 
 ```mermaid
 erDiagram

@@ -70,7 +70,18 @@
     "ml:model:test": "node ml/scripts/model-command.mjs test",
     "ml:model:rebuild": "node ml/scripts/model-command.mjs rebuild",
     "ml:model:notebook:build": "node ml/scripts/build-model-notebook.mjs",
-    "ml:model:notebook:check": "node ml/scripts/check-model-notebook.mjs"
+    "ml:model:notebook:check": "node ml/scripts/check-model-notebook.mjs",
+    "ml:service:setup": "node ml/scripts/service-command.mjs setup",
+    "ml:service:python:setup": "node ml/scripts/service-command.mjs setup-python",
+    "ml:service:start": "node ml/scripts/service-command.mjs start",
+    "ml:service:test": "node ml/scripts/service-command.mjs test",
+    "ml:service:smoke": "node ml/scripts/service-command.mjs smoke",
+    "ml:service:check": "node ml/scripts/service-command.mjs check",
+    "ml:service:config": "docker compose -f compose.ml.yaml config --quiet",
+    "ml:service:up": "docker compose -f compose.ml.yaml up -d --build --wait --wait-timeout 180",
+    "ml:service:status": "docker compose -f compose.ml.yaml ps",
+    "ml:service:logs": "docker compose -f compose.ml.yaml logs --tail 100 ml",
+    "ml:service:stop": "docker compose -f compose.ml.yaml stop ml"
   },
   "workspaces": [
     "apps/api",
