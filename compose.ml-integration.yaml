@@ -1,0 +1,11 @@
+# Overlay of the existing demo project. Do NOT merge the standalone compose.ml.yaml name.
+services:
+  ml:
+    extends:
+      file: compose.ml.yaml
+      service: ml
+    networks: [backend]
+  api:
+    env_file:
+      - ml/outputs/integration.env
+    # No dependency on ML health: tickets/readiness work even if ML is stopped.

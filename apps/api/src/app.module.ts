@@ -18,14 +18,18 @@ import { PrismaIdentityRepository } from './infrastructure/access-repository';
 import { HmacAccessToken, ScryptPasswordVerifier } from './infrastructure/access-token';
 import { ACCESS_TOKEN, AccessGuard, PermissionGuard } from './presentation/access.guard';
 import { AuthController } from './presentation/auth.controller';
+import { SuggestCategory } from './application/suggest-category';
+import { HttpCategoryClassifier } from './infrastructure/category-classifier';
+import { CategoryAssistanceController } from './presentation/category-assistance.controller';
 @Module({})
 export class AppModule {
   static register(config: ApiConfig): DynamicModule {
     return {
       module:AppModule,
-      controllers:[HealthController,SystemController,...(config.localTickets ? [AuthController,TicketsController,OrganizationController,PublicOrganizationController] : [])],
+      controllers:[HealthController,SystemController,...(config.localTickets ? [AuthController,TicketsController,OrganizationController,PublicOrganizationController,CategoryAssistanceController] : [])],
       providers:[
         ...(config.localTickets ? [{provide:LOCAL_TICKETS,useValue:config.localTickets},LocalTicketsGuard,
+          {provide:SuggestCategory,useFactory:()=>new SuggestCategory(config.mlAssistance?.enabled?new HttpCategoryClassifier(config.mlAssistance):null)},
           {provide:ACCESS_TOKEN,useFactory:()=>new HmacAccessToken(config.localTickets!.tokenSecret,config.localTickets!.tokenTtlSeconds)},
           AccessGuard,PermissionGuard,
           {provide:AuthenticateStaff,useFactory:(uow:PrismaTenantUnitOfWork,tokens:HmacAccessToken)=>

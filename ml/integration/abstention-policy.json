@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "policy_version": "category-assistance-policy-v1.0.0",
+  "status": "EXPERIMENTAL_SYNTHETIC_ASSISTANCE_ONLY",
+  "activated_by_this_artifact": false,
+  "model_version": "ticket-category-model-v1.0.0",
+  "candidate_id": "linear-svc-c1",
+  "score_type": "raw_decision_margin_not_probability",
+  "probability": null,
+  "rule": {
+    "minimum_raw_margin": -0.06,
+    "operator": ">=",
+    "on_pass": "offer_optional_suggestion_for_human_confirmation",
+    "on_fail": "abstain_and_keep_manual_classification",
+    "on_invalid_or_unavailable_response": "abstain_and_keep_manual_classification"
+  },
+  "required_response_checks": [
+    "model_version_matches",
+    "known_category",
+    "score_type_matches",
+    "finite_numeric_score",
+    "probability_is_null"
+  ],
+  "human_confirmation_required": true,
+  "automatic_category_assignment": false,
+  "evidence": {
+    "analysis_sha256_canonical_json": "ffc891d9ea2be51b28af690a5f3404b0c1fb3c477cbbb393010575119cf9e8d2",
+    "selected_development_metrics": {
+      "threshold": -0.06,
+      "accepted": 97,
+      "correct": 93,
+      "errors_accepted": 4,
+      "abstained": 63,
+      "coverage": 0.60625,
+      "accuracy_among_accepted": 0.9587628865979382,
+      "categories": {
+        "SOPORTE": {
+          "true_support": 40,
+          "accepted_true": 25,
+          "correct": 23,
+          "abstained_true": 15,
+          "coverage_true": 0.625,
+          "accuracy_among_accepted_true": 0.92,
+          "accepted_predicted": 25,
+          "precision_among_accepted_predicted": 0.92
+        },
+        "REDES": {
+          "true_support": 40,
+          "accepted_true": 30,
+          "correct": 30,
+          "abstained_true": 10,
+          "coverage_true": 0.75,
+          "accuracy_among_accepted_true": 1.0,
+          "accepted_predicted": 32,
+          "precision_among_accepted_predicted": 0.9375
+        },
+        "INFRAESTRUCTURA": {
+          "true_support": 40,
+          "accepted_true": 30,
+          "correct": 30,
+          "abstained_true": 10,
+          "coverage_true": 0.75,
+          "accuracy_among_accepted_true": 1.0,
+          "accepted_predicted": 30,
+          "precision_among_accepted_predicted": 1.0
+        },
+        "BIOMEDICO": {
+          "true_support": 40,
+          "accepted_true": 12,
+          "correct": 10,
+          "abstained_true": 28,
+          "coverage_true": 0.3,
+          "accuracy_among_accepted_true": 0.8333333333333334,
+          "accepted_predicted": 10,
+          "precision_among_accepted_predicted": 1.0
+        }
+      },
+      "passes_all_criteria": true,
+      "failed_criteria": []
+    },
+    "criteria": {
+      "minimum_accuracy_among_accepted": 0.95,
+      "minimum_overall_coverage": 0.5,
+      "minimum_accepted_per_true_category": 10,
+      "minimum_accepted_per_predicted_category": 10,
+      "minimum_precision_per_predicted_category": 0.9
+    },
+    "criteria_and_grids_declared_posthoc": true,
+    "independent_generalization_validation": false,
+    "institutional_validation": false
+  },
+  "provenance": {
+    "sources_sha256_utf8_lf": {
+      "ml/experiments/experiment-v1.0.0/local-2026-10-07/development-oof.csv": "da6d1c115a532c51e6cfa2681ebc03d92ba2c8704707945ab073e2f665e074e4",
+      "ml/experiments/experiment-v1.0.0/local-2026-10-07/selection.json": "a0b4970ab4941103c87a3ffe052f698f0f14c062c031d63016c77bc99505bea2",
+      "ml/experiments/experiment-v1.0.0/splits.json": "041d520e633e213dd51566bad01c103d13cc7e7f2463d0553b2581bb0c8fca81",
+      "ml/experiments/experiment-v1.0.0/protocol.json": "57cba9fda793ffdd0ea796349209c911586c99ed5862f20756ed03b86f5de56f",
+      "ml/models/category-v1.0.0/MODEL-CARD.md": "0cd8e4a5c8c92eb0878de3dc93ab29ab7787f802c9cbfc154947514bf63101ee",
+      "ml/modeling/runtime.py": "a850ec04ae3074fbd15855b6df75a9c0568009f1f3a66faf08b1c23e7b18983e"
+    },
+    "script_sha256_utf8_lf": "66997207825edc1476fd2d9fd03b8b22a4515b2aa6b3c13eb4f05401ae5016e0",
+    "selection_sha256_canonical_json": "64e14be457ebe135f05fdf94bf5c6acbec787f3a78d87a044ef20c8a91b440d0",
+    "splits_sha256_canonical_json": "e38ced2920e4fde8b13947155c58338bb9367213f0a2204fe2252936846c04ec",
+    "dataset_sha256_inherited_not_recomputed": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+    "development_ids_match_splits": true,
+    "final_ids_disjoint_from_oof": true,
+    "final_test_records_or_final_metrics_opened": false,
+    "model_loaded_or_retrained": false
+  },
+  "limitations": [
+    "The model and threshold were selected using development; these are optimistic selection measurements, not independent validation.",
+    "Only existing OOF predictions from 160 synthetic academic cases were reused; no final-test records or final-metrics artifacts were opened.",
+    "OOF scores come from four fold models; score scale may differ for the already-published model fitted on all development cases.",
+    "The criteria are pooled, not per-fold guarantees: accepted accuracy is 20/22 in fold 2 and 19/21 in fold 4; fold 4 coverage is 21/45.",
+    "Ten accepted BIOMEDICO predictions are a small precision denominator; ten correct predictions do not establish real-world certainty.",
+    "BIOMEDICO true-case coverage is 12/40 and 28/40 abstain; pooled accuracy must not hide this coverage difference.",
+    "The maximum raw score is not a top-two score gap, a probability, or a percentage of confidence.",
+    "Every offered suggestion requires an explicit human decision; missing, invalid, or unavailable ML preserves the manual workflow."
+  ]
+}

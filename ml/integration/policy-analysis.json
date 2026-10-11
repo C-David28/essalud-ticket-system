@@ -1,0 +1,1405 @@
+{
+  "schema_version": 1,
+  "policy_version": "category-assistance-policy-v1.0.0",
+  "status": "EXPERIMENTAL_SYNTHETIC_ASSISTANCE_ONLY",
+  "evidence_source": "existing_grouped_development_out_of_fold_predictions",
+  "candidate_id": "linear-svc-c1",
+  "model_version": "ticket-category-model-v1.0.0",
+  "records": 160,
+  "categories": [
+    "SOPORTE",
+    "REDES",
+    "INFRAESTRUCTURA",
+    "BIOMEDICO"
+  ],
+  "score_type": "raw_decision_margin_not_probability",
+  "probability": null,
+  "provenance": {
+    "sources_sha256_utf8_lf": {
+      "ml/experiments/experiment-v1.0.0/local-2026-10-07/development-oof.csv": "da6d1c115a532c51e6cfa2681ebc03d92ba2c8704707945ab073e2f665e074e4",
+      "ml/experiments/experiment-v1.0.0/local-2026-10-07/selection.json": "a0b4970ab4941103c87a3ffe052f698f0f14c062c031d63016c77bc99505bea2",
+      "ml/experiments/experiment-v1.0.0/splits.json": "041d520e633e213dd51566bad01c103d13cc7e7f2463d0553b2581bb0c8fca81",
+      "ml/experiments/experiment-v1.0.0/protocol.json": "57cba9fda793ffdd0ea796349209c911586c99ed5862f20756ed03b86f5de56f",
+      "ml/models/category-v1.0.0/MODEL-CARD.md": "0cd8e4a5c8c92eb0878de3dc93ab29ab7787f802c9cbfc154947514bf63101ee",
+      "ml/modeling/runtime.py": "a850ec04ae3074fbd15855b6df75a9c0568009f1f3a66faf08b1c23e7b18983e"
+    },
+    "script_sha256_utf8_lf": "66997207825edc1476fd2d9fd03b8b22a4515b2aa6b3c13eb4f05401ae5016e0",
+    "selection_sha256_canonical_json": "64e14be457ebe135f05fdf94bf5c6acbec787f3a78d87a044ef20c8a91b440d0",
+    "splits_sha256_canonical_json": "e38ced2920e4fde8b13947155c58338bb9367213f0a2204fe2252936846c04ec",
+    "dataset_sha256_inherited_not_recomputed": "2f571a40f063c4cce267352582f0bf78d2008d09ddc617ab54c7f8dd5ca21a69",
+    "development_ids_match_splits": true,
+    "final_ids_disjoint_from_oof": true,
+    "final_test_records_or_final_metrics_opened": false,
+    "model_loaded_or_retrained": false
+  },
+  "criteria": {
+    "minimum_accuracy_among_accepted": 0.95,
+    "minimum_overall_coverage": 0.5,
+    "minimum_accepted_per_true_category": 10,
+    "minimum_accepted_per_predicted_category": 10,
+    "minimum_precision_per_predicted_category": 0.9
+  },
+  "criteria_and_grids_declared_posthoc": true,
+  "original_grid": {
+    "start": 0,
+    "stop": 1,
+    "step": 0.1,
+    "feasible_thresholds": [],
+    "measurements": [
+      {
+        "threshold": 0.0,
+        "accepted": 83,
+        "correct": 79,
+        "errors_accepted": 4,
+        "abstained": 77,
+        "coverage": 0.51875,
+        "accuracy_among_accepted": 0.9518072289156626,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 21,
+            "correct": 19,
+            "abstained_true": 19,
+            "coverage_true": 0.525,
+            "accuracy_among_accepted_true": 0.9047619047619048,
+            "accepted_predicted": 21,
+            "precision_among_accepted_predicted": 0.9047619047619048
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 28,
+            "correct": 28,
+            "abstained_true": 12,
+            "coverage_true": 0.7,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 30,
+            "precision_among_accepted_predicted": 0.9333333333333333
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 25,
+            "correct": 25,
+            "abstained_true": 15,
+            "coverage_true": 0.625,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 25,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 9,
+            "correct": 7,
+            "abstained_true": 31,
+            "coverage_true": 0.225,
+            "accuracy_among_accepted_true": 0.7777777777777778,
+            "accepted_predicted": 7,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.1,
+        "accepted": 62,
+        "correct": 60,
+        "errors_accepted": 2,
+        "abstained": 98,
+        "coverage": 0.3875,
+        "accuracy_among_accepted": 0.967741935483871,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 15,
+            "correct": 13,
+            "abstained_true": 25,
+            "coverage_true": 0.375,
+            "accuracy_among_accepted_true": 0.8666666666666667,
+            "accepted_predicted": 13,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 21,
+            "correct": 21,
+            "abstained_true": 19,
+            "coverage_true": 0.525,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 23,
+            "precision_among_accepted_predicted": 0.9130434782608695
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 20,
+            "correct": 20,
+            "abstained_true": 20,
+            "coverage_true": 0.5,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 20,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 6,
+            "correct": 6,
+            "abstained_true": 34,
+            "coverage_true": 0.15,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 6,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.2,
+        "accepted": 40,
+        "correct": 39,
+        "errors_accepted": 1,
+        "abstained": 120,
+        "coverage": 0.25,
+        "accuracy_among_accepted": 0.975,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 8,
+            "correct": 7,
+            "abstained_true": 32,
+            "coverage_true": 0.2,
+            "accuracy_among_accepted_true": 0.875,
+            "accepted_predicted": 7,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 16,
+            "correct": 16,
+            "abstained_true": 24,
+            "coverage_true": 0.4,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 17,
+            "precision_among_accepted_predicted": 0.9411764705882353
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 14,
+            "correct": 14,
+            "abstained_true": 26,
+            "coverage_true": 0.35,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 14,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 2,
+            "correct": 2,
+            "abstained_true": 38,
+            "coverage_true": 0.05,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 2,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.3,
+        "accepted": 25,
+        "correct": 24,
+        "errors_accepted": 1,
+        "abstained": 135,
+        "coverage": 0.15625,
+        "accuracy_among_accepted": 0.96,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 4,
+            "correct": 3,
+            "abstained_true": 36,
+            "coverage_true": 0.1,
+            "accuracy_among_accepted_true": 0.75,
+            "accepted_predicted": 3,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 12,
+            "correct": 12,
+            "abstained_true": 28,
+            "coverage_true": 0.3,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 13,
+            "precision_among_accepted_predicted": 0.9230769230769231
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 8,
+            "correct": 8,
+            "abstained_true": 32,
+            "coverage_true": 0.2,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 8,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 1,
+            "correct": 1,
+            "abstained_true": 39,
+            "coverage_true": 0.025,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 1,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.4,
+        "accepted": 12,
+        "correct": 12,
+        "errors_accepted": 0,
+        "abstained": 148,
+        "coverage": 0.075,
+        "accuracy_among_accepted": 1.0,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 1,
+            "correct": 1,
+            "abstained_true": 39,
+            "coverage_true": 0.025,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 1,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 7,
+            "correct": 7,
+            "abstained_true": 33,
+            "coverage_true": 0.175,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 7,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 4,
+            "correct": 4,
+            "abstained_true": 36,
+            "coverage_true": 0.1,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 4,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.5,
+        "accepted": 8,
+        "correct": 8,
+        "errors_accepted": 0,
+        "abstained": 152,
+        "coverage": 0.05,
+        "accuracy_among_accepted": 1.0,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 5,
+            "correct": 5,
+            "abstained_true": 35,
+            "coverage_true": 0.125,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 5,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 3,
+            "correct": 3,
+            "abstained_true": 37,
+            "coverage_true": 0.075,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 3,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_precision_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.6,
+        "accepted": 1,
+        "correct": 1,
+        "errors_accepted": 0,
+        "abstained": 159,
+        "coverage": 0.00625,
+        "accuracy_among_accepted": 1.0,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 1,
+            "correct": 1,
+            "abstained_true": 39,
+            "coverage_true": 0.025,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 1,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_precision_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_precision_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.7,
+        "accepted": 0,
+        "correct": 0,
+        "errors_accepted": 0,
+        "abstained": 160,
+        "coverage": 0.0,
+        "accuracy_among_accepted": null,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_precision_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_precision_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_precision_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.8,
+        "accepted": 0,
+        "correct": 0,
+        "errors_accepted": 0,
+        "abstained": 160,
+        "coverage": 0.0,
+        "accuracy_among_accepted": null,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_precision_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_precision_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_precision_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 0.9,
+        "accepted": 0,
+        "correct": 0,
+        "errors_accepted": 0,
+        "abstained": 160,
+        "coverage": 0.0,
+        "accuracy_among_accepted": null,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_precision_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_precision_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_precision_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": 1.0,
+        "accepted": 0,
+        "correct": 0,
+        "errors_accepted": 0,
+        "abstained": 160,
+        "coverage": 0.0,
+        "accuracy_among_accepted": null,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 0,
+            "correct": 0,
+            "abstained_true": 40,
+            "coverage_true": 0.0,
+            "accuracy_among_accepted_true": null,
+            "accepted_predicted": 0,
+            "precision_among_accepted_predicted": null
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_overall_coverage",
+          "minimum_accepted_per_true_category:SOPORTE",
+          "minimum_accepted_per_predicted_category:SOPORTE",
+          "minimum_precision_per_predicted_category:SOPORTE",
+          "minimum_accepted_per_true_category:REDES",
+          "minimum_accepted_per_predicted_category:REDES",
+          "minimum_precision_per_predicted_category:REDES",
+          "minimum_accepted_per_true_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_precision_per_predicted_category:INFRAESTRUCTURA",
+          "minimum_accepted_per_true_category:BIOMEDICO",
+          "minimum_accepted_per_predicted_category:BIOMEDICO",
+          "minimum_precision_per_predicted_category:BIOMEDICO"
+        ]
+      }
+    ]
+  },
+  "extension_grid": {
+    "start": -0.1,
+    "stop": -0.01,
+    "step": 0.01,
+    "reason": "A multiclass maximum raw decision margin may be negative; zero is not a required score-domain lower bound.",
+    "feasible_thresholds": [
+      -0.06,
+      -0.05,
+      -0.04
+    ],
+    "measurements": [
+      {
+        "threshold": -0.1,
+        "accepted": 110,
+        "correct": 104,
+        "errors_accepted": 6,
+        "abstained": 50,
+        "coverage": 0.6875,
+        "accuracy_among_accepted": 0.9454545454545454,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 29,
+            "correct": 27,
+            "abstained_true": 11,
+            "coverage_true": 0.725,
+            "accuracy_among_accepted_true": 0.9310344827586207,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 0.8709677419354839
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 34,
+            "correct": 34,
+            "abstained_true": 6,
+            "coverage_true": 0.85,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 36,
+            "precision_among_accepted_predicted": 0.9444444444444444
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 31,
+            "correct": 31,
+            "abstained_true": 9,
+            "coverage_true": 0.775,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 16,
+            "correct": 12,
+            "abstained_true": 24,
+            "coverage_true": 0.4,
+            "accuracy_among_accepted_true": 0.75,
+            "accepted_predicted": 12,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_precision_per_predicted_category:SOPORTE"
+        ]
+      },
+      {
+        "threshold": -0.09,
+        "accepted": 107,
+        "correct": 101,
+        "errors_accepted": 6,
+        "abstained": 53,
+        "coverage": 0.66875,
+        "accuracy_among_accepted": 0.9439252336448598,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 27,
+            "correct": 25,
+            "abstained_true": 13,
+            "coverage_true": 0.675,
+            "accuracy_among_accepted_true": 0.9259259259259259,
+            "accepted_predicted": 29,
+            "precision_among_accepted_predicted": 0.8620689655172413
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 33,
+            "correct": 33,
+            "abstained_true": 7,
+            "coverage_true": 0.825,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 35,
+            "precision_among_accepted_predicted": 0.9428571428571428
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 31,
+            "correct": 31,
+            "abstained_true": 9,
+            "coverage_true": 0.775,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 16,
+            "correct": 12,
+            "abstained_true": 24,
+            "coverage_true": 0.4,
+            "accuracy_among_accepted_true": 0.75,
+            "accepted_predicted": 12,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_precision_per_predicted_category:SOPORTE"
+        ]
+      },
+      {
+        "threshold": -0.08,
+        "accepted": 104,
+        "correct": 98,
+        "errors_accepted": 6,
+        "abstained": 56,
+        "coverage": 0.65,
+        "accuracy_among_accepted": 0.9423076923076923,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 26,
+            "correct": 24,
+            "abstained_true": 14,
+            "coverage_true": 0.65,
+            "accuracy_among_accepted_true": 0.9230769230769231,
+            "accepted_predicted": 28,
+            "precision_among_accepted_predicted": 0.8571428571428571
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 31,
+            "correct": 31,
+            "abstained_true": 9,
+            "coverage_true": 0.775,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 33,
+            "precision_among_accepted_predicted": 0.9393939393939394
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 31,
+            "correct": 31,
+            "abstained_true": 9,
+            "coverage_true": 0.775,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 16,
+            "correct": 12,
+            "abstained_true": 24,
+            "coverage_true": 0.4,
+            "accuracy_among_accepted_true": 0.75,
+            "accepted_predicted": 12,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accuracy_among_accepted",
+          "minimum_precision_per_predicted_category:SOPORTE"
+        ]
+      },
+      {
+        "threshold": -0.07,
+        "accepted": 100,
+        "correct": 95,
+        "errors_accepted": 5,
+        "abstained": 60,
+        "coverage": 0.625,
+        "accuracy_among_accepted": 0.95,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 25,
+            "correct": 23,
+            "abstained_true": 15,
+            "coverage_true": 0.625,
+            "accuracy_among_accepted_true": 0.92,
+            "accepted_predicted": 26,
+            "precision_among_accepted_predicted": 0.8846153846153846
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 30,
+            "correct": 30,
+            "abstained_true": 10,
+            "coverage_true": 0.75,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 32,
+            "precision_among_accepted_predicted": 0.9375
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 30,
+            "correct": 30,
+            "abstained_true": 10,
+            "coverage_true": 0.75,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 30,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 15,
+            "correct": 12,
+            "abstained_true": 25,
+            "coverage_true": 0.375,
+            "accuracy_among_accepted_true": 0.8,
+            "accepted_predicted": 12,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_precision_per_predicted_category:SOPORTE"
+        ]
+      },
+      {
+        "threshold": -0.06,
+        "accepted": 97,
+        "correct": 93,
+        "errors_accepted": 4,
+        "abstained": 63,
+        "coverage": 0.60625,
+        "accuracy_among_accepted": 0.9587628865979382,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 25,
+            "correct": 23,
+            "abstained_true": 15,
+            "coverage_true": 0.625,
+            "accuracy_among_accepted_true": 0.92,
+            "accepted_predicted": 25,
+            "precision_among_accepted_predicted": 0.92
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 30,
+            "correct": 30,
+            "abstained_true": 10,
+            "coverage_true": 0.75,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 32,
+            "precision_among_accepted_predicted": 0.9375
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 30,
+            "correct": 30,
+            "abstained_true": 10,
+            "coverage_true": 0.75,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 30,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 12,
+            "correct": 10,
+            "abstained_true": 28,
+            "coverage_true": 0.3,
+            "accuracy_among_accepted_true": 0.8333333333333334,
+            "accepted_predicted": 10,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": true,
+        "failed_criteria": []
+      },
+      {
+        "threshold": -0.05,
+        "accepted": 95,
+        "correct": 91,
+        "errors_accepted": 4,
+        "abstained": 65,
+        "coverage": 0.59375,
+        "accuracy_among_accepted": 0.9578947368421052,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 23,
+            "correct": 21,
+            "abstained_true": 17,
+            "coverage_true": 0.575,
+            "accuracy_among_accepted_true": 0.9130434782608695,
+            "accepted_predicted": 23,
+            "precision_among_accepted_predicted": 0.9130434782608695
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 30,
+            "correct": 30,
+            "abstained_true": 10,
+            "coverage_true": 0.75,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 32,
+            "precision_among_accepted_predicted": 0.9375
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 30,
+            "correct": 30,
+            "abstained_true": 10,
+            "coverage_true": 0.75,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 30,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 12,
+            "correct": 10,
+            "abstained_true": 28,
+            "coverage_true": 0.3,
+            "accuracy_among_accepted_true": 0.8333333333333334,
+            "accepted_predicted": 10,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": true,
+        "failed_criteria": []
+      },
+      {
+        "threshold": -0.04,
+        "accepted": 93,
+        "correct": 89,
+        "errors_accepted": 4,
+        "abstained": 67,
+        "coverage": 0.58125,
+        "accuracy_among_accepted": 0.956989247311828,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 23,
+            "correct": 21,
+            "abstained_true": 17,
+            "coverage_true": 0.575,
+            "accuracy_among_accepted_true": 0.9130434782608695,
+            "accepted_predicted": 23,
+            "precision_among_accepted_predicted": 0.9130434782608695
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 29,
+            "correct": 29,
+            "abstained_true": 11,
+            "coverage_true": 0.725,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 0.9354838709677419
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 29,
+            "correct": 29,
+            "abstained_true": 11,
+            "coverage_true": 0.725,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 29,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 12,
+            "correct": 10,
+            "abstained_true": 28,
+            "coverage_true": 0.3,
+            "accuracy_among_accepted_true": 0.8333333333333334,
+            "accepted_predicted": 10,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": true,
+        "failed_criteria": []
+      },
+      {
+        "threshold": -0.03,
+        "accepted": 89,
+        "correct": 85,
+        "errors_accepted": 4,
+        "abstained": 71,
+        "coverage": 0.55625,
+        "accuracy_among_accepted": 0.9550561797752809,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 22,
+            "correct": 20,
+            "abstained_true": 18,
+            "coverage_true": 0.55,
+            "accuracy_among_accepted_true": 0.9090909090909091,
+            "accepted_predicted": 22,
+            "precision_among_accepted_predicted": 0.9090909090909091
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 29,
+            "correct": 29,
+            "abstained_true": 11,
+            "coverage_true": 0.725,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 0.9354838709677419
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 27,
+            "correct": 27,
+            "abstained_true": 13,
+            "coverage_true": 0.675,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 27,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 11,
+            "correct": 9,
+            "abstained_true": 29,
+            "coverage_true": 0.275,
+            "accuracy_among_accepted_true": 0.8181818181818182,
+            "accepted_predicted": 9,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": -0.02,
+        "accepted": 86,
+        "correct": 82,
+        "errors_accepted": 4,
+        "abstained": 74,
+        "coverage": 0.5375,
+        "accuracy_among_accepted": 0.9534883720930233,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 21,
+            "correct": 19,
+            "abstained_true": 19,
+            "coverage_true": 0.525,
+            "accuracy_among_accepted_true": 0.9047619047619048,
+            "accepted_predicted": 21,
+            "precision_among_accepted_predicted": 0.9047619047619048
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 29,
+            "correct": 29,
+            "abstained_true": 11,
+            "coverage_true": 0.725,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 0.9354838709677419
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 25,
+            "correct": 25,
+            "abstained_true": 15,
+            "coverage_true": 0.625,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 25,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 11,
+            "correct": 9,
+            "abstained_true": 29,
+            "coverage_true": 0.275,
+            "accuracy_among_accepted_true": 0.8181818181818182,
+            "accepted_predicted": 9,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      },
+      {
+        "threshold": -0.01,
+        "accepted": 85,
+        "correct": 81,
+        "errors_accepted": 4,
+        "abstained": 75,
+        "coverage": 0.53125,
+        "accuracy_among_accepted": 0.9529411764705882,
+        "categories": {
+          "SOPORTE": {
+            "true_support": 40,
+            "accepted_true": 21,
+            "correct": 19,
+            "abstained_true": 19,
+            "coverage_true": 0.525,
+            "accuracy_among_accepted_true": 0.9047619047619048,
+            "accepted_predicted": 21,
+            "precision_among_accepted_predicted": 0.9047619047619048
+          },
+          "REDES": {
+            "true_support": 40,
+            "accepted_true": 29,
+            "correct": 29,
+            "abstained_true": 11,
+            "coverage_true": 0.725,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 31,
+            "precision_among_accepted_predicted": 0.9354838709677419
+          },
+          "INFRAESTRUCTURA": {
+            "true_support": 40,
+            "accepted_true": 25,
+            "correct": 25,
+            "abstained_true": 15,
+            "coverage_true": 0.625,
+            "accuracy_among_accepted_true": 1.0,
+            "accepted_predicted": 25,
+            "precision_among_accepted_predicted": 1.0
+          },
+          "BIOMEDICO": {
+            "true_support": 40,
+            "accepted_true": 10,
+            "correct": 8,
+            "abstained_true": 30,
+            "coverage_true": 0.25,
+            "accuracy_among_accepted_true": 0.8,
+            "accepted_predicted": 8,
+            "precision_among_accepted_predicted": 1.0
+          }
+        },
+        "passes_all_criteria": false,
+        "failed_criteria": [
+          "minimum_accepted_per_predicted_category:BIOMEDICO"
+        ]
+      }
+    ]
+  },
+  "selection_rule": "Maximum pooled OOF coverage among all criteria-passing grid candidates; ties prefer the higher threshold.",
+  "selected": {
+    "threshold": -0.06,
+    "accepted": 97,
+    "correct": 93,
+    "errors_accepted": 4,
+    "abstained": 63,
+    "coverage": 0.60625,
+    "accuracy_among_accepted": 0.9587628865979382,
+    "categories": {
+      "SOPORTE": {
+        "true_support": 40,
+        "accepted_true": 25,
+        "correct": 23,
+        "abstained_true": 15,
+        "coverage_true": 0.625,
+        "accuracy_among_accepted_true": 0.92,
+        "accepted_predicted": 25,
+        "precision_among_accepted_predicted": 0.92
+      },
+      "REDES": {
+        "true_support": 40,
+        "accepted_true": 30,
+        "correct": 30,
+        "abstained_true": 10,
+        "coverage_true": 0.75,
+        "accuracy_among_accepted_true": 1.0,
+        "accepted_predicted": 32,
+        "precision_among_accepted_predicted": 0.9375
+      },
+      "INFRAESTRUCTURA": {
+        "true_support": 40,
+        "accepted_true": 30,
+        "correct": 30,
+        "abstained_true": 10,
+        "coverage_true": 0.75,
+        "accuracy_among_accepted_true": 1.0,
+        "accepted_predicted": 30,
+        "precision_among_accepted_predicted": 1.0
+      },
+      "BIOMEDICO": {
+        "true_support": 40,
+        "accepted_true": 12,
+        "correct": 10,
+        "abstained_true": 28,
+        "coverage_true": 0.3,
+        "accuracy_among_accepted_true": 0.8333333333333334,
+        "accepted_predicted": 10,
+        "precision_among_accepted_predicted": 1.0
+      }
+    },
+    "passes_all_criteria": true,
+    "failed_criteria": []
+  },
+  "fold_diagnostics_for_selected_threshold": [
+    {
+      "fold": 1,
+      "records": 40,
+      "accepted": 25,
+      "correct": 25,
+      "abstained": 15,
+      "coverage": 0.625,
+      "accuracy_among_accepted": 1.0
+    },
+    {
+      "fold": 2,
+      "records": 35,
+      "accepted": 22,
+      "correct": 20,
+      "abstained": 13,
+      "coverage": 0.6285714285714286,
+      "accuracy_among_accepted": 0.9090909090909091
+    },
+    {
+      "fold": 3,
+      "records": 40,
+      "accepted": 29,
+      "correct": 29,
+      "abstained": 11,
+      "coverage": 0.725,
+      "accuracy_among_accepted": 1.0
+    },
+    {
+      "fold": 4,
+      "records": 45,
+      "accepted": 21,
+      "correct": 19,
+      "abstained": 24,
+      "coverage": 0.4666666666666667,
+      "accuracy_among_accepted": 0.9047619047619048
+    }
+  ],
+  "independent_generalization_validation": false,
+  "institutional_validation": false
+}

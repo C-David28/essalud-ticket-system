@@ -1,8 +1,8 @@
 # Machine Learning — clasificación asistida de incidencias
 
-Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con Colab/Actions confirmados por el usuario. **4.5 publica Model V1**, pipeline completo, Model Card y carga verificada. **4.6 incorpora el servicio independiente de inferencia**; ver su validación para distinguir pruebas locales y comprobación Docker pendiente. La integración web corresponde a 4.7.
+Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con Colab/Actions confirmados por el usuario. **4.5 publica Model V1**, pipeline completo, Model Card y carga verificada. **4.6 incorpora el servicio independiente**, con Docker y Actions confirmados por el usuario el 2026-10-10. **4.7 integra la asistencia en NestJS/Next.js**; pruebas locales aprobadas, comprobación completa Docker pendiente. Ver validación 4.7.
 
-El modelo futuro recibirá únicamente título y descripción en español para sugerir una categoría existente. La persona decide la categoría final. Crear y gestionar tickets seguirá siendo posible sin ML.
+El modelo recibe únicamente título y descripción en español para sugerir una categoría existente. La persona decide la categoría final. Crear y gestionar tickets continúa siendo posible sin ML.
 
 ## Documentación vigente
 
@@ -24,6 +24,7 @@ El modelo futuro recibirá únicamente título y descripción en español para s
 - [Model Card V1](models/category-v1.0.0/MODEL-CARD.md), [metadatos](models/category-v1.0.0/metadata.json) y [verificación de persistencia](models/category-v1.0.0/verification.json).
 - [Guía de publicación/reproducción 4.5](docs/COLAB-4.5.md), [notebook](notebooks/stage-4.5-model-v1.ipynb) y [validación 4.5](docs/VALIDATION-4.5.md).
 - [Servicio de inferencia 4.6, comandos CMD y demostración](docs/SUBETAPA-4.6.md) y [validación 4.6](docs/VALIDATION-4.6.md).
+- [Integración asistida 4.7 y guía Docker](docs/SUBETAPA-4.7.md), [política externa de abstención](docs/ASSISTANCE-POLICY-4.7.md) y [validación/evidencias](docs/VALIDATION-4.7.md).
 - [Resultados locales medidos](experiments/experiment-v1.0.0/local-2026-10-07/REPORT.md), [errores observados](experiments/experiment-v1.0.0/local-2026-10-07/ERROR-ANALYSIS.md) y [validación 4.4](docs/VALIDATION-4.4.md).
 
 ## Separación del sistema operativo
@@ -45,6 +46,7 @@ ml/
   modeling/             4.5: construcción, entorno aislado y carga aprobada
   models/category-v1.0.0/  pipeline skops, metadatos, tarjeta y comprobaciones
   service/              4.6: inferencia independiente
+  integration/          4.7: evidencia reproducible de política externa
 ```
 
 No se incluyen dependencias Python en npm ni se alteran las imágenes actuales. El entorno Colab y el servicio tienen archivos de requisitos y venv separados. El servicio usa FastAPI/Uvicorn con Python 3.12; `compose.ml.yaml` construye únicamente su imagen. El destino de despliegue público se analiza y aprueba en 4.9.
@@ -57,7 +59,7 @@ Evaluación 4.4: `ml:experiment:build` genera el notebook limpio; `ml:experiment
 
 Resultado local: LinearSVC C=1, Macro F1 medio CV 0.8690; prueba sintética final 40/40 aciertos. Se conservan 21 errores OOF, sin validación institucional. Scores SVM son márgenes, no confianza probabilística ni umbral operativo validado.
 
-En 4.7 se integrará mediante un puerto de aplicación de NestJS y un adaptador HTTP. El navegador llamará a Next.js/NestJS, nunca directamente al modelo. El servicio ML no necesitará acceso a PostgreSQL ni Redis. Los controles actuales de acceso, tenant y rate limiting deberán conservarse.
+En 4.7 se integra mediante un puerto de aplicación de NestJS y un adaptador HTTP. El navegador llama a Next.js/NestJS y el token ML permanece en Nest. Se reutilizan los controles de acceso/tenant actuales. El servicio no recibe sede, prioridad, identidad ni datos operativos y no necesita PostgreSQL o Redis. `ml:integration:setup` genera el overlay local; `ml:integration:up` inicia el conjunto existente; `ml:integration:check` comprueba predicción, abstención, decisión humana y persistencia auditada. `ml:policy:check` reproduce la regla empírica de margen ≥−0.06 desde desarrollo OOF, sin reentrenar ni reabrir la prueba final.
 
 El [roadmap general](../docs/ROADMAP.md) desplaza SLA y Node-RED a Etapa 5 y la evolución Enterprise a Etapa 6. No se implementan en esta etapa.
 

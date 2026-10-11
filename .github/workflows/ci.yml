@@ -86,14 +86,45 @@ jobs:
           npm run demo:config
           npm run demo:up
           npm run demo:check
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify assisted category integration and manual fallback
+        run: |
+          npm run ml:policy:check
+          npm run ml:integration:test
+          npm run ml:service:setup
+          npm run ml:integration:setup
+          git check-ignore ml/outputs/integration.env
+          npm run ml:integration:config
+          npm run ml:integration:up
+          npm run ml:integration:check
+          npm run ml:integration:stop-ml
+          npm run ml:integration:check -- --unavailable
+          npm run ml:integration:start-ml
+          npm run demo:check
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: stage-4.7-integration-check
+          path: ml/outputs/integration*-check.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify cloud operations and backup restoration
         run: npm run cloud:test:integration
       - name: Service status
         if: failure()
-        run: docker compose -f compose.yaml -f compose.api.yaml ps -a
+        run: |
+          docker compose -f compose.yaml -f compose.api.yaml ps -a
+          if [ -f ml/outputs/integration.env ]; then
+            npm run ml:integration:logs
+          fi
       - name: Stop infrastructure
         if: always()
         run: |
+          if [ -f ml/outputs/integration.env ]; then
+            npm run ml:integration:stop-ml
+          fi
           if [ -f apps/api/.env ]; then
             docker compose -f compose.yaml -f compose.api.yaml down --volumes --remove-orphans
           elif [ -f .env ]; then

@@ -33,6 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useTickets } from "@/components/providers";
+import { CategoryAssistance } from "@/components/category-assistance";
 import {
   CATEGORIES,
   DEMO_USER,
@@ -279,6 +280,31 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                 />
                 {error("title")}
               </label>
+              <label htmlFor="draft-description">
+                Describe el problema
+                <textarea
+                  id="draft-description"
+                  value={draft.description}
+                  onChange={(e) => field("description", e.target.value)}
+                  maxLength={2000}
+                  rows={4}
+                  placeholder="Indica qué ocurre y desde cuándo, usando un caso ficticio."
+                  className="field"
+                  aria-invalid={!!errors.description}
+                  aria-describedby={
+                    errors.description ? "error-description" : undefined
+                  }
+                  required
+                />
+                {error("description")}
+              </label>
+              <CategoryAssistance
+                title={draft.title}
+                description={draft.description}
+                open={createOpen}
+                busy={busy}
+                onAccept={(category) => field("category", category)}
+              />
               <div className="form-grid">
                 <label htmlFor="draft-category">
                   Categoría
@@ -342,24 +368,6 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                   {error("area")}
                 </label>
               </div>
-              <label htmlFor="draft-description">
-                Describe el problema
-                <textarea
-                  id="draft-description"
-                  value={draft.description}
-                  onChange={(e) => field("description", e.target.value)}
-                  maxLength={2000}
-                  rows={4}
-                  placeholder="Indica qué ocurre y desde cuándo, usando un caso ficticio."
-                  className="field"
-                  aria-invalid={!!errors.description}
-                  aria-describedby={
-                    errors.description ? "error-description" : undefined
-                  }
-                  required
-                />
-                {error("description")}
-              </label>
               <div className="form-footer">
                 <Button
                   type="button"

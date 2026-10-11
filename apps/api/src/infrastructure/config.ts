@@ -1,10 +1,11 @@
 import { tenantContext } from '../domain/tenant-context';
 export interface LocalTicketsConfig { key:string;redAsistencialId:string;userId:string;tokenSecret:string;tokenTtlSeconds:number }
+export type MlAssistanceConfig=Readonly<{enabled:boolean;baseUrl?:string;token?:string;timeoutMs:number}>;
 export type ApiConfig = Readonly<{
   nodeEnv: 'development' | 'test' | 'production';
   applicationEnvironment:'demo'|'development'|'institutional';siteResolutionMode:'configured'|'network';
   host: string; port: number; databaseUrl: string; redisUrl: string;
-  corsOrigins: readonly string[]; swaggerEnabled: boolean; localTickets?: LocalTicketsConfig;
+  corsOrigins: readonly string[]; swaggerEnabled: boolean; localTickets?: LocalTicketsConfig;mlAssistance:MlAssistanceConfig;
 }>;
 export function readConfig(env: NodeJS.ProcessEnv): ApiConfig {
   const fail = (field: string): never => { throw new Error('Configuracion invalida o ausente: ' + field); };
@@ -59,7 +60,22 @@ export function readConfig(env: NodeJS.ProcessEnv): ApiConfig {
         tokenSecret:env.ACCESS_TOKEN_SECRET!,tokenTtlSeconds});
     } catch { fail('TICKETS_LOCAL_RED_ID/TICKETS_LOCAL_USER_ID'); }
   }
-  return Object.freeze({ localTickets, nodeEnv: nodeEnv as ApiConfig['nodeEnv'],
+  const mlFlag=env.ML_ASSIST_ENABLED??'false';
+  if(!['true','false'].includes(mlFlag))fail('ML_ASSIST_ENABLED');
+  let mlAssistance:MlAssistanceConfig=Object.freeze({enabled:false,timeoutMs:4000});
+  if(mlFlag==='true'){
+    let base:URL;
+    try {base=new URL(env.ML_SERVICE_URL??'');}catch {return fail('ML_SERVICE_URL');}
+    const internal=['localhost','127.0.0.1','[::1]','ml'].includes(base.hostname)||base.hostname.endsWith('.internal');
+    if(!['http:','https:'].includes(base.protocol)||!base.hostname||base.username||base.password||base.pathname!=='/'||base.search||base.hash||
+      (base.protocol==='http:'&&!internal))fail('ML_SERVICE_URL');
+    const token=env.ML_SERVICE_TOKEN??'';
+    if(!/^[a-f0-9]{64}$/.test(token)||token===env.TICKETS_LOCAL_KEY||token===env.ACCESS_TOKEN_SECRET)fail('ML_SERVICE_TOKEN');
+    const timeoutMs=Number(env.ML_SERVICE_TIMEOUT_MS??'4000');
+    if(!Number.isInteger(timeoutMs)||timeoutMs<3000||timeoutMs>4500)fail('ML_SERVICE_TIMEOUT_MS');
+    mlAssistance=Object.freeze({enabled:true,baseUrl:base.origin,token,timeoutMs});
+  }
+  return Object.freeze({ localTickets, mlAssistance, nodeEnv: nodeEnv as ApiConfig['nodeEnv'],
     applicationEnvironment:applicationEnvironment as ApiConfig['applicationEnvironment'],siteResolutionMode:siteResolutionMode as ApiConfig['siteResolutionMode'],host, port, databaseUrl, redisUrl,
     corsOrigins: Object.freeze(corsOrigins), swaggerEnabled: swagger === 'true' });
 }
