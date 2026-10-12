@@ -19,12 +19,26 @@ Fecha de registro: 2026-10-11. Rama existente: `main`. Base heredada: `afb6129`,
 | `ml:integration:config` | Compose combinado válido |
 | Secretos locales | `.env`, API env/tickets y ambos env ML siguen ignorados por Git |
 | Regresión SQL y API en Docker desechable | **17/17**, controles SQL aprobados; log real de CMD con final `OK` |
-| Build API/web Docker y comprobaciones HTTP 4.8 reales | Pendientes de cargar las imágenes finales desde CMD |
+| Build API/web Docker | Ejecutado sin errores desde CMD y confirmado por el usuario; endpoints nuevos activos |
+| HTTP/PG real, asistencia disponible | `ML_ROBUSTNESS_CHECK_OK` estándar y repetición HTTP/TCP de solo lectura aprobados |
+| ML realmente detenido | `ML_ROBUSTNESS_CHECK_OK --unavailable`, recibo estándar y ejecución sin errores confirmados por el usuario |
+| Asistencia desactivada por configuración | `ML_ROBUSTNESS_CHECK_OK --disabled` estándar y repetición HTTP/TCP aprobados; ML estaba saludable |
+| Restauración final | `ML_ASSIST_ENABLED=true`, API recreada, checker estándar y repetición HTTP/TCP disponibles aprobados; `demo:check` repetido y aprobado |
+| `demo:check` real | Aprobado: interfaz, proxy, asignación por carga, persistencia y SSE |
+| Origin/autenticación HTTP real | 10 casos localhost/127.0.0.1: cuerpo inválido 400, origen rechazado 403; Nest y ML sin credencial 401 |
 | Infrastructure CI 4.8 | Configurado; publicación y ejecución remota pendientes |
 
 Las pruebas unitarias HTTP de Nest usan el servidor local y respuestas ML controladas; no equivalen a integración con PostgreSQL real. Las pruebas del checker utilizan conectores simulados y las React utilizan servicios simulados. La suite Python carga y ejecuta el modelo aprobado, sin entrenarlo. La integración real ejecutada desde CMD se verificó mediante `ml/outputs/stage48-api-integration.log`: migraciones y regresión SQL, autenticación, Prisma/RLS, auditoría, Redis, CRUD, asignación, filtros/resumen y health con Redis detenido, con **17/17 y cero fallos**. El entorno desechable fue independiente de la base operativa.
 
-El pool predeterminado de Vitest encontró una restricción de archivos temporales en el sandbox de Windows. La suite completa se ejecutó correctamente con `npm.cmd run test --workspace @essalud/web -- --pool=threads --maxWorkers=1`; no se alteró la configuración del proyecto para ocultar esa restricción. El build nativo de Next sigue sujeto al problema de permisos SWC registrado en 4.7; debe validarse con el build Docker/Linux.
+El pool predeterminado de Vitest encontró una restricción de archivos temporales en el sandbox de Windows. La suite completa se ejecutó correctamente con `npm.cmd run test --workspace @essalud/web -- --pool=threads --maxWorkers=1`; no se alteró la configuración del proyecto para ocultar esa restricción. El build nativo de Next sigue sujeto al problema de permisos SWC registrado en 4.7; el build de producción API/web sí se validó mediante Docker/Linux en esta subetapa.
+
+El usuario ejecutó sin errores la reconstrucción Docker de API/web, el modo disponible, `demo:check`, la detención real de ML, `--unavailable` y el reinicio de ML. Ambos recibos oficiales 4.8 contienen los 21 checks esperados, backend saludable, reapertura/cierre, ticket temporal eliminado, cero tickets posteriores y nueve eventos auditados. El agente repitió el modo disponible con HTTP real y los mismos SELECT PostgreSQL parametrizados por TCP local de solo lectura; `robustness-recheck-tcp-available.json` conserva la evidencia. No se modificó el probe Docker predeterminado ni se usaron respuestas simuladas para esa repetición.
+
+El detalle histórico devuelve un Resuelto desde una página filtrada `view=history`; el resumen nuevo responde 200. Se repitieron `demo:check` y las guardas: Origin ausente/ajeno, Forwarded-Host forjado y Fetch-Site ajeno permanecen bloqueados; todas esas respuestas conservan `no-store`. Nest requiere la clave de servidor y ML requiere su token.
+
+Con `ML_ASSIST_ENABLED=false`, la API recreada devolvió `disabled` mientras el servicio ML mantenía readiness 200. El usuario obtuvo el recibo estándar `robustness-disabled-check.json`; el agente repitió el flujo completo por HTTP/TCP con `ML_ROBUSTNESS_CHECK_OK: disabled`. Ambos comprobaron la categoría humana, resolución/reapertura/cierre, ticket temporal ausente y nueve eventos auditados. Solo se cambió esa bandera en un archivo ignorado, conservando URL, timeout y token.
+
+Finalmente se restauró `ML_ASSIST_ENABLED=true` y el usuario recreó únicamente API y ejecutó sin errores el checker estándar. El agente volvió a ejecutar el checker por HTTP/TCP real: `ML_ROBUSTNESS_CHECK_OK: available`. También repitió `demo:check`, aprobado. El sistema queda con asistencia habilitada; modelo y datos originales conservados.
 
 ## Defectos corregidos durante la revisión
 
@@ -52,5 +66,7 @@ La API conserva el listado anterior por defecto (`view=all`) y su contrato de p�
 4. Detalle histórico consultado desde mapa y reapertura de un Resuelto.
 5. Sugerencia, abstención y creación manual con ML detenido/desactivado; readiness de la API conservada.
 6. Artifact `stage-4.8-robustness-check` y Actions verde cuando se publique el commit.
+
+**Estado técnico local: SUBETAPA 4.8 LISTA PARA CONTINUAR.** Las suites, build Docker, PostgreSQL/Redis reales, tres modos ML, restauración y regresión de demostración están verificados. La publicación/Actions y las capturas manuales mantienen sus comprobaciones propias; no se afirma CI verde sin ejecutar el workflow. Implementación registrada en `0a7d707`, sobre la misma rama `main`.
 
 El siguiente paso del roadmap es **4.9**, únicamente con autorización del usuario y aprobación de la alternativa antes de migrar. No se inicia en esta entrega.
