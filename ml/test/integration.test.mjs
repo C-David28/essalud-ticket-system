@@ -27,9 +27,10 @@ function removeWorkspace(root) {
   rmSync(target, { recursive: true, force: true });
 }
 
-function fakeStack({ mode = 'available', failAt = '', wrongOwner = false, cleanupFails = false } = {}) {
+function fakeStack({ mode = 'available', failAt = '', wrongOwner = false, cleanupFails = false, historyRegression = false, wrongSummary = false } = {}) {
   const calls = [], probes = [];
   let created = null, removed = false;
+  const history = [];
   const fetcher = async (url, init) => {
     const path = new URL(url).pathname;
     calls.push({ path, ...init });
@@ -38,6 +39,10 @@ function fakeStack({ mode = 'available', failAt = '', wrongOwner = false, cleanu
     assert.equal(init.redirect, 'error');
     assert.ok(init.signal instanceof AbortSignal);
     if (failAt === path) throw new Error('private-token ' + password);
+    if (path === '/api/backend-health') {
+      assert.equal(init.headers.Cookie, undefined);
+      return Response.json({ status: 'ok' });
+    }
     if (path === '/api/category-suggestion') {
       const body = JSON.parse(init.body);
       assert.deepEqual(Object.keys(body).sort(), ['descripcion', 'titulo']);
@@ -60,9 +65,38 @@ function fakeStack({ mode = 'available', failAt = '', wrongOwner = false, cleanu
       assert.equal(body.categoria, 'SOPORTE');
       assert.equal(body.centroAsistencialId, centerId);
       assert.equal(body.areaId, areaId);
-      created = { ...body, ticketId, codigo: 'INC-2026-9999' };
+      created = { ...body, ticketId, codigo: 'INC-2026-9999', estado: 'ABIERTO' };
+      history.push({ estadoAnterior: null, estadoNuevo: 'ABIERTO' });
       return Response.json(created, { status: 201 });
     }
+    if (historyRegression && ['/api/tickets', '/api/tickets/resumen'].includes(path)) {
+      const query = new URL(url).searchParams;
+      assert.equal(query.get('search'), runId);
+      assert.equal(query.get('centroAsistencialId'), centerId);
+      assert.equal(query.get('categoria'), 'SOPORTE'); assert.equal(query.get('prioridad'), 'MEDIA');
+      const active = created && ['ABIERTO', 'EN_PROCESO', 'PENDIENTE'].includes(created.estado);
+      const matches = created && !removed && (query.get('view') === 'active' ? active : !active);
+      if (path === '/api/tickets') {
+        assert.equal(query.get('pageSize'), '1');
+        const page = Number(query.get('page'));
+        return Response.json({ items: matches && page === 1 ? [created] : [], page, pageSize: 1, hasMore: false });
+      }
+      const byState = Object.fromEntries(['ABIERTO', 'EN_PROCESO', 'PENDIENTE', 'RESUELTO', 'CERRADO']
+        .map(state => [state, Number(Boolean(matches && created.estado === state))]));
+      return Response.json({ total: wrongSummary ? 99 : Number(Boolean(matches)), active: Number(Boolean(matches && active)),
+        history: Number(Boolean(matches && !active)), byState, priority: 0,
+        centers: matches ? [{ centerId, total: 1, byState, priority: 0 }] : [] });
+    }
+    if (historyRegression && path === '/api/tickets/' + ticketId + '/estado') {
+      const body = JSON.parse(init.body);
+      assert.equal(init.method, 'PATCH'); assert.equal(Object.keys(body).length, 2);
+      const transitions = { ABIERTO: ['EN_PROCESO'], EN_PROCESO: ['PENDIENTE', 'RESUELTO'],
+        PENDIENTE: ['EN_PROCESO'], RESUELTO: ['EN_PROCESO', 'CERRADO'], CERRADO: [] };
+      assert.ok(transitions[created.estado].includes(body.estado));
+      history.push({ estadoAnterior: created.estado, estadoNuevo: body.estado });
+      created = { ...created, estado: body.estado }; return Response.json(created);
+    }
+    if (historyRegression && path === '/api/tickets/' + ticketId + '/estado/historial') return Response.json(history);
     assert.equal(path, '/api/tickets/' + ticketId);
     if (init.method === 'DELETE') {
       if (cleanupFails) return Response.json({ message: 'private' }, { status: 503 });
@@ -75,7 +109,7 @@ function fakeStack({ mode = 'available', failAt = '', wrongOwner = false, cleanu
   const postgresProbe = async (root, id) => {
     probes.push(id);
     assert.equal(id, ticketId);
-    return { ticketCount: removed ? 0 : 1, category: removed ? null : 'SOPORTE', auditCount: removed ? 2 : 1,
+    return { ticketCount: removed ? 0 : 1, category: removed ? null : 'SOPORTE', auditCount: historyRegression ? history.length + Number(removed) : removed ? 2 : 1,
       insertAudited: true, deleteAudited: removed };
   };
   return { fetcher, postgresProbe, calls, probes };
@@ -138,6 +172,68 @@ test('checker limpia el ticket propio si falla la lectura SQL después de crearl
     ...stack, postgresProbe: () => { throw new Error('private connection string'); }, idFactory: () => runId }),
   error => error instanceof IntegrationCheckFailure && error.phase === 'persistencia PostgreSQL' && error.cleanupPending === false && !error.message.includes('private'));
   assert.deepEqual(stack.calls.filter(call => call.method === 'DELETE').map(call => call.path), ['/api/tickets/' + ticketId]);
+});
+
+for (const mode of ['available', 'unavailable', 'disabled']) {
+  test('4.8: historial, reapertura, filtros y limpieza con modo ' + mode, async () => {
+    const stack = fakeStack({ mode, historyRegression: true });
+    const receipt = await runIntegrationCheck({ root: '/unused', env: { TICKETS_DEMO_PASSWORD: password },
+      unavailable: mode === 'unavailable', disabled: mode === 'disabled', verifyHistory: true,
+      ...stack, idFactory: () => runId });
+    assert.equal(receipt.stage, '4.8'); assert.equal(receipt.mode, mode);
+    assert.equal(receipt.temporary_ticket_removed, true);
+    for (const name of ['backend_ready_without_ml_dependency', 'server_filters_and_pagination', 'authorized_summary', 'resolved_in_history',
+      'direct_detail_outside_active_page', 'resolved_reopened', 'closed_in_history', 'state_history_preserved'])
+      assert.ok(receipt.checks.includes(name));
+    assert.equal(stack.calls.filter(call => call.method === 'PATCH').length, 7);
+    assert.equal(stack.calls.filter(call => call.method === 'DELETE').length, 1);
+    assert.equal(receipt.postgres.audit_events, 9);
+    for (const secret of [password, runId, 'unit.private.token', 'Solicitud ficticia'])
+      assert.ok(!JSON.stringify(receipt).includes(secret));
+  });
+}
+
+test('4.8: discrepancia en resumen falla y limpia exclusivamente su ticket', async () => {
+  const stack = fakeStack({ historyRegression: true, wrongSummary: true });
+  await assert.rejects(runIntegrationCheck({ env: { TICKETS_DEMO_PASSWORD: password }, verifyHistory: true,
+    ...stack, idFactory: () => runId }), error => error instanceof IntegrationCheckFailure &&
+      error.phase === 'trabajo activo paginado y resumen autorizado' && !error.cleanupPending);
+  assert.deepEqual(stack.calls.filter(call => call.method === 'DELETE').map(call => call.path), ['/api/tickets/' + ticketId]);
+});
+
+test('4.8: backend no saludable falla antes de crear una solicitud', async () => {
+  const stack = fakeStack({ historyRegression: true });
+  await assert.rejects(runIntegrationCheck({ env: { TICKETS_DEMO_PASSWORD: password }, verifyHistory: true,
+    ...stack, fetcher: (url, init) => new URL(url).pathname === '/api/backend-health' ?
+      Promise.resolve(Response.json({ status: 'unavailable' }, { status: 503 })) : stack.fetcher(url, init),
+    idFactory: () => runId }), error => error instanceof IntegrationCheckFailure &&
+      error.phase === 'salud del backend independiente de ML' && error.diagnostic.status === 503);
+  assert.equal(stack.calls.length, 0); assert.equal(stack.probes.length, 0);
+});
+
+test('4.8: cancela un cuerpo HTTP rechazado sin leer datos upstream', async () => {
+  let cancelled = false;
+  await assert.rejects(runIntegrationCheck({ env: { TICKETS_DEMO_PASSWORD: password },
+    fetcher: async () => new Response(new ReadableStream({ cancel() { cancelled = true; } }), { status: 503 }) }),
+    error => error instanceof IntegrationCheckFailure && error.diagnostic.code === 'ML_UNAVAILABLE');
+  assert.equal(cancelled, true);
+});
+
+test('4.8: comando guarda recibo propio y rechaza modos incompatibles antes de HTTP', async () => {
+  const root = workspace(), messages = [], stack = fakeStack({ mode: 'unavailable', historyRegression: true });
+  try {
+    const status = await main(['check', '--history', '--unavailable'], { root, env: { TICKETS_DEMO_PASSWORD: password },
+      check: options => runIntegrationCheck({ ...options, ...stack, idFactory: () => runId }),
+      log: message => messages.push(message), errorLog: message => messages.push(message) });
+    assert.equal(status, 0); assert.ok(messages[0].startsWith('ML_ROBUSTNESS_CHECK_OK:'));
+    const receipt = JSON.parse(readFileSync(join(root, 'ml/outputs/robustness-unavailable-check.json'), 'utf8'));
+    assert.equal(receipt.stage, '4.8'); assert.equal(receipt.temporary_ticket_removed, true);
+    for (const flags of [['--history', '--history'], ['--unavailable', '--disabled'], ['--unknown']]) {
+      let called = false;
+      assert.equal(await main(['check', ...flags], { root, check: () => { called = true; }, log: () => {}, errorLog: () => {} }), 1);
+      assert.equal(called, false);
+    }
+  } finally { removeWorkspace(root); }
 });
 
 test('checker rechaza borrar un ticket cuyo texto no coincide con el marcador de esta ejecución', async () => {

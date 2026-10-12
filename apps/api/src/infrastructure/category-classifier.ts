@@ -13,14 +13,20 @@ export class HttpCategoryClassifier implements CategoryClassifier {
         body:JSON.stringify({titulo:input.titulo,descripcion:input.descripcion}),
         signal:AbortSignal.timeout(this.config.timeoutMs),
       });
-      if(!response.ok||response.headers.get('content-type')?.split(';')[0]?.trim()!=='application/json'||!response.body)
+      if(!response.ok||response.headers.get('content-type')?.split(';')[0]?.trim()!=='application/json'||!response.body){
+        // Discard a rejected streaming response immediately, without reading/logging its body.
+        void response.body?.cancel().catch(()=>{});
         throw new Error('ML_UNAVAILABLE');
-      const reader=response.body.getReader();let total=0;const chunks:Uint8Array[]=[];
+      }
+      const reader=response.body.getReader();let total=0,complete=false;const chunks:Uint8Array[]=[];
       try {
-        for(;;){const chunk=await reader.read();if(chunk.done)break;
-          total+=chunk.value.byteLength;if(total>4096){void reader.cancel().catch(()=>{});throw new Error('ML_INVALID_RESPONSE');}
+        for(;;){const chunk=await reader.read();if(chunk.done){complete=true;break;}
+          total+=chunk.value.byteLength;if(total>4096)throw new Error('ML_INVALID_RESPONSE');
           chunks.push(chunk.value);}
-      } finally {reader.releaseLock();}
+      } finally {
+        if(!complete)void reader.cancel().catch(()=>{});
+        reader.releaseLock();
+      }
       const value:unknown=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));
       if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('ML_INVALID_RESPONSE');
       const data=value as Record<string,unknown>;

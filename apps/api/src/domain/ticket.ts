@@ -3,6 +3,18 @@ export const CATEGORIES = ['SOPORTE','REDES','INFRAESTRUCTURA','BIOMEDICO'] as c
 export const PRIORITIES = ['BAJA','MEDIA','ALTA','CRITICA'] as const;
 export const TICKET_STATES = ['ABIERTO','EN_PROCESO','PENDIENTE','RESUELTO','CERRADO'] as const;
 export type TicketState = typeof TICKET_STATES[number];
+export const TICKET_VIEWS = ['all','active','history'] as const;
+export const ACTIVE_TICKET_STATES: readonly TicketState[] = ['ABIERTO','EN_PROCESO','PENDIENTE'];
+export const HISTORY_TICKET_STATES: readonly TicketState[] = ['RESUELTO','CERRADO'];
+export interface TicketListFilters {
+  view: typeof TICKET_VIEWS[number]; search?: string; estado?: TicketState;
+  prioridad?: typeof PRIORITIES[number]; categoria?: typeof CATEGORIES[number]; centroAsistencialId?: string;
+}
+export type TicketStateCounts = Record<TicketState,number>;
+export interface TicketCenterSummary { centerId: string; total: number; byState: TicketStateCounts; priority: number }
+export interface TicketSummary {
+  total: number; active: number; history: number; byState: TicketStateCounts; priority: number; centers: TicketCenterSummary[];
+}
 export const TICKET_EVENT_TYPES = ['ticket.created','ticket.updated','ticket.state_changed','ticket.assignment_changed','ticket.deleted'] as const;
 export type TicketEventType = typeof TICKET_EVENT_TYPES[number];
 export type TicketEvent = Readonly<{
@@ -49,7 +61,8 @@ export class TicketFailure extends Error {
 }
 export interface TicketRepository {
   create(context: AuthorizedContext, input: TicketInput): Promise<Ticket>;
-  list(context: AuthorizedContext, page: number, pageSize: number): Promise<TicketPage>;
+  list(context: AuthorizedContext, page: number, pageSize: number, filters?: TicketListFilters): Promise<TicketPage>;
+  summary(context: AuthorizedContext, filters?: TicketListFilters): Promise<TicketSummary>;
   get(context: AuthorizedContext, id: string): Promise<Ticket>;
   update(context: AuthorizedContext, id: string, input: TicketChanges): Promise<Ticket>;
   transition(context: AuthorizedContext,id:string,state:TicketState,reason:string): Promise<Ticket>;

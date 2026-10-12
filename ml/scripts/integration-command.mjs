@@ -27,16 +27,19 @@ export async function main(args = process.argv.slice(2), { root = projectRoot, e
       log('OK: integración ML local configurada; token conservado y cuatro variables exclusivas de Nest.');
       return 0;
     }
-    if (command !== 'check' || flags.some(flag => !['--unavailable', '--disabled'].includes(flag)) ||
-      new Set(flags).size !== flags.length || flags.length > 1) throw new Error('Comando de integración desconocido.');
-    const unavailable = flags.includes('--unavailable'), disabled = flags.includes('--disabled');
-    const receipt = await check({ root, env, unavailable, disabled });
+    if (command !== 'check' || flags.some(flag => !['--unavailable', '--disabled', '--history'].includes(flag)) ||
+      new Set(flags).size !== flags.length || flags.length > 2 ||
+      (flags.includes('--unavailable') && flags.includes('--disabled'))) throw new Error('Comando de integración desconocido.');
+    const unavailable = flags.includes('--unavailable'), disabled = flags.includes('--disabled'), verifyHistory = flags.includes('--history');
+    const receipt = await check({ root, env, unavailable, disabled, verifyHistory });
     mkdirSync(resolve(root, 'ml/outputs'), { recursive: true });
-    const filename = unavailable ? 'integration-unavailable-check.json' : disabled ? 'integration-disabled-check.json' : 'integration-check.json';
+    const mode = unavailable ? 'unavailable' : disabled ? 'disabled' : 'available';
+    const filename = verifyHistory ? 'robustness-' + mode + '-check.json' : unavailable ? 'integration-unavailable-check.json' : disabled ? 'integration-disabled-check.json' : 'integration-check.json';
     writeFileSync(resolve(root, 'ml/outputs', filename), JSON.stringify(receipt, null, 2) + '\n', { mode: 0o600 });
-    log('ML_INTEGRATION_CHECK_OK: ' + (unavailable ? 'ML no disponible; creación manual verificada.' :
+    log((verifyHistory ? 'ML_ROBUSTNESS_CHECK_OK: ' : 'ML_INTEGRATION_CHECK_OK: ') + (unavailable ? 'ML no disponible; creación manual verificada.' :
       disabled ? 'asistencia desactivada; creación manual verificada.' : 'Next→Nest→ML, abstención y decisión manual verificadas.') +
-      ' PostgreSQL y auditoría verificados; ticket temporal eliminado.');
+      ' PostgreSQL y auditoría verificados; ticket temporal eliminado.' +
+      (verifyHistory ? ' Filtros, paginación, historial, reapertura y cierre verificados.' : ''));
     return 0;
   } catch (error) {
     if (error instanceof IntegrationCheckFailure) {
@@ -48,7 +51,7 @@ export async function main(args = process.argv.slice(2), { root = projectRoot, e
         (http || expected ? '; ' : '') + diagnostic.code + '. Revisa el estado local; no se mostraron claves ni texto de tickets.');
       if (error.cleanupPending) errorLog('La limpieza del ticket temporal no se confirmó. Revisar únicamente el ticket ' + error.temporaryTicketId + '.');
     } else errorLog(command === 'setup' ? 'No se completó ML integration setup. Verifica service.env; no se modificó su token.' :
-      'No se completó ML integration check. Usa check, check --unavailable o check --disabled y revisa el estado local.');
+      'No se completó ML integration check. Usa check, check --unavailable o check --disabled; --history incluye la regresión 4.8.');
     return 1;
   }
 }

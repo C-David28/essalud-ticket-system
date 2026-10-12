@@ -69,6 +69,41 @@ function readResult(value: unknown): CategoryAssistanceResult {
   };
 }
 
+async function readResponse(response: Response, signal: AbortSignal): Promise<unknown> {
+  if (!response.body) throw new Error("Respuesta de asistencia inválida.");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0, complete = false, cancelled = false;
+  const cancel = () => {
+    if (cancelled) return;
+    cancelled = true;
+    void reader.cancel().catch(() => {});
+  };
+  // Also cancel streamed bodies when a supplied fetch adapter does not propagate abort.
+  signal.addEventListener("abort", cancel, { once: true });
+  try {
+    signal.throwIfAborted();
+    for (;;) {
+      const chunk = await reader.read();
+      signal.throwIfAborted();
+      if (chunk.done) { complete = true; break; }
+      size += chunk.value.byteLength;
+      if (size > 4096) throw new Error("Invalid response");
+      chunks.push(chunk.value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    throw new Error(signal.aborted ? "La asistencia no está disponible." : "Respuesta de asistencia inválida.");
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    if (!complete) cancel();
+    reader.releaseLock();
+  }
+}
+
 export async function requestCategoryAssistance(
   title: string,
   description: string,
@@ -78,13 +113,22 @@ export async function requestCategoryAssistance(
     throw new Error("Completa el título y la descripción para solicitar asistencia.");
   }
   const timeoutSignal = AbortSignal.timeout(10000);
-  const response = await fetch("/api/category-suggestion", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ titulo: title.trim(), descripcion: description.trim() }),
-    signal: signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal,
-    cache: "no-store",
-  });
-  if (!response.ok) throw new Error("La asistencia no está disponible.");
-  return readResult(await response.json());
+  const requestSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
+  let response: Response;
+  try {
+    response = await fetch("/api/category-suggestion", {
+      method: "POST", redirect: "error",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ titulo: title.trim(), descripcion: description.trim() }),
+      signal: requestSignal,
+      cache: "no-store",
+    });
+  } catch {
+    throw new Error("La asistencia no está disponible.");
+  }
+  if (!response.ok) {
+    void response.body?.cancel().catch(() => {});
+    throw new Error("La asistencia no está disponible.");
+  }
+  return readResult(await readResponse(response, requestSignal));
 }

@@ -8,6 +8,7 @@ const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}
 
 function allowed(method:string,path:string[]) {
   if(path.length===0) return method==="GET"||method==="POST";
+  if(path.length===1&&path[0]==="resumen") return method==="GET";
   if(path.length===2&&path[0]==="asignacion"&&path[1]==="tecnicos") return method==="GET";
   if(path.length===1&&uuid.test(path[0]??"")) return ["GET","PATCH","DELETE"].includes(method);
   if(path.length===2&&uuid.test(path[0]??"")&&path[1]==="estado") return method==="PATCH";
@@ -21,10 +22,13 @@ async function proxy(request:Request,context:Context) {
     const path=(await context.params).path??[];
     if(!allowed(request.method,path)) return Response.json({message:"Ruta no disponible"},{status:404});
     const config=localApiConfig();
-    const token=await staffToken();
+    const token=request.headers.get("x-ticket-audience")==="public"?null:await staffToken();
     const url=new URL("/api/v1/tickets"+(path.length?"/"+path.map(encodeURIComponent).join("/"):""),config.base);
-    if(!path.length&&request.method==="GET") for(const name of ["page","pageSize"])
-      if(new URL(request.url).searchParams.has(name)) url.searchParams.set(name,new URL(request.url).searchParams.get(name)!);
+    if(request.method==="GET"&&(!path.length||path[0]==="resumen")) {
+      const incoming=new URL(request.url).searchParams;
+      const names=["view","search","estado","prioridad","categoria","centroAsistencialId",...(!path.length?["page","pageSize"]:[])];
+      for(const name of names) if(incoming.has(name)) url.searchParams.set(name,incoming.get(name)!);
+    }
     let body:string|undefined;
     if(request.method==="PATCH"||(request.method==="POST"&&!path.length)) {
       let value:Record<string,unknown>;

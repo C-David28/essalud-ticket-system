@@ -184,6 +184,9 @@ test('Integracion en PostgreSQL y Redis desechables', {timeout:60000}, async t=>
     try {await require('./tickets-flow.cjs').exerciseTickets({db:parallel,redA,redB,centro:c.centroAsistencialId,area:area.areaId,tech1,tech2});}
     finally {await parallel.onApplicationShutdown();}
   });
+  await t.test('filtros HTTP y resumen Prisma paginan mas de 100 tickets sin salir del alcance autorizado',async()=>{
+    await require('./ticket-filters.cjs').exerciseTicketFilters({db,redA,redB});
+  });
   await t.test('HTTP real: readiness 200, Redis caido 503 y liveness 200',async()=>{
     const app=await createApplication(readConfig(process.env),true);
     try {

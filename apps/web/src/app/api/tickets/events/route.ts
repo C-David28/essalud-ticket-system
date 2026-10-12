@@ -8,7 +8,8 @@ export async function GET(request:Request) {
   try {
     const config=localApiConfig();
     const headers:Record<string,string>={...apiHeaders(config,"text/event-stream")};
-    const token=await staffToken();if(token)headers.Authorization="Bearer "+token;
+    const token=new URL(request.url).searchParams.get("audience")==="public"?null:await staffToken();
+    if(token)headers.Authorization="Bearer "+token;
     const lastEventId=request.headers.get("last-event-id");
     if(lastEventId) headers["Last-Event-ID"]=lastEventId;
     const response=await fetch(new URL("/api/v1/tickets/events",config.base),{

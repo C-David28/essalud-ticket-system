@@ -1,6 +1,7 @@
 import { PrismaTenantUnitOfWork } from './database';
 import { TicketRepository, TicketInput, TicketChanges, TicketFailure, TicketState, TICKET_TRANSITIONS,
-  Ticket, TicketPage, TicketTransition } from '../domain/ticket';
+  Ticket, TicketPage, TicketTransition, TicketListFilters, TicketSummary, TicketStateCounts, TicketCenterSummary,
+  ACTIVE_TICKET_STATES, HISTORY_TICKET_STATES } from '../domain/ticket';
 import type { SupportTechnician,TicketAssignment } from '../domain/ticket';
 import { AuthorizedContext } from '../domain/access';
 import { Prisma } from '../generated/prisma/client';
@@ -28,6 +29,23 @@ export class PrismaTicketRepository implements TicketRepository {
     if(context.principal.scope==='SEDE')return {...base,centroAsistencialId:{in:[...context.principal.centerIds]}};
     return base;
   }
+  private filtered(context:AuthorizedContext,filters?:TicketListFilters):Prisma.TicketWhereInput {
+    const clauses:Prisma.TicketWhereInput[]=[this.visible(context)];
+    if(filters?.view==='active')clauses.push({estado:{in:[...ACTIVE_TICKET_STATES]}});
+    if(filters?.view==='history')clauses.push({estado:{in:[...HISTORY_TICKET_STATES]}});
+    if(filters?.estado)clauses.push({estado:filters.estado});
+    if(filters?.prioridad)clauses.push({prioridad:filters.prioridad});
+    if(filters?.categoria)clauses.push({categoria:filters.categoria});
+    if(filters?.centroAsistencialId)clauses.push({centroAsistencialId:filters.centroAsistencialId});
+    const search=filters?.search?.trim();
+    if(search) {
+      // Prisma parametriza el valor; escapar LIKE conserva la busqueda literal de %, _ y barra invertida.
+      const contains=search.replace(/[\\%_]/g,'\\$&');
+      clauses.push({OR:[{codigo:{contains,mode:'insensitive'}},{titulo:{contains,mode:'insensitive'}},
+        {descripcion:{contains,mode:'insensitive'}}]});
+    }
+    return clauses.length===1?this.visible(context):{AND:clauses};
+  }
   private async ensureVisible(tx:Prisma.TransactionClient,context:AuthorizedContext,id:string) {
     const ticket=await tx.ticket.findFirst({where:{...this.visible(context),ticketId:id},include:this.relations});
     if(!ticket)throw new TicketFailure('NOT_FOUND');return ticket;
@@ -41,11 +59,34 @@ export class PrismaTicketRepository implements TicketRepository {
       return this.ticket(await tx.ticket.create({data:{...input,redAsistencialId:context.redAsistencialId,isDemo:true},include:this.relations}));
     });
   }
-  list(context: AuthorizedContext,page: number,pageSize: number): Promise<TicketPage> {
+  list(context: AuthorizedContext,page: number,pageSize: number,filters?:TicketListFilters): Promise<TicketPage> {
     return this.run(context,async tx=>{
-      const rows=await tx.ticket.findMany({where:this.visible(context),include:this.relations,
+      const rows=await tx.ticket.findMany({where:this.filtered(context,filters),include:this.relations,
         orderBy:[{createdAt:'desc'},{ticketId:'desc'}],skip:(page-1)*pageSize,take:pageSize+1});
       return {items:rows.slice(0,pageSize).map(row=>this.ticket(row)),page,pageSize,hasMore:rows.length>pageSize};
+    });
+  }
+  summary(context:AuthorizedContext,filters?:TicketListFilters):Promise<TicketSummary> {
+    return this.run(context,async tx=>{
+      const groups=await tx.ticket.groupBy({by:['centroAsistencialId','estado','prioridad'],
+        where:this.filtered(context,filters),_count:{_all:true}});
+      const counts=():TicketStateCounts=>({ABIERTO:0,EN_PROCESO:0,PENDIENTE:0,RESUELTO:0,CERRADO:0});
+      const summary:TicketSummary={total:0,active:0,history:0,byState:counts(),priority:0,centers:[]};
+      const centers=new Map<string,TicketCenterSummary>();
+      for(const group of groups) {
+        const state=group.estado as TicketState,count=group._count._all;
+        let center=centers.get(group.centroAsistencialId);
+        if(!center) {
+          center={centerId:group.centroAsistencialId,total:0,byState:counts(),priority:0};
+          centers.set(center.centerId,center);
+        }
+        summary.total+=count;summary.byState[state]+=count;center.total+=count;center.byState[state]+=count;
+        if(ACTIVE_TICKET_STATES.includes(state))summary.active+=count;
+        if(HISTORY_TICKET_STATES.includes(state))summary.history+=count;
+        if(group.prioridad==='ALTA'||group.prioridad==='CRITICA') {summary.priority+=count;center.priority+=count;}
+      }
+      summary.centers=[...centers.values()].sort((a,b)=>a.centerId.localeCompare(b.centerId));
+      return summary;
     });
   }
   get(context: AuthorizedContext,id: string): Promise<Ticket> {

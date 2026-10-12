@@ -1,4 +1,4 @@
-import { TicketRepository, TicketInput, TicketChanges, TicketFailure, TicketState, TicketEventBus, TicketEventType } from '../domain/ticket';
+import { TicketRepository, TicketInput, TicketChanges, TicketFailure, TicketState, TicketEventBus, TicketEventType, TicketListFilters } from '../domain/ticket';
 import { AuthorizedContext } from '../domain/access';
 export class Tickets {
   constructor(private readonly repository: TicketRepository,private readonly eventBus:TicketEventBus) {}
@@ -11,7 +11,8 @@ export class Tickets {
   create(context: AuthorizedContext, input: TicketInput) {
     return this.changed(context,'ticket.created',this.repository.create(context,input));
   }
-  list(context: AuthorizedContext,page: number,pageSize: number) { return this.repository.list(context,page,pageSize); }
+  list(context: AuthorizedContext,page: number,pageSize: number,filters?: TicketListFilters) { return this.repository.list(context,page,pageSize,filters); }
+  summary(context: AuthorizedContext,filters?: TicketListFilters) { return this.repository.summary(context,filters); }
   get(context: AuthorizedContext,id: string) { return this.repository.get(context,id); }
   update(context: AuthorizedContext,id: string,input: TicketChanges) {
     if (Object.keys(input).length===0) throw new TicketFailure('INVALID');

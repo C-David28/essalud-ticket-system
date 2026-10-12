@@ -86,6 +86,7 @@
     "ml:integration:setup": "node ml/scripts/integration-command.mjs setup",
     "ml:integration:check": "node ml/scripts/integration-command.mjs check",
     "ml:integration:test": "node --test ml/test/integration.test.mjs",
+    "ml:robustness:check": "node ml/scripts/integration-command.mjs check --history",
     "ml:integration:config": "docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml -f compose.demo.yaml -f compose.ml-integration.yaml config --quiet",
     "ml:integration:up": "docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml -f compose.demo.yaml -f compose.ml-integration.yaml up -d --build --force-recreate --wait --wait-timeout 180 api web ml",
     "ml:integration:status": "docker compose -f compose.yaml -f compose.api.yaml -f compose.tickets.yaml -f compose.demo.yaml -f compose.ml-integration.yaml ps",

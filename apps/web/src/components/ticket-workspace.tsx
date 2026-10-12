@@ -32,14 +32,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useTickets } from "@/components/providers";
+import { ticketScope, useTickets } from "@/components/providers";
+import { isTicketId, ticketStateKey, type TicketFilters, type TicketView } from "@/lib/ticket-client";
 import { CategoryAssistance } from "@/components/category-assistance";
 import {
   CATEGORIES,
-  DEMO_USER,
-  STATUSES,
   PRIORITIES,
-  filterTickets,
   formatDate,
   validateDraft,
   type Category,
@@ -77,6 +75,8 @@ const nextStatuses: Record<TicketStatus, readonly TicketStatus[]> = {
   Resuelto: ["En Proceso", "Cerrado"],
   Cerrado: [],
 };
+const activeStatuses: readonly TicketStatus[] = ["Abierto", "En Proceso", "Pendiente"];
+const historyStatuses: readonly TicketStatus[] = ["Resuelto", "Cerrado"];
 function Status({ status }: { status: TicketStatus }) {
   const Icon = statusIcons[status];
   return (
@@ -117,16 +117,23 @@ const emptyDraft = (category: Category = CATEGORIES[0]): TicketDraft => ({
 
 export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: { mode: "portal" | "tecnico";access?:StaffSession;initialTicket?:string;initialCenterId?:string }) {
   const tech = mode === "tecnico";
-  const canAssign=!!access?.permissions.includes("tickets:assign"),canTransition=!tech||!!access?.permissions.includes("tickets:transition");
-  const {tickets,technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets({technical:tech,canAssign});
+  const canAssign=tech&&!!access?.permissions.includes("tickets:assign"),canTransition=tech&&!!access?.permissions.includes("tickets:transition");
+  const [search, setSearch] = useState("");
+  const [listState, setListState] = useState<{view: TicketView; search: string; status: TicketStatus | "";
+    centerId: string; priority: DemoTicket["priority"] | ""; category: Category | ""; page: number}>(() => ({
+      view: "active", search: "", status: "", centerId: initialCenterId && isTicketId(initialCenterId) ? initialCenterId : "",
+      priority: "", category: "", page: 1,
+    }));
+  const {view, status, centerId: center, priority, category, page} = listState;
+  const [selected, setSelected] = useState<string | null>(initialTicket ?? null);
+  const filters: TicketFilters = {view, search: listState.search, status, centerId: center, priority, category};
+  const {tickets, summary, summaryError, detail, detailLoading, detailError, hasMore, fetching,
+    technicians,add,move,assign,autoAssign,realtime,loading,error:loadError,busy,refresh}=useTickets({
+      technical:tech,canAssign,scope:ticketScope(access),filters,summaryFilters:{...filters,view:"all"},page,selectedTicketId:selected,
+    });
   const organization=useQuery({queryKey:["public-organization"],queryFn:getPublicOrganizationCatalog,staleTime:60000});
   const centers=organization.data?.centers??[];
-  const [search, setSearch] = useState(""),
-    [status, setStatus] = useState(""),
-    [center, setCenter] = useState(""),
-    [priority, setPriority] = useState("");
-  const [selected, setSelected] = useState<string | null>(null),
-    [createOpen, setCreateOpen] = useState(false),
+  const [createOpen, setCreateOpen] = useState(false),
     [draft, setDraft] = useState<TicketDraft>(emptyDraft),
     [errors, setErrors] = useState<Record<string, string>>({}),
     [message, setMessage] = useState("");
@@ -135,20 +142,15 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
   const [technicianId,setTechnicianId]=useState(""),[assignmentReason,setAssignmentReason]=useState("");
   const lastDetailTrigger = useRef<HTMLButtonElement | null>(null);
   const lastTicketId = useRef<string>("");
-  const own = filterTickets(tickets, { requester: DEMO_USER });
-  const visible = filterTickets(tickets, {
-    search,
-    status,
-    center,
-    priority,
-    requester: tech ? undefined : DEMO_USER,
-  });
-  const detail = tickets.find((t) => t.id === selected);
-  useEffect(()=>{
-    if(initialTicket&&tickets.some(ticket=>ticket.id===initialTicket||ticket.ticketId===initialTicket))setSelected(
-      tickets.find(ticket=>ticket.id===initialTicket||ticket.ticketId===initialTicket)!.id);
-    if(initialCenterId){const site=centers.find(item=>item.centerId===initialCenterId);if(site)setCenter(site.name);}
-  },[initialTicket,initialCenterId,tickets,centers]);
+  const visible = tickets;
+  const viewStatuses = view === "history" ? historyStatuses : activeStatuses;
+  useEffect(() => {
+    const timer = setTimeout(() => setListState(old => old.search===search.trim().slice(0,100)?old:
+      ({...old, search: search.trim().slice(0,100), page: 1})), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+  useEffect(() => { if(initialTicket) setSelected(initialTicket); }, [initialTicket]);
+  function changeFilter(next: Partial<typeof listState>) { setListState(old => ({...old,...next,page:1})); }
   useEffect(() => {
     setNextStatus(detail ? (nextStatuses[detail.status][0] ?? "") : "");
     setReason("");
@@ -157,9 +159,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
   }, [detail?.id, detail?.status, detail?.assigneeId, technicians[0]?.technicianId]);
   function reset() {
     setSearch("");
-    setStatus("");
-    setCenter("");
-    setPriority("");
+    changeFilter({search:"",status:"",centerId:"",priority:"",category:""});
   }
   function openCreate(category?: Category) {
     const first=centers[0],area=first?.areas[0];
@@ -170,7 +170,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
   function showDetail(ticket: DemoTicket, trigger: HTMLButtonElement) {
     lastDetailTrigger.current = trigger;
     lastTicketId.current = ticket.id;
-    setSelected(ticket.id);
+    setSelected(ticket.ticketId);
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -185,7 +185,8 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
     try {
       const ticket = await add(draft);
       setCreateOpen(false);
-      reset();
+      setSearch("");
+      changeFilter({view:"active",search:"",status:"",centerId:"",priority:"",category:""});
       setMessage(ticket.id + " creada y guardada en PostgreSQL.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo crear la solicitud.");
@@ -443,7 +444,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
               </span>
               <div>
                 <span>Total de solicitudes</span>
-                <strong>{own.length}</strong>
+                <strong>{summary?.total??"—"}</strong>
               </div>
               <small>Guardadas en PostgreSQL local</small>
             </div>
@@ -453,13 +454,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
               </span>
               <div>
                 <span>En atención</span>
-                <strong>
-                  {
-                    own.filter(
-                      (t) => !["Resuelto", "Cerrado"].includes(t.status),
-                    ).length
-                  }
-                </strong>
+                <strong>{summary?.active??"—"}</strong>
               </div>
               <small>Abiertas, en proceso o pendientes</small>
             </div>
@@ -469,13 +464,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
               </span>
               <div>
                 <span>Atendidas</span>
-                <strong>
-                  {
-                    own.filter((t) =>
-                      ["Resuelto", "Cerrado"].includes(t.status),
-                    ).length
-                  }
-                </strong>
+                <strong>{summary?.history??"—"}</strong>
               </div>
               <small>Resueltas o cerradas</small>
             </div>
@@ -488,7 +477,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
             <div>
               <h2 id="ticket-list-title">
                 {tech ? "Solicitudes autorizadas" : "Mis solicitudes"}
-                <span>{tech ? tickets.length : own.length}</span>
+                <span>{(view==="history"?summary?.history:summary?.active)??"—"}</span>
               </h2>
               <p>
                 {tech
@@ -502,10 +491,17 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                   <span />
                   {realtime === "live" ? "Tiempo real activo" : realtime === "reconnecting" ? "Reconectando" : "Conectando"}
                 </span>
-                <span className="view-label"><ClipboardList size={16} />Vista Kanban</span>
+                <span className="view-label"><ClipboardList size={16} />{view==="history"?"Vista historial":"Vista Kanban"}</span>
               </div>
             )}
           </div>
+          <div className="ticket-view-tabs" aria-label="Vista de solicitudes">
+            <Button variant={view==="active"?"default":"outline"} aria-pressed={view==="active"}
+              onClick={()=>changeFilter({view:"active",status:""})}>Trabajo activo <span>{summary?.active??"—"}</span></Button>
+            <Button variant={view==="history"?"default":"outline"} aria-pressed={view==="history"}
+              onClick={()=>changeFilter({view:"history",status:""})}>Historial <span>{summary?.history??"—"}</span></Button>
+          </div>
+          {summaryError&&<p role="alert" className="field-error">{summaryError}</p>}
           <div className="filters">
             <div className="search-field">
               <Search size={18} />
@@ -513,6 +509,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                 aria-label="Buscar solicitudes"
                 placeholder="Buscar por código o descripción…"
                 value={search}
+                maxLength={100}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
@@ -522,38 +519,41 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                   className="field filter-select"
                   aria-label="Filtrar por centro"
                   value={center}
-                  onChange={(e) => setCenter(e.target.value)}
+                  onChange={(e) => changeFilter({centerId:e.target.value})}
                 >
                   <option value="">Todos los centros</option>
-                  {[...new Set(tickets.map(ticket=>ticket.center))].map((c) => (
-                    <option key={c}>{c}</option>
+                  {centers.filter(c=>!access||access.scope!=="SEDE"||access.centerIds.includes(c.centerId)).map((c) => (
+                    <option key={c.centerId} value={c.centerId}>{c.name}</option>
                   ))}
                 </select>
                 <select
                   className="field filter-select"
                   aria-label="Filtrar por prioridad"
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
+                  onChange={(e) => changeFilter({priority:e.target.value as DemoTicket["priority"]|""})}
                 >
                   <option value="">Todas las prioridades</option>
                   {PRIORITIES.map((p) => (
                     <option key={p}>{p}</option>
                   ))}
                 </select>
+                <select className="field filter-select" aria-label="Filtrar por categoría" value={category}
+                  onChange={e=>changeFilter({category:e.target.value as Category|""})}>
+                  <option value="">Todas las categorías</option>{CATEGORIES.map(item=><option key={item}>{item}</option>)}
+                </select>
               </>
-            ) : (
+            ) : null}
               <select
                 className="field filter-select"
                 aria-label="Filtrar por estado"
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e) => changeFilter({status:e.target.value as TicketStatus|""})}
               >
                 <option value="">Todos los estados</option>
-                {STATUSES.map((s) => (
+                {viewStatuses.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </select>
-            )}
           </div>
           {tech&&!!technicians.length&&<div className="workload-strip" aria-label="Carga activa por técnico">
             {technicians.map(technician=><div key={technician.technicianId}>
@@ -563,7 +563,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
           </div>}
           {tech && (
             <div className="board-meta">
-              <span role="status">{visible.length} solicitudes visibles</span>
+              <span role="status">{visible.length} solicitudes en esta página · Página {page}</span>
             </div>
           )}
           {loading ? (
@@ -573,9 +573,9 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
               <p>{loadError}</p><Button variant="outline" onClick={() => void refresh()}>Reintentar</Button></div>
           ) : !visible.length ? (
             <Empty reset={reset} />
-          ) : tech ? (
+          ) : tech&&view==="active" ? (
             <div className="kanban" aria-label="Tablero Kanban" tabIndex={0}>
-              {STATUSES.map((s) => {
+              {activeStatuses.map((s) => {
                 const Icon = statusIcons[s];
                 const rows = visible.filter((t) => t.status === s);
                 return (
@@ -587,7 +587,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                     <div className="column-heading">
                       <Icon size={16} />
                       <h3>{s}</h3>
-                      <span>{rows.length}</span>
+                      <span>{summary?.byState[ticketStateKey[s]]??"—"}</span>
                     </div>
                     <div className="column-body">
                       {rows.map((ticket) => {
@@ -637,13 +637,22 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                         );
                       })}
                       {!rows.length && (
-                        <p className="column-empty">Sin solicitudes</p>
+                        <p className="column-empty">Sin solicitudes en esta página</p>
                       )}
                     </div>
                   </section>
                 );
               })}
             </div>
+          ) : tech ? (
+            <div className="history-table-wrap"><table className="history-table" aria-label="Historial de solicitudes">
+              <thead><tr><th>Solicitud</th><th>Estado</th><th>Prioridad</th><th>Registrada</th></tr></thead>
+              <tbody>{visible.map(ticket=><tr key={ticket.ticketId}><td>
+                <button className="history-ticket" data-ticket-id={ticket.id} onClick={e=>showDetail(ticket,e.currentTarget)}
+                  aria-label={"Ver "+ticket.id+": "+ticket.title}><strong>{ticket.id}</strong><span>{ticket.title}</span><small>{ticket.center} · {ticket.area}</small></button>
+              </td><td><Status status={ticket.status}/></td><td><Priority value={ticket.priority}/></td>
+                <td><time dateTime={ticket.createdAt}>{formatDate(ticket.createdAt)}</time></td></tr>)}</tbody>
+            </table></div>
           ) : (
             <div className="ticket-list">
               <div className="list-labels" aria-hidden="true">
@@ -687,10 +696,15 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
                 );
               })}
               <div className="list-footnote">
-                {visible.length} solicitudes locales · Vista solicitante
+                {visible.length} solicitudes en esta página · Vista solicitante
               </div>
             </div>
           )}
+          <nav className="ticket-pagination" aria-label="Paginación de solicitudes">
+            <Button variant="outline" disabled={page===1||fetching} onClick={()=>setListState(old=>({...old,page:old.page-1}))}>Anterior</Button>
+            <span>Página {page} · Hasta 25 solicitudes</span>
+            <Button variant="outline" disabled={!hasMore||fetching} onClick={()=>setListState(old=>({...old,page:old.page+1}))}>Siguiente</Button>
+          </nav>
         </section>
         {!tech && (
           <aside className="help-panel">
@@ -720,7 +734,7 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
         )}
       </div>
       <Dialog
-        open={!!detail}
+        open={!!selected}
         onOpenChange={(open) => {
           if (!open) setSelected(null);
         }}
@@ -736,6 +750,12 @@ export function TicketWorkspace({ mode,access,initialTicket,initialCenterId }: {
             trigger?.focus();
           }}
         >
+          {!detail&&<>
+            <DialogTitle>Detalle de solicitud</DialogTitle>
+            <DialogDescription>{detailLoading?"Cargando la solicitud…":detailError||"La solicitud no está disponible."}</DialogDescription>
+            {detailError&&<p role="alert">{detailError}</p>}
+            <Button variant="outline" onClick={()=>setSelected(null)}>Cerrar detalle</Button>
+          </>}
           {detail && (
             <>
               <div className="dialog-heading">

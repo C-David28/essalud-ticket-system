@@ -23,7 +23,7 @@
 | 4.5 | Modelo V1, versionamiento y Model Card | Artefacto generado, carga/persistencia verificadas, Model Card; ver validación 4.5 |
 | 4.6 | Servicio independiente de inferencia | HTTP probado; Docker y Actions confirmados por usuario el 2026-10-10 |
 | 4.7 | Clasificación asistida en NestJS y Next.js | Integración y fallback verificados por HTTP/PostgreSQL reales; corregido Origin Docker; ver validación 4.7 |
-| 4.8 | Fallback, historial paginado y regresión | Pendiente |
+| 4.8 | Fallback, historial paginado y regresión | Implementada; suites locales aprobadas; validación Docker/HTTP y CI pendientes; ver validación 4.8 |
 | 4.9 | Alternativa de despliegue completo, previa aprobación | Pendiente |
 | 5.1 | Motor configurable de SLA y prioridades | Pendiente |
 | 5.2 | Panel operativo de técnicos y supervisores | Pendiente |

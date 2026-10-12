@@ -780,6 +780,11 @@ h1 {
   scrollbar-color: #c1d1dc transparent;
   min-height: 440px;
 }
+.ticket-view-tabs{display:flex;gap:9px;padding:0 23px 18px;flex-wrap:wrap}.ticket-view-tabs button span{font-size:11px;opacity:.85}
+.ticket-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 23px;border-top:1px solid var(--border);font-size:12px;color:var(--secondary-text)}
+.history-table-wrap{overflow-x:auto;padding:0 23px 20px}.history-table{border-collapse:collapse;width:100%;min-width:620px;text-align:left;font-size:12px}.history-table th{font-size:10px;letter-spacing:.6px;color:var(--secondary-text);padding:12px}.history-table td{border-top:1px solid var(--border);padding:12px}.history-ticket{display:grid;gap:4px;text-align:left;width:100%;background:none;border:0;cursor:pointer;color:var(--foreground)}.history-ticket strong{font-size:11px;color:var(--primary)}.history-ticket span{font-weight:650;font-size:13px}.history-ticket small{color:var(--secondary-text)}.history-ticket:hover span{text-decoration:underline}.history-ticket:focus-visible{outline:2px solid var(--primary);outline-offset:5px;border-radius:4px}
+.map-center-tickets{margin-top:15px}.map-center-tickets .ticket-pagination{padding:12px 0 0;font-size:10px}.map-center-tickets .ticket-pagination button{padding:7px 10px;min-height:32px}.site-stats{grid-template-columns:repeat(5,1fr)}
+@media(max-width:700px){.ticket-pagination{padding:14px 16px;flex-wrap:wrap}.ticket-pagination span{font-size:10px}.ticket-view-tabs{padding:0 16px 16px}}
 .kanban-column {
   flex: 1 0 230px;
   min-width: 230px;
@@ -1775,3 +1780,6 @@ h1 {
 @media(max-width:700px){.map-page{padding:26px 16px}.map-summary{grid-template-columns:1fr;gap:9px}.map-canvas-wrap,.map-disabled,.map-empty{margin:0 16px 18px}.map-site-grid{padding:0 16px 18px}.map-canvas-wrap{height:380px}}
 .map-toolbar{display:flex;justify-content:space-between;align-items:end;gap:18px}.map-filters{display:flex;gap:9px}.map-filters .field{min-width:170px}.map-site-grid article.selected{border-color:#087e82;box-shadow:0 0 0 3px rgba(8,126,130,.12)}.site-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}.site-stats span{background:#f3f7f8;border-radius:6px;padding:7px;font-size:9px;color:#647987}.site-stats b{display:block;font-size:16px;color:#173244}.map-site-grid li a{display:grid;color:inherit;text-decoration:none}.map-site-grid li a:hover strong{color:#087e82}.site-ticket-link,.map-info-link,.map-detail-link{display:inline-flex;align-items:center;gap:6px;color:#087478;font-size:11px;font-weight:750;text-decoration:none;margin-top:13px}.map-info-link{font-size:12px}.demo-data-badge{display:inline-flex;width:max-content;font-size:9px;font-weight:800;letter-spacing:.5px;color:#785b00;background:#fff4c2;border-radius:999px;padding:4px 7px}.map-detail-link{font-size:13px;margin:0}
 @media(max-width:700px){.map-toolbar{align-items:stretch;flex-direction:column}.map-filters{flex-direction:column}.site-stats{grid-template-columns:repeat(2,1fr)}}
+/* Paged geographic details share the aggregate cards without widening them. */
+.map-site-grid .site-stats{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:700px){.map-site-grid .site-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -4,17 +4,21 @@ import userEvent from "@testing-library/user-event";
 import { Providers } from "@/components/providers";
 import { TicketWorkspace } from "@/components/ticket-workspace";
 import { initialTickets, makeDemoTicket } from "@/lib/demo-tickets";
+import { authorizedTickets, serverPage, serverSummary } from "./ticket-server-fixture";
 
 const api = vi.hoisted(() => ({
-  listTickets: vi.fn(), listTechnicians: vi.fn(), createTicket: vi.fn(), transitionTicket: vi.fn(),
+  listTicketPage: vi.fn(), getTicketSummary: vi.fn(), getTicket: vi.fn(), listTechnicians: vi.fn(), createTicket: vi.fn(), transitionTicket: vi.fn(),
   assignTicket: vi.fn(), autoAssignTicket: vi.fn(), getPublicOrganizationCatalog: vi.fn(),
 }));
-vi.mock("@/lib/ticket-client", () => api);
+vi.mock("@/lib/ticket-client", async importOriginal => ({...await importOriginal<typeof import("@/lib/ticket-client")>(), ...api}));
 vi.mock("@/lib/organization-client", () => ({ getPublicOrganizationCatalog: api.getPublicOrganizationCatalog }));
 class FakeEventSource { addEventListener() {} close() {} }
 const fetchMock = vi.fn<typeof fetch>();
 beforeEach(() => {
-  api.listTickets.mockReset().mockResolvedValue(initialTickets());
+  const server=initialTickets();
+  api.listTicketPage.mockReset().mockImplementation(async(filters,page,pageSize,audience)=>serverPage(server,filters,page,pageSize,audience));
+  api.getTicketSummary.mockReset().mockImplementation(async(filters,audience)=>serverSummary(server,filters,audience));
+  api.getTicket.mockReset().mockImplementation(async(id,audience)=>authorizedTickets(server,audience).find(ticket=>ticket.ticketId===id));
   api.listTechnicians.mockReset().mockResolvedValue([]);
   api.createTicket.mockReset().mockImplementation(async (draft) => makeDemoTicket(draft, "NEW", "2026-10-10T12:00:00Z"));
   api.getPublicOrganizationCatalog.mockReset().mockResolvedValue({

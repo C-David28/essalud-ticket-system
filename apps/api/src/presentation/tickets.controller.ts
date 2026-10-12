@@ -3,7 +3,7 @@ import { ApiOperation, ApiProduces, ApiResponse, ApiSecurity, ApiTags } from '@n
 import { interval, merge, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Tickets } from '../application/tickets';
-import { AssignTicketDto,CreateTicketDto, UpdateTicketDto, TicketQuery, TransitionTicketDto } from './tickets.dto';
+import { AssignTicketDto,CreateTicketDto, UpdateTicketDto, TicketFilterQuery, TicketQuery, TransitionTicketDto } from './tickets.dto';
 import { LOCAL_TICKETS, LocalTicketsConfig, LocalTicketsGuard } from './local-tickets.guard';
 import { AccessGuard,AccessRequest,PermissionGuard,RequirePermission } from './access.guard';
 @ApiTags('Tickets locales')
@@ -24,7 +24,14 @@ export class TicketsController {
   create(@Req() req: AccessRequest,@Body() body: CreateTicketDto) { return this.tickets.create(this.context(req),body); }
   @RequirePermission('tickets:list')
   @Get() @ApiResponse({status:200,description:'items, page, pageSize y hasMore'})
-  list(@Req() req: AccessRequest,@Query() query: TicketQuery) { return this.tickets.list(this.context(req),query.page,query.pageSize); }
+  list(@Req() req: AccessRequest,@Query() query: TicketQuery) {
+    const {page,pageSize,...filters}=query;
+    return this.tickets.list(this.context(req),page,pageSize,filters);
+  }
+  @RequirePermission('tickets:list')
+  @Get('resumen') @ApiOperation({summary:'Contar tickets visibles con los mismos filtros del listado'})
+  @ApiResponse({status:200,description:'Totales, estados, prioridades alta/critica y resumen por sede'})
+  summary(@Req() req: AccessRequest,@Query() query: TicketFilterQuery) { return this.tickets.summary(this.context(req),query); }
   @RequirePermission('tickets:technicians')
   @Get('asignacion/tecnicos') @ApiOperation({summary:'Listar técnicos activos con carga y capacidad disponibles'})
   technicians(@Req() req:AccessRequest) {return this.tickets.technicians(this.context(req));}

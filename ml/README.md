@@ -1,6 +1,6 @@
 # Machine Learning — clasificación asistida de incidencias
 
-Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con Colab/Actions confirmados por el usuario. **4.5 publica Model V1**, pipeline completo, Model Card y carga verificada. **4.6 incorpora el servicio independiente**, con Docker y Actions confirmados por el usuario el 2026-10-10. **4.7 integra la asistencia en NestJS/Next.js**; pruebas locales aprobadas, comprobación completa Docker pendiente. Ver validación 4.7.
+Estado: diseño 4.1, Dataset V1 de 4.2 y preparación 4.3 confirmados. **Experimento 4.4 ejecutado localmente**, con Colab/Actions confirmados por el usuario. **4.5 publica Model V1**, pipeline completo, Model Card y carga verificada. **4.6 incorpora el servicio independiente**, con Docker y Actions confirmados por el usuario el 2026-10-10. **4.7 integra la asistencia en NestJS/Next.js**, con HTTP real y fallback verificados. **4.8 añade robustez y consultas paginadas de trabajo activo/historial**; el resultado de cada comprobación se registra en su validación, sin asumir el estado de Actions.
 
 El modelo recibe únicamente título y descripción en español para sugerir una categoría existente. La persona decide la categoría final. Crear y gestionar tickets continúa siendo posible sin ML.
 
@@ -25,6 +25,7 @@ El modelo recibe únicamente título y descripción en español para sugerir una
 - [Guía de publicación/reproducción 4.5](docs/COLAB-4.5.md), [notebook](notebooks/stage-4.5-model-v1.ipynb) y [validación 4.5](docs/VALIDATION-4.5.md).
 - [Servicio de inferencia 4.6, comandos CMD y demostración](docs/SUBETAPA-4.6.md) y [validación 4.6](docs/VALIDATION-4.6.md).
 - [Integración asistida 4.7 y guía Docker](docs/SUBETAPA-4.7.md), [política externa de abstención](docs/ASSISTANCE-POLICY-4.7.md) y [validación/evidencias](docs/VALIDATION-4.7.md).
+- [Robustez, historial y regresión 4.8](docs/SUBETAPA-4.8.md), [validación y evidencias](docs/VALIDATION-4.8.md).
 - [Resultados locales medidos](experiments/experiment-v1.0.0/local-2026-10-07/REPORT.md), [errores observados](experiments/experiment-v1.0.0/local-2026-10-07/ERROR-ANALYSIS.md) y [validación 4.4](docs/VALIDATION-4.4.md).
 
 ## Separación del sistema operativo
@@ -62,6 +63,8 @@ Resultado local: LinearSVC C=1, Macro F1 medio CV 0.8690; prueba sintética fina
 En 4.7 se integra mediante un puerto de aplicación de NestJS y un adaptador HTTP. El navegador llama a Next.js/NestJS y el token ML permanece en Nest. Se reutilizan los controles de acceso/tenant actuales. El servicio no recibe sede, prioridad, identidad ni datos operativos y no necesita PostgreSQL o Redis. `ml:integration:setup` genera el overlay local; `ml:integration:up` inicia el conjunto existente; `ml:integration:check` comprueba predicción, abstención, decisión humana y persistencia auditada. `ml:policy:check` reproduce la regla empírica de margen ≥−0.06 desde desarrollo OOF, sin reentrenar ni reabrir la prueba final.
 
 El [roadmap general](../docs/ROADMAP.md) desplaza SLA y Node-RED a Etapa 5 y la evolución Enterprise a Etapa 6. No se implementan en esta etapa.
+
+En 4.8 el tablero consulta páginas de 25 tickets y distingue Trabajo activo de Historial. Los filtros y resúmenes se calculan dentro del alcance autorizado en PostgreSQL; el mapa utiliza agregados, no la primera página como total. El detalle se consulta por UUID. SSE invalida página, resumen y detalle; caché y mutaciones se separan por principal. `ml:robustness:check` verifica decisión manual, persistencia, auditoría, filtros, resolución, reapertura y cierre con asistencia disponible, detenida o desactivada. Los fixtures de más de 100 tickets pertenecen únicamente al entorno de integración desechable; no al dataset ML ni a la base operativa. No se requieren migraciones, seeds ni reentrenamiento para activar esta entrega.
 
 Modelo 4.5: `npm run ml:model:setup` prepara Python 3.12 en `ml/outputs/model-environment/.venv`; `ml:model:check` verifica la publicación aprobada y ejecuta una predicción local; `ml:model:test` verifica carga, integridad, límites e independencia del holdout. `ml:model:rebuild` crea una reconstrucción separada en outputs, sin reemplazar ni aprobar automáticamente Model V1. `ml:model:notebook:check` mantiene limpio/sincronizado el notebook. No requiere Docker, PostgreSQL, Redis ni credenciales.
 

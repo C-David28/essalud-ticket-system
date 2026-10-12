@@ -68,10 +68,12 @@ function mapTicket(ticket: ApiTicket): DemoTicket {
   };
 }
 
-async function api<T>(path = "", init?: RequestInit, conflictMessage="La transición no está permitida desde el estado actual."): Promise<T> {
+export type TicketAudience = "public" | "staff";
+async function api<T>(path = "", init?: RequestInit, conflictMessage="La transición no está permitida desde el estado actual.", audience: TicketAudience = "staff"): Promise<T> {
   const response = await fetch("/api/tickets" + path, {
     ...init,
-    headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+    headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...(audience === "public" ? { "X-Ticket-Audience": "public" } : {}) },
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) {
@@ -81,19 +83,56 @@ async function api<T>(path = "", init?: RequestInit, conflictMessage="La transic
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
+export type TicketView = "all" | "active" | "history";
+export type TicketFilters = { view?: TicketView; search?: string; status?: TicketStatus | "";
+  priority?: DemoTicket["priority"] | ""; category?: DemoTicket["category"] | ""; centerId?: string };
+export type TicketPage = { items: DemoTicket[]; page: number; pageSize: number; hasMore: boolean };
+export type TicketStateCounts = Record<ApiTicket["estado"], number>;
+export type TicketCenterSummary = { centerId: string; total: number; byState: TicketStateCounts; priority: number };
+export type TicketSummary = { total: number; active: number; history: number; byState: TicketStateCounts;
+  priority: number; centers: TicketCenterSummary[] };
+export const ticketStateKey = statusToApi;
+export const isTicketId = (value: string) => /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
+
+function filterParams(filters: TicketFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.view) params.set("view", filters.view);
+  const search = filters.search?.trim().slice(0, 100);
+  if (search) params.set("search", search);
+  if (filters.status) params.set("estado", statusToApi[filters.status]);
+  if (filters.priority) params.set("prioridad", priorityToApi[filters.priority]);
+  if (filters.category) params.set("categoria", categoryToApi[filters.category]);
+  if (filters.centerId) params.set("centroAsistencialId", filters.centerId);
+  return params;
+}
+export async function listTicketPage(filters: TicketFilters = {}, page = 1, pageSize = 25, audience: TicketAudience = "staff"): Promise<TicketPage> {
+  const params = filterParams(filters);
+  params.set("page", String(Math.max(1, Math.floor(page))));
+  params.set("pageSize", String(Math.max(1, Math.min(100, Math.floor(pageSize)))));
+  const result = await api<Omit<TicketPage, "items"> & { items: ApiTicket[] }>("?" + params.toString(), undefined, undefined, audience);
+  return { ...result, items: result.items.map(mapTicket) };
+}
+export function getTicketSummary(filters: TicketFilters = {}, audience: TicketAudience = "staff"): Promise<TicketSummary> {
+  const params = filterParams(filters);
+  return api<TicketSummary>("/resumen" + (params.size ? "?" + params.toString() : ""), undefined, undefined, audience);
+}
+export async function getTicket(ticketId: string, audience: TicketAudience = "staff"): Promise<DemoTicket> {
+  if (!isTicketId(ticketId)) throw new Error("El código de detalle no es válido.");
+  return mapTicket(await api<ApiTicket>("/" + encodeURIComponent(ticketId), undefined, undefined, audience));
+}
+// A bounded compatibility helper; interactive views use listTicketPage explicitly.
 export async function listTickets(): Promise<DemoTicket[]> {
-  const page = await api<{ items: ApiTicket[] }>("?page=1&pageSize=100");
-  return page.items.map(mapTicket);
+  return (await listTicketPage()).items;
 }
 export function listTechnicians():Promise<Technician[]> {return api<Technician[]>("/asignacion/tecnicos");}
-export async function createTicket(draft: TicketDraft): Promise<DemoTicket> {
+export async function createTicket(draft: TicketDraft, audience: TicketAudience = "staff"): Promise<DemoTicket> {
   if(!draft.centerId||!draft.areaId) throw new Error("Selecciona una sede y un área válidas.");
   const result = await api<ApiTicket>("", {
     method: "POST",
     body: JSON.stringify({titulo:draft.title,descripcion:draft.description,
       categoria:categoryToApi[draft.category],prioridad:priorityToApi[draft.priority],
       centroAsistencialId:draft.centerId,areaId:draft.areaId}),
-  });
+  }, undefined, audience);
   return mapTicket(result);
 }
 export async function transitionTicket(ticketId:string,status:TicketStatus,reason:string):Promise<DemoTicket> {

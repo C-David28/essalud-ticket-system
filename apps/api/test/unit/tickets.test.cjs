@@ -17,9 +17,11 @@ const env={NODE_ENV:'test',DATABASE_URL:'postgresql://runtime:example@localhost/
 const admin={authenticated:true,redAsistencialId:env.TICKETS_LOCAL_RED_ID,userId:env.TICKETS_LOCAL_USER_ID,displayName:'Administrador demo',
  roles:['ADMIN_GCTIC'],scope:'NACIONAL',centerIds:[],permissions:['tickets:create','tickets:list','tickets:read','tickets:update','tickets:transition','tickets:history','tickets:assign','tickets:technicians','tickets:delete','tickets:events','organization:read']};
 const body={centroAsistencialId:randomUUID(),areaId:randomUUID(),titulo:'Ticket de prueba',descripcion:'Descripcion suficientemente larga',categoria:'SOPORTE',prioridad:'MEDIA'};
-async function fixture(t){
+async function fixture(t,principal=admin){
  const calls=[];
- const service={create:async(c,b)=>{calls.push(c);return {...b,codigo:'INC-2026-0001'};},list:async(c,p,size)=>({items:[],page:p,pageSize:size,hasMore:false}),
+ const service={create:async(c,b)=>{calls.push(c);return {...b,codigo:'INC-2026-0001'};},list:async(c,p,size,filters)=>{calls.push({operation:'list',context:c,filters});return {items:[],page:p,pageSize:size,hasMore:false};},
+ summary:async(c,filters)=>{calls.push({operation:'summary',context:c,filters});return {total:0,active:0,history:0,priority:0,
+  byState:{ABIERTO:0,EN_PROCESO:0,PENDIENTE:0,RESUELTO:0,CERRADO:0},centers:[]};},
  get:async()=>{throw new TicketFailure('NOT_FOUND');},update:async(c,id,b)=>{if(!Object.keys(b).length)throw new TicketFailure('INVALID');return b;},
  transition:async(c,id,state,reason)=>{calls.push({state,reason});if(state==='CERRADO')throw new TicketFailure('CONFLICT');return {estado:state};},
  history:async()=>[{estadoAnterior:null,estadoNuevo:'ABIERTO',motivo:'Ticket creado'}],delete:async()=>{},
@@ -32,7 +34,7 @@ async function fixture(t){
  const mod=await Test.createTestingModule({imports:[AppModule.register(config)]}).overrideProvider(Database).useValue({check:async()=>true})
  .overrideProvider(RedisProbe).useValue({check:async()=>true})
  .overrideProvider(RedisTicketEvents).useValue({publish:async()=>{},subscribe:()=>()=>{}})
- .overrideProvider(ACCESS_TOKEN).useValue({verify:()=>admin,issue:()=>''})
+ .overrideProvider(ACCESS_TOKEN).useValue({verify:()=>principal,issue:()=>''})
  .overrideProvider(Tickets).useValue(service).compile();
  const app=mod.createNestApplication({logger:false,bodyParser:false});configureHttp(app,config,false);await app.init();t.after(()=>app.close());
  const raw=request(app.getHttpServer());
@@ -75,12 +77,42 @@ test('PATCH valida null, vacio e identidad; DELETE devuelve 204; ajeno 404',asyn
 test('paginacion limitada y Swagger con cinco operaciones y clave local',async t=>{
  const {http}=await fixture(t);
  const page=await http.get('/api/v1/tickets').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(200);assert.equal(page.body.pageSize,20);
- for(const q of ['page=0','pageSize=101','pageSize=1.5','page=abc','redAsistencialId='+randomUUID()])
+ for(const q of ['page=0','page=100001','pageSize=101','pageSize=1.5','page=abc','redAsistencialId='+randomUUID()])
  await http.get('/api/v1/tickets?'+q).set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(400);
  const spec=(await http.get('/docs-json').expect(200)).body;
  assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets']).sort(),['get','post']);
  assert.deepEqual(Object.keys(spec.paths['/api/v1/tickets/{id}']).sort(),['delete','get','patch']);
  assert.equal(spec.components.securitySchemes['local-key'].name,'X-Local-Api-Key');
+});
+
+test('listado y resumen validan los filtros y normalizan la busqueda; all es compatible por defecto',async t=>{
+ const {http,calls}=await fixture(t),headers={'X-Local-Api-Key':env.TICKETS_LOCAL_KEY};
+ await http.get('/api/v1/tickets').set(headers).expect(200);
+ assert.equal(calls.at(-1).filters.view,'all');
+ const filters={view:'active',search:'  Servidor Central  ',estado:'PENDIENTE',prioridad:'CRITICA',categoria:'REDES',centroAsistencialId:body.centroAsistencialId};
+ for(const url of ['/api/v1/tickets','/api/v1/tickets/resumen']) {
+  await http.get(url).set(headers).query(filters).expect(200);
+  const accepted=calls.at(-1).filters;
+  for(const [key,value] of Object.entries(filters))assert.equal(accepted[key],key==='search'?value.trim():value);
+  await http.get(url).set(headers).query({search:'   '}).expect(200);
+  assert.equal(calls.at(-1).filters.search,undefined);
+  for(const invalid of [{view:'pending'},{view:''},{search:'x'.repeat(101)},{estado:'ARCHIVADO'},{prioridad:'URGENTE'},
+    {categoria:'OTRA'},{centroAsistencialId:'invalid'},{solicitanteId:randomUUID()},{search:['uno','dos']}])
+   await http.get(url).set(headers).query(invalid).expect(400);
+ }
+ await http.get('/api/v1/tickets?page=100000&pageSize=100').set(headers).expect(200);
+ const summary=(await http.get('/api/v1/tickets/resumen').set(headers).expect(200)).body;
+ assert.deepEqual(summary,{total:0,active:0,history:0,priority:0,byState:{ABIERTO:0,EN_PROCESO:0,PENDIENTE:0,RESUELTO:0,CERRADO:0},centers:[]});
+ assert.equal(calls.at(-1).operation,'summary');
+ await http.get('/api/v1/tickets/resumen?page=2').set(headers).expect(400);
+ const spec=(await http.get('/docs-json').expect(200)).body;
+ assert.ok(spec.paths['/api/v1/tickets/resumen'].get);
+});
+
+test('resumen exige clave local y permiso tickets:list',async t=>{
+ const {http}=await fixture(t,{...admin,permissions:['tickets:read']});
+ await http.get('/api/v1/tickets/resumen').expect(401);
+ await http.get('/api/v1/tickets/resumen').set('X-Local-Api-Key',env.TICKETS_LOCAL_KEY).expect(403);
 });
 test('estado exige motivo, valida catalogo y convierte transicion invalida en 409',async t=>{
  const {http,calls}=await fixture(t),id=randomUUID(),url='/api/v1/tickets/'+id+'/estado';
@@ -176,4 +208,47 @@ test('repositorio limita listados por solicitante y por sedes autorizadas',async
   {redAsistencialId:env.TICKETS_LOCAL_RED_ID,centroAsistencialId:{in:[centerA,centerB]}},
   {redAsistencialId:env.TICKETS_LOCAL_RED_ID},
  ]);
+});
+
+test('listado intersecta visibilidad, vista y filtros; conserva orden y pagina del servidor',async()=>{
+ const queries=[],centerId=randomUUID(),outside=randomUUID(),rows=Array.from({length:3},()=>({ticketId:randomUUID()}));
+ const repository=new PrismaTicketRepository({run:async(_context,operation)=>operation({ticket:{findMany:async query=>{queries.push(query);return rows;}}})});
+ const context={redAsistencialId:env.TICKETS_LOCAL_RED_ID,userId:env.TICKETS_LOCAL_USER_ID,requestId:randomUUID(),
+  principal:{...admin,scope:'SEDE',centerIds:[centerId]}};
+ const filters={view:'active',estado:'CERRADO',prioridad:'CRITICA',categoria:'REDES',centroAsistencialId:outside,search:"  %_' OR 1=1  "};
+ const result=await repository.list(context,3,2,filters),query=queries[0];
+ assert.deepEqual(query.where.AND.slice(0,6),[
+  {redAsistencialId:context.redAsistencialId,centroAsistencialId:{in:[centerId]}},
+  {estado:{in:['ABIERTO','EN_PROCESO','PENDIENTE']}},{estado:'CERRADO'},
+  {prioridad:'CRITICA'},{categoria:'REDES'},{centroAsistencialId:outside},
+ ]);
+ assert.deepEqual(query.where.AND[6].OR,['codigo','titulo','descripcion'].map(field=>({[field]:{contains:"\\%\\_' OR 1=1",mode:'insensitive'}})));
+ assert.deepEqual(query.orderBy,[{createdAt:'desc'},{ticketId:'desc'}]);assert.equal(query.skip,4);assert.equal(query.take,3);
+ assert.deepEqual(result.items.map(item=>item.ticketId),rows.slice(0,2).map(row=>row.ticketId));
+ assert.deepEqual({page:result.page,pageSize:result.pageSize,hasMore:result.hasMore},{page:3,pageSize:2,hasMore:true});
+});
+
+test('resumen agrega grupos en base de datos y usa la misma interseccion de filtros que listado',async()=>{
+ const queries=[],centerA='00000000-0000-4000-8000-000000000001',centerB='00000000-0000-4000-8000-000000000002';
+ let groups=[
+  {centroAsistencialId:centerB,estado:'CERRADO',prioridad:'CRITICA',_count:{_all:2}},
+  {centroAsistencialId:centerA,estado:'ABIERTO',prioridad:'ALTA',_count:{_all:101}},
+  {centroAsistencialId:centerA,estado:'PENDIENTE',prioridad:'MEDIA',_count:{_all:3}},
+  {centroAsistencialId:centerA,estado:'RESUELTO',prioridad:'BAJA',_count:{_all:4}},
+ ];
+ const tx={ticket:{findMany:async query=>{queries.push({operation:'list',...query});return[];},groupBy:async query=>{queries.push({operation:'summary',...query});return groups;}}};
+ const repository=new PrismaTicketRepository({run:async(_context,operation)=>operation(tx)}),context={redAsistencialId:env.TICKETS_LOCAL_RED_ID,
+  userId:env.TICKETS_LOCAL_USER_ID,requestId:randomUUID(),principal:{...admin,scope:'PROPIO'}};
+ const filters={view:'all',search:'aguja'};
+ await repository.list(context,1,20,filters);const summary=await repository.summary(context,filters);
+ assert.deepEqual(queries[0].where,queries[1].where);
+ assert.deepEqual(queries[1].by,['centroAsistencialId','estado','prioridad']);assert.deepEqual(queries[1]._count,{_all:true});
+ assert.equal(queries[1].take,undefined);assert.equal(queries[1].include,undefined);
+ assert.deepEqual(summary,{total:110,active:104,history:6,priority:103,
+  byState:{ABIERTO:101,EN_PROCESO:0,PENDIENTE:3,RESUELTO:4,CERRADO:2},centers:[
+   {centerId:centerA,total:108,priority:101,byState:{ABIERTO:101,EN_PROCESO:0,PENDIENTE:3,RESUELTO:4,CERRADO:0}},
+   {centerId:centerB,total:2,priority:2,byState:{ABIERTO:0,EN_PROCESO:0,PENDIENTE:0,RESUELTO:0,CERRADO:2}},
+  ]});
+ groups=[];assert.deepEqual(await repository.summary(context),{total:0,active:0,history:0,priority:0,
+  byState:{ABIERTO:0,EN_PROCESO:0,PENDIENTE:0,RESUELTO:0,CERRADO:0},centers:[]});
 });

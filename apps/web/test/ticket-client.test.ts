@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { assignTicket, autoAssignTicket, createTicket, listTechnicians, listTickets, transitionTicket } from "../src/lib/ticket-client";
+import { assignTicket, autoAssignTicket, createTicket, getTicket, getTicketSummary, listTechnicians, listTicketPage, listTickets, transitionTicket } from "../src/lib/ticket-client";
 import { CATEGORIES, CENTERS, type TicketDraft } from "../src/lib/demo-tickets";
 
 const apiTicket={ticketId:"11111111-1111-4111-8111-111111111111",codigo:"INC-2026-0001",
@@ -9,10 +9,28 @@ const apiTicket={ticketId:"11111111-1111-4111-8111-111111111111",codigo:"INC-202
  centroNombre:"Hospital DEMO",areaNombre:"TI DEMO",isDemo:true,assignedTo:null,assignedAt:null,assignmentMode:null};
 afterEach(()=>vi.unstubAllGlobals());
 it("mapea el contrato del API al tablero",async()=>{
- const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({items:[apiTicket]}));vi.stubGlobal("fetch",fetcher);
+ const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({items:[apiTicket],page:1,pageSize:25,hasMore:false}));vi.stubGlobal("fetch",fetcher);
  const tickets=await listTickets();expect(tickets[0]).toMatchObject({ticketId:apiTicket.ticketId,id:"INC-2026-0001",
   category:"Redes y conectividad",priority:"Crítica",status:"Abierto"});
- expect(String(fetcher.mock.calls[0][0])).toBe("/api/tickets?page=1&pageSize=100");
+ expect(String(fetcher.mock.calls[0][0])).toBe("/api/tickets?page=1&pageSize=25");
+});
+it("serializa filtros del servidor, página acotada, resumen y detalle directo",async()=>{
+ const summary={total:142,active:135,history:7,priority:90,byState:{ABIERTO:135,EN_PROCESO:0,PENDIENTE:0,RESUELTO:7,CERRADO:0},centers:[]};
+ const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({items:[apiTicket],page:6,pageSize:25,hasMore:true}))
+  .mockResolvedValueOnce(Response.json(summary)).mockResolvedValueOnce(Response.json(apiTicket));vi.stubGlobal("fetch",fetcher);
+ const filters={view:"active" as const,search:" x".repeat(70),status:"Abierto" as const,priority:"Crítica" as const,
+  category:"Redes y conectividad" as const,centerId:apiTicket.centroAsistencialId};
+ expect(await listTicketPage(filters,6,25,"public")).toMatchObject({page:6,pageSize:25,hasMore:true,items:[{id:apiTicket.codigo}]});
+ const url=new URL(String(fetcher.mock.calls[0][0]),"http://localhost");
+ expect(url.searchParams.get("search")).toHaveLength(100);expect(url.searchParams.get("estado")).toBe("ABIERTO");
+ expect(url.searchParams.get("prioridad")).toBe("CRITICA");expect(url.searchParams.get("categoria")).toBe("REDES");
+ expect(url.searchParams.get("centroAsistencialId")).toBe(apiTicket.centroAsistencialId);
+ expect(fetcher.mock.calls[0][1]?.headers).toMatchObject({"X-Ticket-Audience":"public"});
+ expect(await getTicketSummary({view:"all"})).toEqual(summary);
+ expect(String(fetcher.mock.calls[1][0])).toBe("/api/tickets/resumen?view=all");
+ expect((await getTicket(apiTicket.ticketId)).ticketId).toBe(apiTicket.ticketId);
+ expect(String(fetcher.mock.calls[2][0])).toBe("/api/tickets/"+apiTicket.ticketId);
+ await expect(getTicket("INC-2026-0001")).rejects.toThrow("no es válido");expect(fetcher).toHaveBeenCalledTimes(3);
 });
 it("crea y transiciona usando nombres del dominio",async()=>{
  const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(apiTicket,{status:201}))

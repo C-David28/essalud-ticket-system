@@ -218,6 +218,45 @@ test('HTTP ML: timeout cubre cuerpo lento despues de recibir cabeceras',async t=
   assert.ok(delayedBodyStarted);assert.ok(performance.now()-started<1000);assertRedactedWarnings(warnings,1);
 });
 
+test('HTTP ML: cancela respuestas rechazadas y overflow antes del timeout sin leer detalles privados',async t=>{
+  const warnings=collectWarnings(t);
+  const responses=[{status:503,type:'application/json',body:'{"private":"response fixture"'},
+    {status:200,type:'text/plain',body:'response fixture'},
+    {status:200,type:undefined,body:'response fixture'},
+    {status:200,type:'application/json',body:'x'.repeat(4097)}];
+  for(const response of responses){
+    let notifyClosed;
+    const closed=new Promise(resolve=>{notifyClosed=()=>resolve(true);});
+    const server=await mockMlServer(t,(_req,res)=>{
+      res.once('close',notifyClosed);
+      res.writeHead(response.status,response.type?{'Content-Type':response.type}:{});
+      res.write(response.body); // Keep streaming: rejecting must release the connection itself.
+    });
+    await assert.rejects(new HttpCategoryClassifier(classifierConfig(server.baseUrl,3000)).classify(input),{message:'ML_UNAVAILABLE'});
+    let deadline;
+    try {
+      assert.equal(await Promise.race([closed,new Promise(resolve=>{deadline=setTimeout(()=>resolve(false),300);})]),true,
+        'rejected response must be closed before its timeout');
+    } finally {clearTimeout(deadline);}
+    assert.equal(server.requests.length,1);
+  }
+  assertRedactedWarnings(warnings,responses.length);
+});
+
+test('HTTP ML: transporte cortado antes o durante el cuerpo se vuelve unavailable con logs controlados',async t=>{
+  const warnings=collectWarnings(t);let index=0;
+  const server=await mockMlServer(t,(_req,res,_captured,later)=>{
+    if(index++===0){res.destroy();return;}
+    res.writeHead(200,{'Content-Type':'application/json'});
+    res.write('{"categoria_sugerida":"SOPORTE"');
+    later(()=>res.destroy(),20);
+  });
+  const classifier=new HttpCategoryClassifier(classifierConfig(server.baseUrl));
+  for(let attempt=0;attempt<2;attempt++)
+    await assert.rejects(classifier.classify(input),{message:'ML_UNAVAILABLE'});
+  assert.equal(server.requests.length,2);assertRedactedWarnings(warnings,2);
+});
+
 test('ruta asistencia: exige clave local y sesion valida antes de clasificar',async t=>{
   const {http,assistanceCalls,creates,state}=await fixture(t);
   await http.post(route).send(input).expect(401);

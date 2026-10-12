@@ -83,7 +83,7 @@ SELECT json_build_object(
   return data;
 }
 
-export async function runIntegrationCheck({ root = projectRoot, env = process.env, unavailable = false, disabled = false,
+export async function runIntegrationCheck({ root = projectRoot, env = process.env, unavailable = false, disabled = false, verifyHistory = false,
   fetcher = fetch, postgresProbe = postgresTicketProbe, idFactory = randomUUID } = {}) {
   let phase = 'configuración local', cookie = '', ticketId = null, ticketInput = null;
   let cleanupDone = false, failure = null, receipt = null;
@@ -99,7 +99,10 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     return response;
   }
   async function expectStatus(response, expectedStatus, suggestion = false) {
-    if (response.status === expectedStatus) return;
+    if (response.status === expectedStatus) {
+      if ([204, 404].includes(expectedStatus)) void response.body?.cancel().catch(() => {});
+      return;
+    }
     let code = response.status === 401 ? 'AUTH_REJECTED' : response.status === 403 ? 'PERMISSION_REJECTED' :
       [400, 422].includes(response.status) ? 'INVALID_INPUT' : suggestion && response.status === 503 ? 'ML_UNAVAILABLE' : 'UNEXPECTED_CONTRACT';
     if (suggestion && response.status === 403) {
@@ -108,11 +111,12 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
         if ((await response.json())?.message === 'Origen no permitido.') code = 'ORIGIN_REJECTED';
       } catch { /* A malformed rejection stays a permission failure. */ }
     }
+    void response.body?.cancel().catch(() => {});
     throw new IntegrationCheckFailure(phase, false, null, { status: response.status, expectedStatus, code });
   }
   async function ownedTicket() {
     const response = await request('/api/tickets/' + ticketId, { authenticated: true });
-    if (response.status === 404) return false;
+    if (response.status === 404) { void response.body?.cancel().catch(() => {}); return false; }
     await expectStatus(response, 200);
     requireCheck(ownTicket(await response.json(), ticketInput, ticketId));
     return true;
@@ -143,6 +147,13 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     const password = env.TICKETS_DEMO_PASSWORD ?? localEnv.TICKETS_DEMO_PASSWORD;
     requireCheck(typeof password === 'string' && password.length > 0);
     const expected = unavailable ? 'unavailable' : disabled ? 'disabled' : 'suggested';
+    if (verifyHistory) {
+      phase = 'salud del backend independiente de ML';
+      const health = await request('/api/backend-health');
+      await expectStatus(health, 200);
+      requireCheck((await health.json())?.status === 'ok');
+      checks.push('backend_ready_without_ml_dependency');
+    }
     phase = 'sugerencia pública sin cookie';
     await suggestion(examples.biomedical, expected);
     checks.push('public_without_cookie', unavailable ? 'ml_unavailable' : disabled ? 'ml_disabled' : 'biomedical_suggested');
@@ -153,7 +164,7 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     phase = 'acceso admin.gctic';
     const login = await request('/api/auth/login', { body: { username: 'admin.gctic', password } });
     await expectStatus(login, 200);
-    cookie = staffCookie(login);
+    try { cookie = staffCookie(login); } finally { void login.body?.cancel().catch(() => {}); }
     checks.push('staff_login');
     phase = 'sugerencia autenticada';
     await suggestion(examples.biomedical, expected, true);
@@ -170,7 +181,7 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     diagnostic = { code: 'UNEXPECTED_CONTRACT' };
     const runId = idFactory();
     requireCheck(uuid.test(runId));
-    ticketInput = { titulo: examples.biomedical.titulo + ' [4.7 ' + runId + ']',
+    ticketInput = { titulo: examples.biomedical.titulo + ' [' + (verifyHistory ? '4.8' : '4.7') + ' ' + runId + ']',
       descripcion: examples.biomedical.descripcion + ' Solicitud ficticia temporal de integración local.',
       categoria: 'SOPORTE', prioridad: 'MEDIA', centroAsistencialId: center.centerId, areaId: area.areaId };
     phase = 'creación con categoría manual';
@@ -190,6 +201,63 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     requireCheck(persisted.ticketCount === 1 && persisted.category === 'SOPORTE' && persisted.insertAudited === true && persisted.auditCount >= 1);
     checks.push('postgres_manual_category', 'insert_audited');
 
+    if (verifyHistory) {
+      const parameters = new URLSearchParams({ search: runId, centroAsistencialId: center.centerId,
+        categoria: 'SOPORTE', prioridad: 'MEDIA' });
+      async function verifyView(view, present, state) {
+        const filter = new URLSearchParams(parameters); filter.set('view', view);
+        const pageQuery = new URLSearchParams(filter); pageQuery.set('page', '1'); pageQuery.set('pageSize', '1');
+        const response = await request('/api/tickets?' + pageQuery, { authenticated: true });
+        await expectStatus(response, 200);
+        const page = await response.json();
+        requireCheck(page.page === 1 && page.pageSize === 1 && page.hasMore === false &&
+          Array.isArray(page.items) && page.items.length === (present ? 1 : 0));
+        if (present) requireCheck(ownTicket(page.items[0], ticketInput, ticketId) && page.items[0].estado === state);
+        const summaryResponse = await request('/api/tickets/resumen?' + filter, { authenticated: true });
+        await expectStatus(summaryResponse, 200);
+        const summary = await summaryResponse.json();
+        requireCheck(summary.total === (present ? 1 : 0) && summary.active + summary.history === summary.total &&
+          summary.priority === 0 && Array.isArray(summary.centers) && summary.centers.length === (present ? 1 : 0));
+        if (present) requireCheck(summary.byState[state] === 1 && summary.centers[0].centerId === center.centerId &&
+          summary.centers[0].total === 1 && summary.centers[0].byState[state] === 1);
+      }
+      async function transition(state) {
+        const response = await request('/api/tickets/' + ticketId + '/estado', { method: 'PATCH', authenticated: true,
+          body: { estado: state, motivo: 'Verificación temporal de trazabilidad de la subetapa 4.8.' } });
+        await expectStatus(response, 200);
+        const ticket = await response.json();
+        requireCheck(ownTicket(ticket, ticketInput, ticketId) && ticket.estado === state);
+      }
+      phase = 'trabajo activo paginado y resumen autorizado';
+      await verifyView('active', true, 'ABIERTO'); await verifyView('history', false);
+      const secondPage = new URLSearchParams(parameters); secondPage.set('view', 'active');
+      secondPage.set('page', '2'); secondPage.set('pageSize', '1');
+      const pageResponse = await request('/api/tickets?' + secondPage, { authenticated: true });
+      await expectStatus(pageResponse, 200);
+      const page = await pageResponse.json();
+      requireCheck(page.page === 2 && page.items.length === 0 && page.hasMore === false);
+      checks.push('server_filters_and_pagination', 'authorized_summary');
+      phase = 'estados operativos y consulta del historial';
+      for (const state of ['EN_PROCESO', 'PENDIENTE', 'EN_PROCESO', 'RESUELTO']) await transition(state);
+      await verifyView('active', false); await verifyView('history', true, 'RESUELTO');
+      requireCheck(await ownedTicket());
+      checks.push('resolved_in_history', 'direct_detail_outside_active_page');
+      phase = 'reapertura conservando trazabilidad';
+      await transition('EN_PROCESO');
+      await verifyView('active', true, 'EN_PROCESO'); await verifyView('history', false);
+      checks.push('resolved_reopened');
+      phase = 'cierre e historial inmutable';
+      await transition('RESUELTO'); await transition('CERRADO');
+      await verifyView('active', false); await verifyView('history', true, 'CERRADO');
+      const historyResponse = await request('/api/tickets/' + ticketId + '/estado/historial', { authenticated: true });
+      await expectStatus(historyResponse, 200);
+      const history = await historyResponse.json();
+      requireCheck(Array.isArray(history) && history.length === 8 && history[0].estadoAnterior === null &&
+        history[0].estadoNuevo === 'ABIERTO' && history.at(-1).estadoNuevo === 'CERRADO');
+      for (let index = 1; index < history.length; index++) requireCheck(history[index].estadoAnterior === history[index - 1].estadoNuevo);
+      checks.push('closed_in_history', 'state_history_preserved');
+    }
+
     phase = 'limpieza del ticket temporal';
     requireCheck(await ownedTicket());
     const removed = await request('/api/tickets/' + ticketId, { method: 'DELETE', authenticated: true, expectedStatus: 204 });
@@ -203,7 +271,7 @@ export async function runIntegrationCheck({ root = projectRoot, env = process.en
     checks.push('temporary_ticket_removed', 'postgres_ticket_absent', 'delete_audited');
     receipt = { checked_at: new Date().toISOString(), mode: unavailable ? 'unavailable' : disabled ? 'disabled' : 'available',
       origin, expected_model_version: modelVersion, policy_version: policyVersion, manual_category: 'SOPORTE',
-      checks, postgres: { ticket_count_after_delete: deleted.ticketCount, audit_events: deleted.auditCount,
+      ...(verifyHistory ? { stage: '4.8' } : {}), checks, postgres: { ticket_count_after_delete: deleted.ticketCount, audit_events: deleted.auditCount,
         insert_audited: deleted.insertAudited, delete_audited: deleted.deleteAudited }, temporary_ticket_removed: true };
   } catch (error) {
     failure = error instanceof IntegrationCheckFailure ? error : new IntegrationCheckFailure(phase, false, null, diagnostic);
